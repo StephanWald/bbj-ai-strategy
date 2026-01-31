@@ -60,13 +60,13 @@ Plans:
   3. Chapter 3 covers training data structure, base model selection (with rationale), LoRA approach, and Ollama hosting -- a developer reader has enough detail to begin implementation
   4. BBj code examples throughout all three chapters render with proper syntax highlighting (not plain text)
   5. Each chapter uses the content patterns from Phase 2 (TL;DR blocks, decision callouts where applicable, Mermaid diagrams for architecture)
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: Create BBj Prism grammar and verify syntax highlighting works
-- [ ] 03-02: Research and write Chapter 1 (The BBj Challenge)
-- [ ] 03-03: Research and write Chapter 2 (Strategic Architecture)
-- [ ] 03-04: Research and write Chapter 3 (Fine-Tuning the Model)
+- [ ] 03-01-PLAN.md -- Configure BBj syntax highlighting (additionalLanguages config) and rename Chapter 1 to .mdx for Tabs support
+- [ ] 03-02-PLAN.md -- Research and write Chapter 1: The BBj Challenge (4 generations, cross-generation code comparisons, generic LLM failure, webforJ contrast)
+- [ ] 03-03-PLAN.md -- Research and write Chapter 2: Strategic Architecture (unified infrastructure vision, shared model + RAG, three initiatives overview)
+- [ ] 03-04-PLAN.md -- Research and write Chapter 3: Fine-Tuning the Model (training data, Qwen2.5-Coder selection, QLoRA/Unsloth pipeline, Ollama hosting)
 
 ### Phase 4: Execution Chapters
 **Goal**: All 7 chapters are complete with current best practices, execution guidance, and decision rationale -- the full strategy is documented to depth
@@ -111,6 +111,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|---------------|--------|-----------|
 | 1. Scaffold & Deploy Pipeline | 2/2 | Complete | 2026-01-31 |
 | 2. Content Architecture & Landing Page | 2/2 | Complete | 2026-01-31 |
-| 3. Foundation Chapters | 0/4 | Not started | - |
+| 3. Foundation Chapters | 0/4 | Planned | - |
 | 4. Execution Chapters | 0/5 | Not started | - |
 | 5. Search, SEO & Launch | 0/2 | Not started | - |
