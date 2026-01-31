@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A public Docusaurus site that communicates BASIS International's AI strategy for BBj — covering LLM fine-tuning, IDE integration, documentation chat, and RAG database design. The site serves three audiences (internal developers, leadership, customers/partners) through 7 researched chapters with full-text search, professional content patterns, and automated deployment. Live at https://stephanwald.github.io/bbj-ai-strategy/.
+A public Docusaurus site that communicates BASIS International's AI strategy for BBj — covering LLM fine-tuning, IDE integration, documentation chat, and RAG database design. The site serves three audiences (internal developers, leadership, customers/partners) through 7 researched chapters with full-text search, professional content patterns, BASIS brand identity, and automated deployment. Live at https://stephanwald.github.io/bbj-ai-strategy/.
 
 ## Core Value
 
@@ -25,18 +25,15 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - ✓ Full-text search, OG meta tags, robots.txt, verified navigation — v1.0
 - ✓ All chapters researched for 2025/2026 best practices with execution guidance — v1.0
 - ✓ Current status and decision rationale in every chapter — v1.0
+- ✓ All BBj code samples corrected to match authoritative PDF reference (mnemonic syntax, DWC signatures, CTRL() channel-based syntax) — v1.1
+- ✓ PDF reference attribution (GuideToGuiProgrammingInBBj.pdf) added to Chapter 1 — v1.1
+- ✓ Custom favicon and navbar logo using BASIS DWC brand assets — v1.1
+- ✓ Blue brand color palette (#2563eb/#60a5fa) with matching admonition backgrounds — v1.1
+- ✓ Typography confirmed as Infima defaults (no custom fonts needed) — v1.1
 
 ### Active
 
-- **CODE-01**: Fix hallucinated Visual PRO/5 code samples in Chapter 1 (replace fabricated `WINDOW CREATE`/`BUTTON CREATE` verb syntax with correct `PRINT (sysgui)'WINDOW'(...)` mnemonic syntax) — v1.1
-- **CODE-02**: Fix hallucinated DWC/BBj GUI code samples in Chapter 1 (correct `addWindow`/`addButton` signatures to include coordinate parameters) — v1.1
-- **CODE-03**: Fix hallucinated CTRL syntax in Chapter 1 (replace `CTRL(wnd, n)` with correct `CTRL(sysgui, controlId, index)`) — v1.1
-- **CODE-04**: Fix comparison table describing Visual PRO/5 as using `WINDOW CREATE`, `BUTTON CREATE` — v1.1
-- **CODE-05**: Audit and correct BBj code samples in all remaining chapters (3, 5, and any others) against PDF reference — v1.1
-- **CODE-06**: Add reference/attribution to `GuideToGuiProgrammingInBBj.pdf` as authoritative source — v1.1
-- **BRAND-01**: Custom favicon and logo using BASIS brand assets — v1.1
-- **BRAND-02**: Custom color theme aligned with BASIS brand colors — v1.1
-- **BRAND-03**: Typography updates if BASIS brand fonts are specified — v1.1
+(None — all requirements shipped through v1.1)
 
 ### Out of Scope
 
@@ -45,7 +42,6 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - Building the actual AI infrastructure (model, RAG, extension) — this project documents the strategy
 - Mobile-optimized design beyond Docusaurus defaults — standard responsive is sufficient
 - Internationalization — English only
-- Custom favicon/branding — ~~no BASIS logo available~~ moved to Active (BRAND-01/02/03) for v1.1
 
 ## Context
 
@@ -55,7 +51,7 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.0 shipped 2026-01-31. v1.1 in progress — fixing hallucinated code samples and adding custom branding. 2,441 lines of content across 7 chapters. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages.
+- **Current state:** v1.1 shipped 2026-01-31. All code samples corrected, BASIS brand identity applied. 2,441 lines of content across 7 chapters. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages.
 - **BBj code reference:** `GuideToGuiProgrammingInBBj.pdf` (project root) — authoritative reference for all BBj GUI patterns across 4 generations. Contains complete working sample programs (cust-cui.txt, cust-gui.txt, cust-bbj.txt, cust-obj.txt).
 
 ## Constraints
@@ -80,6 +76,11 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | pgvector over dedicated vector DB | BBj corpus under 50K chunks; identical performance at this scale | ✓ Good |
 | Text-only social previews | No custom image needed; removed Docusaurus dinosaur placeholder | ✓ Good |
 | @easyops-cn/docusaurus-search-local | Zero-dependency offline search; no Algolia service needed for 7-chapter site | ✓ Good |
+| Lowercase Visual PRO/5 examples matching PDF reference | `print`/`open`/`ctrl` in code blocks matches authoritative source style | ✓ Good |
+| General documentation.basis.cloud URL for PDF reference | More resilient than deep-linking specific PDF path | ✓ Good |
+| Tailwind blue-600 scale for brand palette | Matches reference project (bbj-dwc-tutorial); tested shade progression | ✓ Good |
+| No srcDark navbar logo variant | DWC logo has dark background with white icon; works in both modes | ✓ Good |
+| Infima default typography (no custom fonts) | Clean sans-serif matches reference project; no BASIS font spec exists | ✓ Good |
 
 ---
-*Last updated: 2026-01-31 after v1.1 milestone start*
+*Last updated: 2026-01-31 after v1.1 milestone complete*
