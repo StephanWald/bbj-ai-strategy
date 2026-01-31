@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'BBj AI Strategy',
   tagline: 'Intelligent Code Assistance Across Four Generations of Business BASIC',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
 
   url: 'https://StephanWald.github.io',
   baseUrl: '/bbj-ai-strategy/',
@@ -70,6 +70,10 @@ const config: Config = {
     },
     navbar: {
       title: 'BBj AI Strategy',
+      logo: {
+        alt: 'BASIS Logo',
+        src: 'img/dwc-logo.png',
+      },
       items: [
         {
           type: 'docSidebar',
