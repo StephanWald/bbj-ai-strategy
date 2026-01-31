@@ -13,7 +13,7 @@ completion, documentation chat, and future capabilities from one source of truth
 Build it once, share it everywhere, maintain it in one place.
 :::
 
-The previous chapter established that BBj is invisible to generic LLMs and that a fine-tuned model is unavoidable. This chapter addresses the next question: **how should that model -- and the infrastructure around it -- be organized?**
+The [previous chapter](/docs/bbj-challenge) established that BBj is invisible to generic LLMs and that a fine-tuned model is unavoidable. This chapter addresses the next question: **how should that model -- and the infrastructure around it -- be organized?**
 
 The answer is deceptively simple. Every AI-powered BBj tool needs the same two things: a model that understands BBj syntax across all four generations, and a retrieval layer that can surface relevant documentation and code examples. Rather than letting each tool reinvent these capabilities independently, the strategy builds them once as shared infrastructure and exposes them to any consumer application through standard APIs.
 
