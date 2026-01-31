@@ -75,11 +75,11 @@ Plans:
   2. Document type classifier categorizes content as api-reference, concept, example, migration, language-reference, best-practice, or version-note based on content structure
   3. Every chunk has a contextual header prepended (e.g., "BBj Objects > BBjWindow > addButton > Parameters") derived from TOC hierarchy and heading structure
   4. Running the tagger on actual Flare content produces a plausible generation distribution (not everything tagged "all")
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: Implement generation tagger with multi-signal classification (condition tags, file paths, API patterns, syntax)
-- [ ] 11-02: Implement document type classifier and contextual chunk header generation
+- [ ] 11-01-PLAN.md -- Generation tagger with multi-signal classification (StrEnum, path/condition/content signals, report), model updates (context_header, deprecated), DDL changes
+- [ ] 11-02-PLAN.md -- Document type classifier (7 types, extensible rule registry) and contextual chunk header builder
 
 ### Phase 12: Embedding Pipeline
 **Goal**: The full pipeline runs end-to-end for the Flare source -- parse, tag, chunk, embed, store -- producing searchable vectors in pgvector with working hybrid retrieval
