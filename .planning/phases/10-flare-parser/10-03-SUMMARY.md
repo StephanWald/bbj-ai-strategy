@@ -72,7 +72,7 @@ Each task was committed atomically:
 1. **Task 1: Implement WebCrawlParser with httpx + BeautifulSoup** - `64c4ad8` (feat)
 2. **Task 2: Write tests for WebCrawlParser with mocked HTTP** - `6dc7f2c` (test)
 
-**Plan metadata:** [pending] (docs: complete plan)
+**Plan metadata:** `375b0ba` (docs: complete plan)
 
 ## Files Created/Modified
 - `rag-ingestion/src/bbj_rag/parsers/web_crawl.py` - WebCrawlParser class with crawl logic, chrome stripping, HTML-to-Markdown, URL hierarchy
