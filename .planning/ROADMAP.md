@@ -12,7 +12,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 
 ## Phases
 
-- [ ] **Phase 8: Project Scaffold & README** - Python sub-project setup and repo README
+- [x] **Phase 8: Project Scaffold & README** - Python sub-project setup and repo README
 - [ ] **Phase 9: Schema & Data Models** - pgvector DDL, Pydantic models, config system, deduplication
 - [ ] **Phase 10: Flare Parser** - MadCap Flare XHTML parser (project files + condition tags + crawl fallback)
 - [ ] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
@@ -33,7 +33,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 **Plans**: 1 plan
 
 Plans:
-- [ ] 08-01-PLAN.md -- Scaffold rag-ingestion/ Python project with uv and write repo README
+- [x] 08-01-PLAN.md -- Scaffold rag-ingestion/ Python project with uv and write repo README
 
 ### Phase 9: Schema & Data Models
 **Goal**: The database schema and data contracts are defined so all downstream parsers, taggers, and embedders work against stable interfaces
@@ -165,7 +165,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 8. Project Scaffold & README | v1.2 | 0/1 | Not started | - |
+| 8. Project Scaffold & README | v1.2 | 1/1 | Complete | 2026-01-31 |
 | 9. Schema & Data Models | v1.2 | 0/2 | Not started | - |
 | 10. Flare Parser | v1.2 | 0/2 | Not started | - |
 | 11. BBj Intelligence | v1.2 | 0/2 | Not started | - |
