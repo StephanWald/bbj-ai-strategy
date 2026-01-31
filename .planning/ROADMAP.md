@@ -59,11 +59,12 @@ Plans:
   2. Parser reads TOC files (.fltoc) to derive hierarchical section paths (e.g., "BBj Objects > BBjWindow > Methods") for each topic
   3. Condition tags (Primary.BASISHelp, Primary.Deprecated, Primary.Superseded, etc.) are extracted per topic and available as metadata for downstream generation tagging
   4. Web crawl fallback parser can extract content from documentation.basis.cloud when project files are unavailable
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 10-01: Implement Flare XHTML project file parser with TOC hierarchy and MadCap namespace stripping
-- [ ] 10-02: Implement condition tag extraction and web crawl fallback parser
+- [ ] 10-01-PLAN.md -- Parser foundation: dependencies, DocumentParser protocol, TOC index builder, condition tag extractor
+- [ ] 10-02-PLAN.md -- Flare XHTML parser: MadCap tag handling, snippet resolution, code blocks, tables, hierarchy paths
+- [ ] 10-03-PLAN.md -- Web crawl fallback parser: httpx + BeautifulSoup for documentation.basis.cloud
 
 ### Phase 11: BBj Intelligence
 **Goal**: Every parsed document is automatically classified by BBj generation and document type, and chunks carry contextual headers derived from the source hierarchy -- this is the BBj-specific intelligence that makes the pipeline valuable
@@ -167,7 +168,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 8. Project Scaffold & README | v1.2 | 1/1 | Complete | 2026-01-31 |
 | 9. Schema & Data Models | v1.2 | 2/2 | Complete | 2026-01-31 |
-| 10. Flare Parser | v1.2 | 0/2 | Not started | - |
+| 10. Flare Parser | v1.2 | 0/3 | Not started | - |
 | 11. BBj Intelligence | v1.2 | 0/2 | Not started | - |
 | 12. Embedding Pipeline | v1.2 | 0/2 | Not started | - |
 | 13. Additional Parsers | v1.2 | 0/3 | Not started | - |
