@@ -5,31 +5,31 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** v1.1 Phase 7 -- Apply BASIS International brand identity to the site.
+**Current focus:** v1.1 complete -- All code corrections and branding applied.
 
 ## Current Position
 
 Milestone: v1.1 Code Corrections & Branding
 Phase: 7 of 7 (Custom Branding)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-31 -- Completed 07-01-PLAN.md (brand assets and navbar logo)
+Plan: 2 of 2 in current phase
+Status: Milestone complete
+Last activity: 2026-01-31 -- Completed 07-02-PLAN.md (color palette and admonitions)
 
-Progress: [████████████   ] 80% (4/5 plans)
+Progress: [███████████████] 100% (5/5 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 2min
-- Total execution time: 7min
+- Total execution time: 8min
 
 **By Phase:**
 
 | Phase | Plans | Duration | Status |
 |-------|-------|----------|--------|
 | 06-code-corrections | 3/3 | 6min | Complete (verified) |
-| 07-custom-branding | 1/2 | 1min | In progress |
+| 07-custom-branding | 2/2 | 2min | Complete |
 
 ## Accumulated Context
 
@@ -46,6 +46,10 @@ Progress: [████████████   ] 80% (4/5 plans)
 - Used general documentation.basis.cloud URL rather than specific PDF path for URL resilience
 - Keep favicon.ico alongside favicon.png as fallback for older browsers
 - No srcDark logo variant needed (dwc-logo.png has dark background, works in both modes)
+- Use Tailwind blue-600 scale from reference project for color palette
+- TL;DR admonition backgrounds updated to blue to match blue primary border
+- Info admonitions left unchanged (already blue-toned)
+- No custom fonts -- reference project uses Infima defaults
 
 ### Pending Todos
 
@@ -58,5 +62,5 @@ None open.
 ## Session Continuity
 
 Last session: 2026-01-31
-Stopped at: Completed 07-01-PLAN.md (brand assets); ready for 07-02 (color theme)
+Stopped at: v1.1 milestone complete (5/5 plans across 2 phases)
 Resume file: None
