@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 10 (Flare Parser)
+**Current focus:** v1.2 -- Phase 11 (BBj Intelligence)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
-Phase: 10 of 14 (Flare Parser)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 10-03-PLAN.md (Web Crawl Parser)
+Phase: 11 of 14 (BBj Intelligence)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-31 -- Completed 11-01-PLAN.md (Generation Tagger)
 
-Progress: ██████░░░░░░░░ 6/14 (43%)
+Progress: ███████░░░░░░░ 7/14 (50%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6 (v1.2)
-- Average duration: 6min
-- Total execution time: 34min
+- Total plans completed: 7 (v1.2)
+- Average duration: 5min
+- Total execution time: 38min
 
 **By Phase:**
 
@@ -31,6 +31,7 @@ Progress: ██████░░░░░░░░ 6/14 (43%)
 | 08-project-scaffold-readme | 1/1 | 3min | 3min |
 | 09-schema-data-models | 2/2 | 8min | 4min |
 | 10-flare-parser | 3/3 | 23min | 8min |
+| 11-bbj-intelligence | 1/2 | 4min | 4min |
 
 *Updated after each plan completion*
 
@@ -65,6 +66,12 @@ Recent decisions affecting current work:
 - Backslash-to-forward-slash normalization for Windows-authored snippet src attributes on macOS
 - 58 unresolvable snippet references are genuine Flare authoring issues -- graceful degradation via warning
 - _SnippetMap type alias for dict[str, etree._Element] to reduce function signature verbosity
+- Generation StrEnum auto() produces lowercase values: all, character, vpro5, bbj_gui, dwc
+- resolve_signals returns ["untagged"] sentinel (not empty list) for below-threshold signals
+- Primary.BASISHelp is NOT a generation signal (informational only, 84.6% of files have it)
+- Primary.Deprecated/Superseded are lifecycle flags on deprecated boolean field, not generation signals
+- Signal weights: path=0.6, condition=0.3-0.5, content=0.4 with 0.3 aggregation threshold
+- context_header stored as separate field to avoid content_hash mutation
 
 ### Pending Todos
 
@@ -76,7 +83,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-01-31T20:52Z
-Stopped at: Completed 10-03-PLAN.md (Web Crawl Parser)
+Last session: 2026-01-31T21:46Z
+Stopped at: Completed 11-01-PLAN.md (Generation Tagger)
 Resume file: None
-Next action: Phase 10 verification, then Phase 11 planning/execution.
+Next action: Execute 11-02-PLAN.md (Doc Type Classifier / Context Headers).
