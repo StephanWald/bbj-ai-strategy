@@ -44,11 +44,11 @@ Plans:
   2. A TL;DR summary block renders at the top of a sample chapter page (pattern ready for all chapters)
   3. Decision record callouts render with distinct visual styling that highlights strategic choices
   4. At least one Mermaid diagram renders correctly in a chapter page, replacing what would be ASCII art
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Build landing page with executive summary and audience routing
-- [ ] 02-02: Create content patterns (TL;DR component, decision callouts, Mermaid config) and demonstrate in placeholder content
+- [ ] 02-01-PLAN.md -- Redesign landing page with problem-first hero, executive summary, audience routing cards, and chapter grid
+- [ ] 02-02-PLAN.md -- Install Mermaid theme, create admonition CSS for TL;DR and decision callouts, demonstrate all patterns in sample chapters
 
 ### Phase 3: Foundation Chapters
 **Goal**: A reader can understand why BBj needs a custom AI strategy, what the unified architecture looks like, and how the model will be fine-tuned -- through three researched, well-structured chapters with proper BBj syntax highlighting
