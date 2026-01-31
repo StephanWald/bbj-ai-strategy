@@ -30,10 +30,10 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
   1. Repo README at project root describes the project, links to the live site, and summarizes the tech stack
   2. Running `uv sync` in `rag-ingestion/` installs all dependencies without errors
   3. The `rag-ingestion/` directory has a valid `pyproject.toml` with Python 3.12+ requirement and all core dependencies declared
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: Scaffold rag-ingestion/ Python project with uv and write repo README
+- [ ] 08-01-PLAN.md -- Scaffold rag-ingestion/ Python project with uv and write repo README
 
 ### Phase 9: Schema & Data Models
 **Goal**: The database schema and data contracts are defined so all downstream parsers, taggers, and embedders work against stable interfaces
