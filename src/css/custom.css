@@ -28,3 +28,39 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/*
+ * Admonition type allocation (site-wide convention):
+ *   :::tip     = TL;DR summary blocks (green, prominent)
+ *   :::info    = Decision records (blue, structured)
+ *   :::note    = General notes
+ *   :::warning = Caveats / limitations
+ *   :::danger  = Critical warnings
+ */
+
+/* --- TL;DR blocks (:::tip -> .alert--success) --- */
+.alert--success {
+  --ifm-alert-background-color: rgba(46, 133, 85, 0.08);
+  --ifm-alert-background-color-highlight: rgba(46, 133, 85, 0.15);
+  --ifm-alert-border-color: var(--ifm-color-primary);
+  border-left-width: 5px;
+  font-size: 1.05rem;
+}
+
+[data-theme='dark'] .alert--success {
+  --ifm-alert-background-color: rgba(37, 194, 160, 0.08);
+  --ifm-alert-background-color-highlight: rgba(37, 194, 160, 0.15);
+}
+
+/* --- Decision callouts (:::info -> .alert--info) --- */
+.alert--info {
+  --ifm-alert-background-color: rgba(54, 120, 194, 0.06);
+  --ifm-alert-background-color-highlight: rgba(54, 120, 194, 0.12);
+  --ifm-alert-border-color: #3678c2;
+  border-left-width: 5px;
+}
+
+[data-theme='dark'] .alert--info {
+  --ifm-alert-background-color: rgba(54, 120, 194, 0.1);
+  --ifm-alert-background-color-highlight: rgba(54, 120, 194, 0.18);
+}
