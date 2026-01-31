@@ -11,24 +11,25 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 
 Milestone: v1.1 Code Corrections & Branding
 Phase: 7 of 7 (Custom Branding)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-01-31 -- Phase 6 complete (3/3 plans, verified 15/15 must-haves)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-31 -- Completed 07-01-PLAN.md (brand assets and navbar logo)
 
-Progress: [█████████      ] 60% (3/5 plans)
+Progress: [████████████   ] 80% (4/5 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 2min
-- Total execution time: 6min
+- Total execution time: 7min
 
 **By Phase:**
 
 | Phase | Plans | Duration | Status |
 |-------|-------|----------|--------|
-| 06-code-corrections | 3/3 | 6min | ✓ Complete (verified) |
+| 06-code-corrections | 3/3 | 6min | Complete (verified) |
+| 07-custom-branding | 1/2 | 1min | In progress |
 
 ## Accumulated Context
 
@@ -43,6 +44,8 @@ Progress: [█████████      ] 60% (3/5 plans)
 - Existing correct code blocks (OrderForm, modern BBj API) verified and left unchanged
 - PDF reference callout placed after Four Generations section (after DWC subsection) for natural reading flow
 - Used general documentation.basis.cloud URL rather than specific PDF path for URL resilience
+- Keep favicon.ico alongside favicon.png as fallback for older browsers
+- No srcDark logo variant needed (dwc-logo.png has dark background, works in both modes)
 
 ### Pending Todos
 
@@ -55,5 +58,5 @@ None open.
 ## Session Continuity
 
 Last session: 2026-01-31
-Stopped at: Phase 6 complete, verified 15/15, ready to plan Phase 7
+Stopped at: Completed 07-01-PLAN.md (brand assets); ready for 07-02 (color theme)
 Resume file: None
