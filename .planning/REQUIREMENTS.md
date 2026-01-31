@@ -1,7 +1,7 @@
 # Requirements: BBj AI Strategy Documentation Site
 
 **Defined:** 2026-01-31
-**Core Value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed — through a well-structured, publicly accessible documentation site.
+**Core Value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
 
 ## v1 Requirements
 
@@ -70,10 +70,10 @@ Deferred to future release. Tracked but not in current roadmap.
 |---------|--------|
 | Authentication / access control | Site is fully public |
 | Interactive demos or live chat widget | This documents the strategy, not the AI system itself |
-| Building actual AI infrastructure | Separate project — this is documentation only |
+| Building actual AI infrastructure | Separate project -- this is documentation only |
 | Multi-language / i18n | English only, unnecessary complexity |
 | Blog section | Strategy docs, not ongoing blog content |
-| Versioned docs | Single version of the strategy — updates happen in place |
+| Versioned docs | Single version of the strategy -- updates happen in place |
 | Algolia DocSearch | Overkill for 7-chapter site; local search sufficient |
 | Mobile app | Standard Docusaurus responsive design is sufficient |
 
@@ -83,35 +83,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCAF-01 | — | Pending |
-| SCAF-02 | — | Pending |
-| SCAF-03 | — | Pending |
-| SCAF-04 | — | Pending |
-| SCAF-05 | — | Pending |
-| ARCH-01 | — | Pending |
-| ARCH-02 | — | Pending |
-| ARCH-03 | — | Pending |
-| ARCH-04 | — | Pending |
-| CONT-01 | — | Pending |
-| CONT-02 | — | Pending |
-| CONT-03 | — | Pending |
-| CONT-04 | — | Pending |
-| CONT-05 | — | Pending |
-| CONT-06 | — | Pending |
-| CONT-07 | — | Pending |
-| CONT-08 | — | Pending |
-| CONT-09 | — | Pending |
-| CONT-10 | — | Pending |
-| NAV-01 | — | Pending |
-| NAV-02 | — | Pending |
-| NAV-03 | — | Pending |
-| NAV-04 | — | Pending |
+| SCAF-01 | Phase 1 | Pending |
+| SCAF-02 | Phase 1 | Pending |
+| SCAF-03 | Phase 1 | Pending |
+| SCAF-04 | Phase 1 | Pending |
+| SCAF-05 | Phase 3 | Pending |
+| ARCH-01 | Phase 2 | Pending |
+| ARCH-02 | Phase 2 | Pending |
+| ARCH-03 | Phase 2 | Pending |
+| ARCH-04 | Phase 2 | Pending |
+| CONT-01 | Phase 3 | Pending |
+| CONT-02 | Phase 3 | Pending |
+| CONT-03 | Phase 3 | Pending |
+| CONT-04 | Phase 4 | Pending |
+| CONT-05 | Phase 4 | Pending |
+| CONT-06 | Phase 4 | Pending |
+| CONT-07 | Phase 4 | Pending |
+| CONT-08 | Phase 4 | Pending |
+| CONT-09 | Phase 4 | Pending |
+| CONT-10 | Phase 4 | Pending |
+| NAV-01 | Phase 5 | Pending |
+| NAV-02 | Phase 5 | Pending |
+| NAV-03 | Phase 5 | Pending |
+| NAV-04 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after initial definition*
+*Last updated: 2026-01-31 after roadmap creation*
