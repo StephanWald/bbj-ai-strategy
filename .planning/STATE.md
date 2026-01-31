@@ -5,39 +5,40 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** v1.0 milestone complete. Planning next milestone if needed.
+**Current focus:** v1.1 Phase 6 -- Fix hallucinated BBj code samples across all chapters.
 
 ## Current Position
 
-Milestone: v1.0 SHIPPED (2026-01-31)
-Phase: All 5 phases complete (15/15 plans)
-Status: Milestone archived
-Last activity: 2026-01-31 -- v1.0 milestone completed and archived
+Milestone: v1.1 Code Corrections & Branding
+Phase: 6 of 7 (Code Corrections)
+Plan: 1 of 3 in current phase
+Status: In progress -- Plan 01 complete, Plans 02-03 remaining
+Last activity: 2026-01-31 -- Completed 06-01-PLAN.md (Chapter 1 code corrections)
 
-Progress: [###############] 100% (15/15 plans)
+Progress: [███            ] 20% (1/5 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 3 min
-- Total execution time: 0.78 hours
+- Total plans completed: 1
+- Average duration: 2min
+- Total execution time: 2min
 
 **By Phase:**
 
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
-| 02-content-architecture-landing-page | 2/2 | 6 min | 3 min |
-| 03-foundation-chapters | 4/4 | 9 min | 2.25 min |
-| 04-execution-chapters | 5/5 | 15 min | 3 min |
-| 05-search-seo-launch | 2/2 | 4 min | 2 min |
+| Phase | Plans | Duration | Status |
+|-------|-------|----------|--------|
+| 06-code-corrections | 1/3 | 2min | In progress |
 
 ## Accumulated Context
 
 ### Decisions
 
-All decisions logged in PROJECT.md Key Decisions table and archived in milestones/v1.0-ROADMAP.md.
+- Use `GuideToGuiProgrammingInBBj.pdf` as authoritative reference for all BBj code corrections
+- User has BASIS brand assets available (logo, colors, fonts)
+- Code corrections (Phase 6) before branding (Phase 7) -- content integrity is higher priority
+- Used lowercase print/open/ctrl in Visual PRO/5 examples to match PDF reference style
+- DWC code blocks given same coordinate params as BBj GUI to show API equivalence
 
 ### Pending Todos
 
@@ -49,6 +50,6 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-01-31
-Stopped at: v1.0 milestone archived. Run /gsd:new-milestone for next version.
+Last session: 2026-01-31T13:34:35Z
+Stopped at: Completed 06-01-PLAN.md (Chapter 1 code corrections)
 Resume file: None
