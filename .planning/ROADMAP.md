@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Content Architecture & Landing Page** - Landing page, content patterns (TL;DR, decision callouts, Mermaid), audience routing
 - [x] **Phase 3: Foundation Chapters** - Chapters 1-3 (BBj Challenge, Strategic Architecture, Fine-Tuning) with BBj syntax highlighting
 - [x] **Phase 4: Execution Chapters** - Chapters 4-7 (IDE, Chat, RAG, Roadmap) with research depth and execution guidance across all chapters
-- [ ] **Phase 5: Search, SEO & Launch** - Full-text search, navigation polish, Open Graph tags, production verification
+- [x] **Phase 5: Search, SEO & Launch** - Full-text search, navigation polish, Open Graph tags, production verification
 
 ## Phase Details
 
@@ -100,7 +100,7 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md -- Install @easyops-cn/docusaurus-search-local, configure OG meta tags, create robots.txt, remove default social card
-- [ ] 05-02-PLAN.md -- Fix sidebar_position values, verify pagination/ToC/sitemap/OG tags, deploy to GitHub Pages and verify live site
+- [x] 05-02-PLAN.md -- Fix sidebar_position values, verify pagination/ToC/sitemap/OG tags, deploy to GitHub Pages and verify live site
 
 ## Progress
 
@@ -113,4 +113,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Content Architecture & Landing Page | 2/2 | Complete | 2026-01-31 |
 | 3. Foundation Chapters | 4/4 | Complete | 2026-01-31 |
 | 4. Execution Chapters | 5/5 | Complete | 2026-01-31 |
-| 5. Search, SEO & Launch | 1/2 | In progress | - |
+| 5. Search, SEO & Launch | 2/2 | Complete | 2026-01-31 |
