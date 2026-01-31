@@ -33,13 +33,17 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 
 ### Active
 
-(None — all requirements shipped through v1.1)
+- [ ] Repo README with project description and link to live site
+- [ ] RAG Getting Started sub-page under Chapter 6 — concrete source-by-source ingestion approach with design rationale
+- [ ] Python ingestion sub-project (`rag-ingestion/`) with parsers, chunking pipeline, pgvector schema, and embedding pipeline
+- [ ] Source coverage: MadCap Flare docs, standalone PDFs, Advantage articles, Knowledge Base, DWC-Course
+- [ ] Current embedding model recommendation (researched for Jan 2026)
 
 ### Out of Scope
 
 - Authentication or access control — site is fully public
 - Interactive features (chat widgets, live demos) — this is documentation, not the AI system itself
-- Building the actual AI infrastructure (model, RAG, extension) — this project documents the strategy
+- Production deployment of the RAG pipeline (CI/CD, hosting) — the ingestion sub-project is a starter kit, not production infrastructure
 - Mobile-optimized design beyond Docusaurus defaults — standard responsive is sufficient
 - Internationalization — English only
 
@@ -51,7 +55,9 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.1 shipped 2026-01-31. All code samples corrected, BASIS brand identity applied. 2,441 lines of content across 7 chapters. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages.
+- **Current state:** v1.2 in progress. Adding RAG ingestion runbook and starter code. v1.1 shipped 2026-01-31 with all code samples corrected and BASIS brand identity applied. 2,441 lines of content across 7 chapters. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages.
+- **RAG source corpus:** 5 concrete sources identified: (1) MadCap Flare docs at documentation.basis.cloud, (2) standalone PDFs linked from docs (e.g., GUI programming guide), (3) Advantage magazine articles at basis.cloud/advantage-index/, (4) Knowledge Base at basis.cloud/knowledge-base/ (WordPress/LearnPress), (5) DWC-Course at github.com/BasisHub/DWC-Course (Docusaurus MDX + BBj samples).
+- **Flare access:** Engineers have both Flare project access (Clean XHTML export) and the live site (crawl fallback). Both paths documented.
 - **BBj code reference:** `GuideToGuiProgrammingInBBj.pdf` (project root) — authoritative reference for all BBj GUI patterns across 4 generations. Contains complete working sample programs (cust-cui.txt, cust-gui.txt, cust-bbj.txt, cust-obj.txt).
 
 ## Constraints
@@ -82,5 +88,8 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | No srcDark navbar logo variant | DWC logo has dark background with white icon; works in both modes | ✓ Good |
 | Infima default typography (no custom fonts) | Clean sans-serif matches reference project; no BASIS font spec exists | ✓ Good |
 
+| Python ingestion sub-project as mono-repo directory | Keeps scripts co-located with strategy docs until ready for CI/CD | — Pending |
+| Both Flare export and crawl ingestion paths | Engineers may or may not have Flare project access; crawl is fallback | — Pending |
+
 ---
-*Last updated: 2026-01-31 after v1.1 milestone complete*
+*Last updated: 2026-01-31 after v1.2 milestone started*
