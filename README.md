@@ -1,41 +1,31 @@
-# Website
+# BBj AI Strategy
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+This repo contains the AI strategy documentation for BBj (a Business BASIC language by BASIS International) and a RAG ingestion pipeline for processing BBj documentation into a vector database. The documentation site covers LLM fine-tuning, IDE integration, documentation chat, and RAG database design across 7 chapters.
 
-## Installation
+**Live site:** https://stephanwald.github.io/bbj-ai-strategy/
 
-```bash
-yarn
-```
+## What's Here
 
-## Local Development
+- **`/docs`** and root Docusaurus config -- the strategy documentation site (Docusaurus 3, TypeScript, deployed to GitHub Pages)
+- **`/rag-ingestion`** -- Python ingestion pipeline for processing BBj documentation sources into pgvector (Python 3.12+, uv)
 
-```bash
-yarn start
-```
+## Tech Stack
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+| Component           | Stack                                          |
+| ------------------- | ---------------------------------------------- |
+| Documentation site  | Docusaurus 3.9, Rspack, TypeScript, GitHub Pages |
+| Ingestion pipeline  | Python 3.12+, uv, pgvector/PostgreSQL          |
 
-## Build
+## Getting Started
 
-```bash
-yarn build
-```
+**Documentation site** -- visit the [live site](https://stephanwald.github.io/bbj-ai-strategy/) to read the strategy docs.
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-## Deployment
-
-Using SSH:
+**Ingestion pipeline** -- set up the Python development environment:
 
 ```bash
-USE_SSH=true yarn deploy
+cd rag-ingestion
+uv sync
+make check
 ```
 
-Not using SSH:
-
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Full setup details will be in `rag-ingestion/README.md`.
