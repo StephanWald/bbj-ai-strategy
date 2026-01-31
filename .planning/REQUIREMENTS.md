@@ -7,13 +7,13 @@
 
 ### Documentation
 
-- [ ] **DOC-01**: Repo README rewritten with project description, live site link, and tech stack summary
+- [x] **DOC-01**: Repo README rewritten with project description, live site link, and tech stack summary
 - [ ] **DOC-02**: RAG Getting Started sub-page under Chapter 6 with source-by-source ingestion approach and design rationale
 - [ ] **DOC-03**: Getting Started page links to actual code files in `rag-ingestion/` via GitHub URLs
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Python project scaffolded at `rag-ingestion/` with uv, pyproject.toml, and dependency management
+- [x] **INFRA-01**: Python project scaffolded at `rag-ingestion/` with uv, pyproject.toml, and dependency management
 - [ ] **INFRA-02**: pgvector schema DDL with generation array column, tsvector for BM25, HNSW index for cosine similarity
 - [ ] **INFRA-03**: Pydantic data models for parsed documents and chunks (common interface across all parsers)
 - [ ] **INFRA-04**: Configuration system for source paths, database connection, embedding model, chunk sizes
@@ -82,8 +82,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOC-01 | Phase 8 | Pending |
-| INFRA-01 | Phase 8 | Pending |
+| DOC-01 | Phase 8 | Complete |
+| INFRA-01 | Phase 8 | Complete |
 | INFRA-02 | Phase 9 | Pending |
 | INFRA-03 | Phase 9 | Pending |
 | INFRA-04 | Phase 9 | Pending |
