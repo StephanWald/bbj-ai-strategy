@@ -27,13 +27,13 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CONT-01**: Chapter 1 — The BBj Challenge: 4 generations explained, why generic LLMs fail, contrast with webforJ
 - [x] **CONT-02**: Chapter 2 — Strategic Architecture: unified AI infrastructure vision, shared model + RAG
 - [x] **CONT-03**: Chapter 3 — Fine-Tuning the Model: training data structure, base model selection, hosting via Ollama, LoRA approach
-- [ ] **CONT-04**: Chapter 4 — IDE Integration: VSCode extension + Langium, ghost text vs popup completion, generation-aware prompts
-- [ ] **CONT-05**: Chapter 5 — Documentation Chat: website chat system, why generic services fail, generation-aware responses
-- [ ] **CONT-06**: Chapter 6 — RAG Database Design: multi-generation document structure, retrieval strategy, metadata schema
-- [ ] **CONT-07**: Chapter 7 — Implementation Roadmap: phases, resource requirements, risk assessment, success metrics
-- [ ] **CONT-08**: Each chapter researched for current best practices and rewritten (not just copied from paper)
-- [ ] **CONT-09**: How-to / execution guidance added where original paper is abstract
-- [ ] **CONT-10**: Current status and decision rationale reflected in each chapter
+- [x] **CONT-04**: Chapter 4 — IDE Integration: VSCode extension + Langium, ghost text vs popup completion, generation-aware prompts
+- [x] **CONT-05**: Chapter 5 — Documentation Chat: website chat system, why generic services fail, generation-aware responses
+- [x] **CONT-06**: Chapter 6 — RAG Database Design: multi-generation document structure, retrieval strategy, metadata schema
+- [x] **CONT-07**: Chapter 7 — Implementation Roadmap: phases, resource requirements, risk assessment, success metrics
+- [x] **CONT-08**: Each chapter researched for current best practices and rewritten (not just copied from paper)
+- [x] **CONT-09**: How-to / execution guidance added where original paper is abstract
+- [x] **CONT-10**: Current status and decision rationale reflected in each chapter
 
 ### Search & Navigation
 
@@ -95,13 +95,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONT-01 | Phase 3 | Complete |
 | CONT-02 | Phase 3 | Complete |
 | CONT-03 | Phase 3 | Complete |
-| CONT-04 | Phase 4 | Pending |
-| CONT-05 | Phase 4 | Pending |
-| CONT-06 | Phase 4 | Pending |
-| CONT-07 | Phase 4 | Pending |
-| CONT-08 | Phase 4 | Pending |
-| CONT-09 | Phase 4 | Pending |
-| CONT-10 | Phase 4 | Pending |
+| CONT-04 | Phase 4 | Complete |
+| CONT-05 | Phase 4 | Complete |
+| CONT-06 | Phase 4 | Complete |
+| CONT-07 | Phase 4 | Complete |
+| CONT-08 | Phase 4 | Complete |
+| CONT-09 | Phase 4 | Complete |
+| CONT-10 | Phase 4 | Complete |
 | NAV-01 | Phase 5 | Pending |
 | NAV-02 | Phase 5 | Pending |
 | NAV-03 | Phase 5 | Pending |
