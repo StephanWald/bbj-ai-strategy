@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Phase 4 complete -- all 7 chapters written with Current Status sections, cross-references, and no outdated claims. Ready for Phase 5 if applicable.
+**Current focus:** Phase 5 in progress -- search and SEO complete, verify + deploy next.
 
 ## Current Position
 
-Phase: 4 of 5 (Execution Chapters) -- Complete
-Plan: 5 of 5 in current phase
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 04-05-PLAN.md (Cross-chapter quality pass)
+Phase: 5 of 5 (Search, SEO & Launch) -- In progress
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-31 -- Completed 05-01-PLAN.md (search plugin + SEO configuration)
 
-Progress: [##############░] 87% (13/15 plans)
+Progress: [##############░] 93% (14/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 4 min
-- Total execution time: 0.73 hours
+- Total plans completed: 14
+- Average duration: 3 min
+- Total execution time: 0.75 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [##############░] 87% (13/15 plans)
 | 02-content-architecture-landing-page | 2/2 | 6 min | 3 min |
 | 03-foundation-chapters | 4/4 | 9 min | 2.25 min |
 | 04-execution-chapters | 5/5 | 15 min | 3 min |
+| 05-search-seo-launch | 1/2 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (3 min), 04-02 (3 min), 04-03 (3 min), 04-04 (4 min), 04-05 (2 min)
-- Trend: consistent 2-4 min for execution chapter tasks
+- Last 5 plans: 04-02 (3 min), 04-03 (3 min), 04-04 (4 min), 04-05 (2 min), 05-01 (1 min)
+- Trend: 1-4 min per plan, search/SEO config was fastest
 
 *Updated after each plan completion*
 
@@ -86,6 +87,9 @@ Recent decisions affecting current work:
 - [04-04]: MVP checkpoints as explicit safe stopping points with standalone value description
 - [04-05]: Cross-references added as natural inline links, not forced navigation sections
 - [04-05]: All 7 chapters verified with Current Status sections and no outdated claims
+- [05-01]: @easyops-cn/docusaurus-search-local for zero-dependency offline search (no Algolia needed)
+- [05-01]: Twitter summary card (text-only) -- no custom social card image, removed Docusaurus dinosaur placeholder
+- [05-01]: Rspack bundler compatible with search plugin -- no fallback to granular experimental_faster needed
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31 12:04 UTC
-Stopped at: Completed 04-05-PLAN.md (Cross-chapter quality pass). Phase 4 (Execution Chapters) is complete -- all 5 plans done. All 7 chapters have Current Status, cross-references, and no outdated claims.
+Last session: 2026-01-31 12:38 UTC
+Stopped at: Completed 05-01-PLAN.md (Search plugin + SEO configuration). Phase 5 in progress -- 1 of 2 plans done. Search, OG tags, and robots.txt configured.
 Resume file: None

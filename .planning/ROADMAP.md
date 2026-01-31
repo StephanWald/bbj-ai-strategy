@@ -96,11 +96,11 @@ Plans:
   2. Every chapter page has previous/next pagination linking to adjacent chapters
   3. Every chapter page shows a table of contents generated from its headings
   4. Sharing the site URL on Slack, Twitter, or LinkedIn shows a proper preview card with title, description, and image
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Install and configure local search, set up SEO meta tags and Open Graph
-- [ ] 05-02: Verify all navigation paths, pagination, ToC, and run final production deployment check
+- [x] 05-01-PLAN.md -- Install @easyops-cn/docusaurus-search-local, configure OG meta tags, create robots.txt, remove default social card
+- [ ] 05-02-PLAN.md -- Fix sidebar_position values, verify pagination/ToC/sitemap/OG tags, deploy to GitHub Pages and verify live site
 
 ## Progress
 
@@ -113,4 +113,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Content Architecture & Landing Page | 2/2 | Complete | 2026-01-31 |
 | 3. Foundation Chapters | 4/4 | Complete | 2026-01-31 |
 | 4. Execution Chapters | 5/5 | Complete | 2026-01-31 |
-| 5. Search, SEO & Launch | 0/2 | Not started | - |
+| 5. Search, SEO & Launch | 1/2 | In progress | - |
