@@ -1,0 +1,15 @@
+"""BBj Intelligence: document classification and contextual enrichment.
+
+Public API for the intelligence package. This module re-exports the
+primary types and functions used by the ingestion pipeline.
+"""
+
+from bbj_rag.intelligence.generations import Generation, tag_generation
+from bbj_rag.intelligence.report import build_report, print_report
+
+__all__ = [
+    "Generation",
+    "build_report",
+    "print_report",
+    "tag_generation",
+]

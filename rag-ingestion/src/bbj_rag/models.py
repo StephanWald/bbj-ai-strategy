@@ -21,6 +21,8 @@ class Document(BaseModel):
     doc_type: str
     content: str
     generations: list[str]
+    context_header: str = ""
+    deprecated: bool = False
     metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("content")
@@ -49,6 +51,8 @@ class Chunk(BaseModel):
     content: str
     content_hash: str
     generations: list[str]
+    context_header: str = ""
+    deprecated: bool = False
     metadata: dict[str, str] = Field(default_factory=dict)
     embedding: list[float] | None = None
 
@@ -75,11 +79,15 @@ class Chunk(BaseModel):
         content: str,
         generations: list[str],
         metadata: dict[str, str] | None = None,
+        context_header: str = "",
+        deprecated: bool = False,
     ) -> Chunk:
         """Create a Chunk with auto-computed SHA-256 content hash.
 
         This is the canonical way to create Chunk instances. The hash is
         computed on stripped content to avoid whitespace-only duplicates.
+        The ``context_header`` is stored separately so it does not affect
+        the content hash (avoids dedup breakage when TOC changes).
         """
         content_hash = hashlib.sha256(content.strip().encode("utf-8")).hexdigest()
         return cls(
@@ -89,5 +97,7 @@ class Chunk(BaseModel):
             content=content,
             content_hash=content_hash,
             generations=generations,
+            context_header=context_header,
+            deprecated=deprecated,
             metadata=metadata or {},
         )

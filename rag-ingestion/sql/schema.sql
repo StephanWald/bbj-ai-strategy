@@ -22,10 +22,12 @@ CREATE TABLE IF NOT EXISTS chunks (
     doc_type        TEXT            NOT NULL,
     content         TEXT            NOT NULL,
     content_hash    VARCHAR(64)     NOT NULL UNIQUE,
+    context_header  TEXT            NOT NULL DEFAULT '',
     generations     TEXT[]          NOT NULL DEFAULT '{}',
+    deprecated      BOOLEAN         NOT NULL DEFAULT false,
     embedding       vector(1536),
     search_vector   tsvector        GENERATED ALWAYS AS (
-                        to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, ''))
+                        to_tsvector('english', coalesce(context_header, '') || ' ' || coalesce(title, '') || ' ' || coalesce(content, ''))
                     ) STORED,
     metadata        JSONB           NOT NULL DEFAULT '{}',
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT now(),
