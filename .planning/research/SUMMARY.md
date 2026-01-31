@@ -1,323 +1,269 @@
 # Project Research Summary
 
-**Project:** BBj AI Strategy Documentation Site
-**Domain:** Technical documentation site (Docusaurus)
+**Project:** BBj AI Strategy Documentation Site - v1.2 RAG Ingestion Pipeline
+**Domain:** Multi-source RAG ingestion for technical documentation (niche programming language)
 **Researched:** 2026-01-31
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This project converts a comprehensive AI strategy paper (~1100 lines) into a professional Docusaurus documentation site serving three distinct audiences: internal developers, leadership, and customers/partners. The research confirms that Docusaurus 3.9.2 with modern tooling (Rspack builds, Mermaid diagrams, local search) is the optimal stack for this use case. The site will present 7 chapters of strategic content plus appendices, deployed to GitHub Pages with zero runtime dependencies.
+The BBj AI Strategy project adds a Python-based RAG ingestion pipeline in milestone v1.2 to process five distinct source types into a generation-aware vector database. This is not a generic RAG pipeline—the core differentiator is **generation tagging**, which classifies every chunk of documentation by which BBj generation it applies to (character UI, Visual PRO/5, BBj GUI/Swing, DWC/browser, or cross-generation). Without this, the RAG system would confidently return 1990s Visual PRO/5 syntax when a developer asks for modern DWC patterns—syntactically valid but semantically wrong code.
 
-The recommended approach prioritizes content architecture over technical features. Docusaurus provides 70% of required functionality out of the box; the differentiating work is creating audience-aware content patterns (decision record callouts, TL;DR blocks, generation-specific code examples) and ensuring the narrative flow works for web consumption rather than sequential reading. The biggest technical differentiator is custom BBj syntax highlighting, which is essential for credibility with the developer audience but can be deferred to the polish phase.
+The recommended approach uses direct library usage (BeautifulSoup, PyMuPDF, sentence-transformers, psycopg3) rather than heavyweight RAG frameworks (LangChain/LlamaIndex), because this is a batch ETL pipeline, not a runtime query system. The stack is optimized for correctness and maintainability: **MadCap Flare Clean XHTML export** (not web crawling) as the primary source, **Qwen3-Embedding-0.6B** for self-hosted embeddings (Apache 2.0, code-aware, 32K context), **chonkie** for document-type-aware chunking, and **pgvector with HNSW indexing** for hybrid retrieval (vector + BM25). The pipeline is built as a standalone Python sub-project (`rag-ingestion/`) within the existing Docusaurus repo, with zero build dependencies between the two.
 
-Key risks center on deployment configuration (GitHub Pages baseUrl mismatches cause complete site failure), content structure (monolithic paper dumps fail as documentation), and audience clarity (mixing strategic rationale with implementation details alienates all three audiences). All three are preventable with upfront configuration discipline and content architecture planning before migration begins.
+The critical risk is **generation mistagging**, which produces confidently wrong answers. The BBj GUI programming guide PDF becomes the Rosetta Stone for building classification rules—it contains complete working examples across all four generations with clear labels. Additional risks include MadCap Flare proprietary markup contamination (mitigated by using Clean XHTML export), PDF extraction losing tables and code blocks (mitigated by using pymupdf4llm), and WordPress content being invisible to static HTTP scrapers (mitigated by using Crawl4AI with Playwright or the WordPress REST API).
 
 ## Key Findings
 
 ### Recommended Stack
 
-The research identifies Docusaurus 3.9.2 as the clear choice, with the modern Rspack build pipeline (2-4x faster builds), Mermaid diagram support (essential for architecture diagrams), and local search for zero external dependencies. The stack is production-ready and actively maintained by Meta.
+**Runtime:** Python 3.12+ with **uv** for package management (10-100x faster than pip, native lockfile support, the 2026 standard). Direct library usage, not framework-based—no LangChain/LlamaIndex because this is a batch pipeline, not a runtime orchestration system.
 
 **Core technologies:**
-- **Docusaurus 3.9.2 with @docusaurus/preset-classic** — Industry-standard documentation framework providing sidebar navigation, dark mode, code highlighting, and static site generation. No viable alternative for this use case.
-- **@docusaurus/faster 3.9.2 (Rspack builds)** — Rust-based build pipeline (Rspack bundler, SWC transpiler). Provides 2-4x faster builds, critical for iterative content authoring. Already used in production by Docusaurus team.
-- **@docusaurus/theme-mermaid 3.9.2** — Enables Mermaid diagram rendering in markdown. Essential for converting the strategy paper's ASCII architecture diagrams to maintainable, theme-aware diagrams.
-- **@easyops-cn/docusaurus-search-local 0.52.3** — Client-side search using lunr.js. Zero external dependencies, no API keys, works offline. Simpler than Algolia DocSearch for a 7-chapter site.
-- **Node.js 22 LTS** — Current LTS, well within Docusaurus >=20.0 requirement. Default for Docusaurus team's own CI.
-- **GitHub Actions + GitHub Pages** — Modern deployment using actions/deploy-pages@v4 with OIDC authentication. Standard approach replacing older gh-pages branch method.
+- **lxml 5.x**: XHTML/XML parsing — 11x faster than BeautifulSoup for well-formed Flare Clean XHTML, native XPath support for namespace-heavy content
+- **pymupdf4llm (latest)**: PDF extraction — purpose-built for RAG, outputs Markdown with structure preservation (headers, tables, code blocks), released Jan 2026
+- **crawl4ai 0.8.x**: Web crawling — LLM-optimized Markdown extraction with JavaScript rendering via Playwright, strips navigation/boilerplate automatically
+- **python-frontmatter 1.1.0 + markdown-it-py 3.x**: MDX parsing — handles Docusaurus MDX with frontmatter extraction and JSX stripping
+- **chonkie 1.5.x**: Text chunking — 9 chunking strategies including RecursiveChunker (docs), SemanticChunker (prose), CodeChunker (BBj samples), native pgvector integration
+- **Qwen3-Embedding-0.6B (Apache 2.0)**: Embedding model — 600M params, 1024 dims, 32K context, code + text aware, ~4GB VRAM, competitive with 7B models on MTEB
+- **sentence-transformers >=2.7.0**: Embedding inference — standard Python framework for local models, batch encoding optimized for GPU/CPU
+- **psycopg3 + pgvector 0.4.2**: PostgreSQL driver + vector types — async-capable, binary COPY for fast bulk inserts, native vector type registration
+- **pydantic 2.x + typer + rich**: Configuration, CLI, terminal output — type-safe config, multi-command CLI, progress bars for long embedding runs
 
-**What NOT to use:**
-- Docusaurus 2.x (end-of-life)
-- Algolia DocSearch (overkill for 7 chapters, can add later)
-- Webpack builds (Rspack is production-ready and faster)
-- Alternative frameworks (MkDocs/VitePress/GitBook) all have significant drawbacks versus Docusaurus for this use case
+**Why NOT LangChain/LlamaIndex:** These are retrieval + generation frameworks designed for query-time workflows, not batch ingestion. They add 100+ transitive dependencies to wrap the same underlying libraries (BeautifulSoup, PyMuPDF, sentence-transformers). For a focused ETL pipeline with 5 known source types and a single vector store, direct library usage is simpler, faster, and more maintainable.
+
+**Why Qwen3-Embedding-0.6B over alternatives:**
+- BGE-M3 (568M params, 1024 dims): Strong but 8K context limit may truncate long Flare pages, no explicit code training emphasis
+- Nomic Embed Text v2 (300M active): 8K context limit, less code-aware
+- EmbeddingGemma-300M: More restrictive Gemma license than Apache 2.0, newer with less production validation
+- All-MiniLM-L6-v2: Too small (384 dims, 56.3 MTEB) for production quality
 
 ### Expected Features
 
-Most features are built into Docusaurus by default. The differentiation comes from content patterns, not technical implementation.
+Research identifies three feature categories: table stakes (must-have), differentiators (BBj-specific intelligence), and anti-features (deliberately excluded).
 
 **Must have (table stakes):**
-- Sidebar navigation with hierarchy — Docusaurus default
-- Full-text search — Local search plugin
-- Syntax-highlighted code blocks — Prism.js (BBj grammar needed)
-- Copy buttons on code blocks — Theme config toggle
-- Mobile-responsive layout — Docusaurus default
-- Table of contents (in-page) — Docusaurus default
-- Landing page with value proposition — Custom React page (medium effort)
-- Last updated dates on pages — Git timestamps config
-- Fast page loads — Static generation automatic
-- Working links with broken-link detection — Docusaurus build-time validation
+- **XHTML/HTML parsing for MadCap Flare output** — primary corpus; must extract text from semantic elements while stripping markup
+- **Heading hierarchy extraction** — section headings form contextual headers for chunks (FinanceBench showed 83% vs. 19% baseline with contextual chunk headers)
+- **PDF text extraction** — standalone PDFs are a defined source type
+- **Document-type-aware chunk sizing** — API refs 200-400 tokens, concepts 400-600 tokens, per Chapter 6 design
+- **Contextual chunk headers (CCH)** — prepend section hierarchy to each chunk before embedding (highest-ROI generic RAG feature)
+- **Code block integrity** — never split code examples across chunks; BBj functions split in half are useless
+- **Embedding generation via local model** — self-hostable per enterprise data policy
+- **pgvector schema creation** — table with vector column, metadata columns, tsvector for BM25 hybrid search
+- **HNSW index creation** — built after bulk insertion for approximate nearest neighbor search
+- **Content hashing for idempotent ingestion** — re-runs must not create duplicates; engineers will run pipeline multiple times during development
+- **Source URL tracking** — every chunk links back to source for citation
 
-**Should have (competitive):**
-- **Audience signal badges** — Visual indicators showing relevance per audience (Technical Deep Dive, Leadership Summary, Customer-Facing). Custom MDX component. This is the most important differentiator for the multi-audience requirement.
-- **Decision record callouts** — Architecture Decision Record style explanations for technical choices. Custom admonition type. Separates strategy docs from reference docs.
-- **TL;DR/Executive Summary blocks** — Collapsible summaries for leadership readers. Custom MDX component. Low complexity, high value.
-- **Custom BBj syntax highlighting** — Proper Prism.js language grammar. Critical for developer audience credibility; BBj readers will immediately notice broken highlighting.
-- **Generation-labeled code examples** — Visual tags showing which BBj generation applies (All, DWC Only, Visual PRO/5). Docusaurus tabs component.
-- **Mermaid diagram support** — Replaces ASCII art with professional, theme-aware diagrams. Official Docusaurus plugin.
-- **Progressive disclosure of technical depth** — Expandable sections for implementation details. HTML details tags or custom components.
-- **Current status indicators** — Badges showing implementation status (Research, In Progress, Shipped, Future). Custom MDX component.
+**Should have (differentiators - BBj-specific):**
+- **Automatic generation classification** — tag every chunk with `all`, `character`, `vpro5`, `bbj-gui`, or `dwc` based on API names, syntax patterns, file paths (the defining feature)
+- **Multi-generation tag support** — single chunk can apply to multiple generations; PostgreSQL array column with GIN indexing
+- **Document type classification** — classify as api-reference, concept, example, migration, language-reference, best-practice, or version-note to drive chunk sizing
+- **MadCap Flare TOC-aware parsing** — use TOC structure to maintain hierarchical relationships, providing the "Section > Subsection" breadcrumbs for contextual headers
+- **BBj code block preservation** — detect BBj syntax patterns (REM, LET, PRINT, sysgui!, BBj* classes) and preserve as atomic units
 
-**Defer (v2+):**
-- Glossary hover definitions — Nice but not essential for launch
-- Chapter progress visualization — Custom sidebar component, polish phase
-- Interactive code playgrounds — Client-side complexity, no clear ROI for launch
-- PDF export — Browser print suffices; adds complexity
-- Analytics dashboards — Simple page-view tracking is enough
-
-**Anti-features (do NOT build):**
-- Authentication/gated content — Site is explicitly public
-- Interactive chat widget — Documents the AI strategy, does not demonstrate it
-- Multi-language/i18n — English only, confirmed out of scope
-- Comments per page — Low-signal noise on strategy docs
-- Blog/changelog section — Not a stream of updates; single versioned strategy
-- Dark mode customization beyond Docusaurus defaults — Accept defaults, don't invest time
+**Defer (v2+, anti-features for starter kit):**
+- **CI/CD automated re-ingestion** — v1.2 is a starter kit, not production infrastructure; manual CLI invocation is sufficient
+- **Incremental ingestion** — full re-ingestion with idempotent upserts is fast enough at ~50K chunks
+- **Docker/container packaging** — assumes deployment target; starter kit runs on engineer's machine
+- **Embedding fine-tuning** — Chapter 6 explicitly defers this until baseline pipeline is operational
+- **LLM-assisted chunk summarization** — contextual chunk headers provide most of the same benefit deterministically
+- **Retrieval API server** — ingestion writes to pgvector; building FastAPI retrieval is a separate project
+- **Automated web crawling with link discovery** — curated URL lists per source type; Flare uses Clean XHTML export (file system, not crawl)
 
 ### Architecture Approach
 
-Docusaurus follows a conventional static site architecture with three navigation layers (navbar, sidebar, landing page) that work together. The folder structure uses numbered prefixes (01-, 02-) to ensure correct chapter ordering with autogenerated sidebars.
+The pipeline is a standalone Python sub-project (`rag-ingestion/`) within the existing Docusaurus repo, sharing git history but zero build dependencies. Two completely independent toolchains: npm/Node.js for the docs site, uv/Python for ingestion. The only connection is documentation—the new `docs/06-rag-database/getting-started.md` page links to scripts/config files via absolute GitHub URLs (Docusaurus cannot resolve links outside `docs/`).
+
+**Pipeline data flow:**
+```
+Source Acquisition → Enrichment Pipeline → Embedding + Storage
+
+1. Source Acquisition (5 source-specific parsers)
+   - Flare Clean XHTML: lxml with XPath, strip MC namespace
+   - PDFs: pymupdf4llm for Markdown output
+   - WordPress (Advantage + KB): Crawl4AI with Playwright OR REST API
+   - Docusaurus MDX (DWC-Course): frontmatter + markdown-it-py + JSX stripping
+   - BBj code samples: plain text with generation tagging logic
+   → Produces: List[Document] (Pydantic models)
+
+2. Enrichment Pipeline
+   - Generation Tagger: assigns generation labels based on API names, syntax patterns
+   - Doc-Type Classifier: classifies as api-reference, concept, example, etc.
+   - Chunker: document-type-aware sizing, contextual headers, 10-15% overlap, code block protection
+   → Produces: List[Chunk]
+
+3. Embedding + Storage
+   - Embedder: sentence-transformers with Qwen3-Embedding-0.6B, batch processing
+   - Storage: psycopg3 bulk insert via COPY protocol, pgvector registration
+   → Produces: PostgreSQL/pgvector table with embeddings, metadata, tsvector
+```
 
 **Major components:**
-1. **Content layer (docs/)** — 7 chapter folders with markdown files. Each chapter has an index.md landing page plus 2-5 topic pages. Autogenerated sidebar from folder structure with _category_.json per chapter for labels/position.
-2. **Landing page (src/pages/index.tsx)** — Custom React component outside docs tree. Serves as executive summary and provides three audience entry paths. Not part of sidebar navigation.
-3. **Build pipeline (GitHub Actions + Docusaurus SSG)** — Static site generation to /build directory, deployed via actions/deploy-pages@v4. Modern OIDC-based GitHub Pages deployment, not the older gh-pages branch approach.
-4. **Theme layer (src/css/custom.css + Docusaurus theme)** — Classic theme with minimal customization. Custom BBj Prism grammar registered in docusaurus.config.ts.
-5. **Search (client-side local search)** — Lunr.js-based index built at build time, downloaded to browser. Zero runtime dependencies.
+1. **Parsers (`parsers/`)** — 5 source-specific parsers implementing common `BaseParser` interface, all output `Document` objects
+2. **Pipeline (`pipeline/`)** — tagger.py (generation classification), chunker.py (type-aware splitting), embedder.py (batch embedding)
+3. **Storage (`storage/`)** — schema.sql (pgvector table DDL), db.py (connection + operations), migrate.py (schema creation)
+4. **CLI (`cli.py`)** — typer-based multi-command CLI orchestrating full pipeline with rich progress bars
 
-**Key architectural decisions:**
-- Autogenerated sidebar with _category_.json overrides (minimal configuration maintenance)
-- Numbered folder prefixes (01-, 02-) for explicit ordering
-- Index.md per chapter for clickable category landings
-- Flat page structure within chapters (no deep nesting)
-- Landing page as React component, not markdown
-- GitHub Actions deploy-pages (not gh-pages branch)
-- trailingSlash: false for GitHub Pages compatibility
+**Database schema:** Single denormalized table (not document + chunks) at ~50K scale. Includes: vector(1024) for embeddings, TEXT[] for multi-generation tags, tsvector GENERATED column for BM25, HNSW index with cosine similarity, GIN indexes on generation/source_type/doc_type, unique constraint on content hash for deduplication.
 
-**File structure:**
-```
-bbj-ai-strategy/
-├── docs/
-│   ├── 01-bbj-challenge/          # Chapter folders with numeric prefixes
-│   │   ├── _category_.json        # Sidebar label + position
-│   │   ├── index.md               # Chapter landing
-│   │   └── *.md                   # Topic pages (2-5 per chapter)
-│   ├── 02-strategic-architecture/
-│   ├── 03-fine-tuning/
-│   ├── 04-ide-integration/
-│   ├── 05-documentation-chat/
-│   ├── 06-rag-database/
-│   ├── 07-implementation-roadmap/
-│   └── appendices/
-├── src/
-│   ├── pages/index.tsx            # Custom landing page
-│   └── css/custom.css             # Theme overrides
-├── .github/workflows/deploy.yml   # GitHub Pages deployment
-├── docusaurus.config.ts           # Site configuration
-└── sidebars.ts                    # Autogenerated config
-```
+**Build order:** (1) Schema + models, (2) Flare parser (primary source, validates full pipeline), (3) Chunker + tagger (BBj-specific intelligence), (4) Embedder + storage (completes end-to-end for one source), (5) Additional parsers, (6) Documentation page.
 
 ### Critical Pitfalls
 
-The research identified 12 critical/medium pitfalls. The top 5 by impact:
+Research identified 16 pitfalls across 3 severity levels. Top 5 critical pitfalls that require rewrites if missed:
 
-1. **GitHub Pages baseUrl mismatch breaks all assets** — Docusaurus defaults baseUrl to /. When deployed to GitHub Pages project repo (username.github.io/bbj-ai-strategy/), every CSS/JS/image returns 404. Site appears as blank page or unstyled HTML. **Prevention:** Set baseUrl: '/bbj-ai-strategy/' and trailingSlash: false in docusaurus.config.ts before first deploy. Verify with local production build.
+1. **Generation Mistagging Produces Confidently Wrong Answers** — A Visual PRO/5 chunk tagged as DWC means retrieval returns 1990s syntax for modern queries. Trust collapses after a few wrong-generation responses. **Prevention:** Build dedicated generation classifier as pipeline stage; use BBj GUI programming PDF as Rosetta Stone for API signatures; chunk at generation boundaries for multi-generation pages; require generation as retrieval filter (not just boost); build evaluation set with generation-boundary queries. **Phase:** Schema/architecture design, validated before any other features.
 
-2. **Monolithic content dump instead of documentation architecture** — Splitting the paper at existing heading boundaries without rethinking structure for web consumption. Pages assume sequential reading; readers landing via search/link find scattered context. **Prevention:** Treat each page as standalone entry point. Add 2-3 sentence summary at top. Break prose into scannable elements (tables, code blocks, admonitions). Review structure after initial migration.
+2. **MadCap Flare Proprietary Markup Contaminates Chunks** — Flare XHTML contains extensive `MadCap:*` namespace elements/attributes. Generic HTML parsing embeds invisible metadata noise that dilutes semantic signal. Clean XHTML export strips most MadCap tags but web crawl preserves them. **Prevention:** Prefer Clean XHTML export over web crawl; strip all `MadCap:*` and `data-mc-*` attributes, `MC` CSS classes; use headless browser for web crawl to expand dropdowns/togglers; extract from topic content container only, ignore navigation. **Phase:** Flare parser implementation (must be first parser built).
 
-3. **Three audiences, zero audience clarity per page** — No visual/structural differentiation between content for developers, leadership, and customers. Everyone reads everything, 60% is irrelevant. **Prevention:** Add audience indicators to sections (admonitions: "For Leadership", "For Developers"). Landing page provides three entry paths. Review internal-only content (budgets, costs) for public site appropriateness.
+3. **PDF Extraction Silently Loses Tables, Code Blocks, and Formatting** — Basic PDF libraries (PyPDF2, pdfplumber) mangle code examples, flatten tables into nonsense, interleave multi-column layouts. BBj GUI programming guide contains multi-generation code samples and comparison tables that degrade catastrophically. **Prevention:** Use layout-aware parser (pymupdf4llm rated 10/10 for RAG); detect monospace font regions for code blocks; strip repeating headers/footers; use table-aware extractor preserving row/column structure; validate 5 sample pages manually before full pipeline run. **Phase:** PDF parser implementation (prototype first to validate tool selection).
 
-4. **Code examples lose context when split across pages** — BBj examples reference multiple generations and build on each other. When split, code appears without generation context or prerequisite setup. **Prevention:** Every code block self-contained or includes minimal setup. Add generation badges/tags above examples. Use Docusaurus tabs to show same concept across generations side-by-side.
+4. **Chunking Destroys Code Example Integrity** — Standard text splitters cut BBj code mid-function/class. Retrieved code is syntactically broken; LLM hallucinates completions. **Prevention:** Structure-aware splitter treats code blocks as atomic units; if code block exceeds chunk size, include as standalone chunk with preceding description; detect BBj code via `REM`, `LET`, `PRINT`, `sysgui!`, `BBj*` patterns; two-pass chunking (extract protected code regions, chunk narrative, reassemble); set minimum chunk size to 400-800 tokens. **Phase:** Chunking pipeline implementation, tested with actual BBj samples before production.
 
-5. **trailingSlash inconsistency causes 404s on GitHub Pages** — GitHub Pages handles trailing slashes differently than Docusaurus dev server. Some pages load, others 404 despite identical link format. **Prevention:** Explicitly set trailingSlash: false for GitHub Pages (recommended setting). Test all navigation paths in production after first deploy.
-
-**Other notable pitfalls:**
-- ASCII art diagrams render poorly (convert to Mermaid)
-- MDX parsing errors with angle brackets/curly braces in code (use fenced code blocks)
-- Sensitive content on public site (review budgets, costs for appropriateness)
-- Landing page using default Docusaurus template (customize immediately)
-- GitHub Actions workflow misconfiguration (use recommended Docusaurus workflow)
+5. **WordPress/LearnPress Content Is Invisible to HTTP Scrapers** — WordPress sites render content via JavaScript/AJAX; `requests.get()` returns page shell but not lesson/article content. Pipeline appears to succeed but chunks contain only navigation boilerplate. **Prevention:** Use headless browser (Crawl4AI with Playwright); wait for content-specific selectors before extraction; strip WordPress chrome (nav, sidebars, footers); check WordPress REST API (`/wp-json/wp/v2/posts`) as cleaner path than scraping; validate extraction length against visible browser content. **Phase:** WordPress parser implementation (test approach early—REST API changes entire strategy).
 
 ## Implications for Roadmap
 
-Based on research, this project has clear phase dependencies driven by Docusaurus architecture. Content cannot be written until scaffolding exists, and polish features depend on content structure being finalized.
+Based on research, v1.2 should be structured as 5-6 sequential phases building the pipeline incrementally, with Flare parsing as the critical path and generation tagging as the make-or-break feature.
 
-### Phase 1: Scaffold & Configure
-**Rationale:** Docusaurus configuration must be correct before any content work. GitHub Pages baseUrl mismatch (critical pitfall #1) cannot be fixed retroactively without breaking all deployed links. Sidebar structure defines content organization.
+### Suggested Phase Structure
 
-**Delivers:**
-- Working Docusaurus 3.9.2 installation with faster builds enabled
-- docusaurus.config.ts configured for GitHub Pages (baseUrl, trailingSlash, url, organizationName)
-- Sidebar structure defined (autogenerated config with numbered chapter folders)
-- All 7 chapter folders created with _category_.json files
-- Placeholder index.md in each chapter folder
-- GitHub Actions deployment workflow configured
-- Verified local build (npm run build succeeds)
+**Phase 1: Schema + Core Infrastructure**
+- **Rationale:** Establishes contracts before any code is written. pgvector schema, Pydantic models, and database connection must exist before parsers can output data.
+- **Delivers:** `pyproject.toml`, `models.py` (Document/Chunk/EmbeddedChunk), `schema.sql`, `db.py`, `migrate.py`, `setup_db.sh` script
+- **Addresses:** pgvector schema creation, content hashing for idempotent ingestion, source URL tracking
+- **Avoids:** Embedding model lock-in (dimension configurable from day one), pgvector index misconfiguration (document index creation as separate post-load step)
+- **Research flag:** STANDARD PATTERNS — established PostgreSQL/pgvector setup, no deep research needed
 
-**Addresses features:**
-- Sidebar navigation (table stakes)
-- Breadcrumbs, pagination, ToC (all Docusaurus defaults)
-- Mobile responsive (Docusaurus default)
-- Broken link detection (onBrokenLinks: 'throw')
+**Phase 2: Flare Parser (Primary Source)**
+- **Rationale:** MadCap Flare docs are the largest, most complex source and the highest-value corpus. Getting this right validates the entire pipeline architecture. Implements both Clean XHTML export path (preferred) and web crawl fallback.
+- **Delivers:** `parsers/base.py`, `parsers/flare.py`, test fixtures, validation against 10 sample topics
+- **Addresses:** XHTML parsing, heading hierarchy extraction, MadCap namespace stripping
+- **Avoids:** Proprietary markup contamination (Pitfall #2), Flare dropdown content structure loss, TOC-excluded topics leaking into corpus
+- **Research flag:** NEEDS RESEARCH — Complex two-path implementation (Clean XHTML vs. crawl), MadCap-specific cleanup, dynamic site crawling patterns
 
-**Avoids pitfalls:**
-- #1: GitHub Pages baseUrl mismatch (config set correctly upfront)
-- #3: trailingSlash inconsistency (explicit setting)
-- #6: GitHub Actions misconfiguration (use recommended workflow)
-- #7: Sidebar doesn't match file structure (numbered prefixes + autogenerated)
+**Phase 3: Generation Tagger + Document Classifier**
+- **Rationale:** This is the BBj-specific intelligence layer that makes the pipeline valuable. Without it, this is a generic RAG pipeline. Generation tagging determines pipeline success. Document type drives chunk sizing.
+- **Delivers:** `pipeline/tagger.py` (generation classification signals from BBj GUI programming PDF), `pipeline/chunker.py` (type-aware sizing), evaluation query set (30 queries with generation-boundary tests)
+- **Addresses:** Automatic generation classification, multi-generation tag support, document type classification, chunk size variation by type
+- **Avoids:** Generation mistagging (Pitfall #1 — the most critical failure mode)
+- **Research flag:** NEEDS RESEARCH — Domain-specific BBj generation detection, API signature extraction from PDF, classification rule heuristics
 
-**Research flag:** Standard patterns, no additional research needed.
+**Phase 4: Chunking Pipeline**
+- **Rationale:** Implements contextual chunk headers (highest-ROI generic RAG feature per FinanceBench), code block protection, and document-type-aware sizing. Depends on document type classifier from Phase 3.
+- **Delivers:** Enhanced `pipeline/chunker.py` with CCH, code block integrity, token-aware splitting, overlap management
+- **Addresses:** Contextual chunk headers, chunk overlap, token-aware splitting, code block integrity
+- **Avoids:** Chunking destroys code examples (Pitfall #4), cross-references become dead links
+- **Research flag:** STANDARD PATTERNS — Established RAG chunking techniques, well-documented chonkie library usage
 
-### Phase 2: Content Architecture & Landing Page
-**Rationale:** Content structure must be planned before migration begins to avoid monolithic dump pitfall (#2). Landing page provides the three-audience entry point and must exist before docs content links to it. Custom MDX components for audience signaling must be built before content uses them.
+**Phase 5: Embedder + Storage (End-to-End for Flare)**
+- **Rationale:** Completes full pipeline for one source type (Flare). Enables end-to-end testing and retrieval validation before adding breadth with other sources.
+- **Delivers:** `pipeline/embedder.py` (sentence-transformers + Qwen3-Embedding-0.6B), `cli.py` orchestration, `config/sources.toml`, HNSW index creation, query example script
+- **Addresses:** Embedding generation via local model, batch embedding with progress, chunk insertion with metadata, full-text search vector column, HNSW index
+- **Avoids:** Embedding model lock-in (model name in config), index misconfiguration (HNSW with cosine similarity, built after data load)
+- **Research flag:** STANDARD PATTERNS — sentence-transformers batch encoding, psycopg3 COPY protocol, pgvector HNSW indexing
 
-**Delivers:**
-- Landing page (src/pages/index.tsx) with executive summary and three audience paths
-- Content migration plan: which paper sections map to which pages
-- Custom admonition types defined (decision records, TL;DR, audience badges)
-- Each chapter index.md written as standalone overview
-- First draft of all 7 chapters migrated from strategy paper
-- Frontmatter standard established (title, description, sidebar_position, sidebar_label)
-- Content reviewed for public site appropriateness (budgets, costs redacted if needed)
+**Phase 6: Additional Parsers (Breadth)**
+- **Rationale:** Add remaining 4 sources in value/complexity order. Each parser plugs into existing pipeline (same Document model, same enrichment stages).
+- **Delivers:**
+  - `parsers/pdf.py` (pymupdf4llm for GuideToGuiProgrammingInBBj.pdf)
+  - `parsers/wordpress.py` (Crawl4AI or REST API for Advantage + Knowledge Base)
+  - `parsers/docusaurus.py` (frontmatter + markdown-it-py for DWC-Course)
+  - `parsers/bbj_code.py` (plain text with BBj syntax detection)
+- **Addresses:** PDF extraction, WordPress scraping, MDX parsing, BBj code preservation
+- **Avoids:** PDF extraction loses tables/code (Pitfall #3), WordPress content invisible to scrapers (Pitfall #5), MDX parsing strips JSX components (Pitfall #9)
+- **Research flag:** NEEDS RESEARCH for WordPress (REST API availability, LearnPress structure); STANDARD for PDF/MDX/code
 
-**Addresses features:**
-- Landing page with value proposition (table stakes)
-- Decision record callouts (competitive differentiator)
-- TL;DR/Executive Summary blocks (competitive differentiator)
-- Audience signal badges (competitive differentiator)
-
-**Avoids pitfalls:**
-- #2: Monolithic content dump (each page standalone with summary)
-- #5: Three audiences without clarity (audience indicators added)
-- #9: Landing page is default template (customized in this phase)
-- #11: Sensitive content on public site (reviewed during migration)
-
-**Research flag:** Standard patterns, no additional research needed.
-
-### Phase 3: Code Examples & Technical Content
-**Rationale:** Code examples depend on content structure being finalized (Phase 2). BBj syntax highlighting is critical for developer credibility but can follow initial content migration. Mermaid diagrams replace ASCII art from strategy paper.
-
-**Delivers:**
-- Custom BBj Prism.js language grammar registered
-- All code examples labeled with generation (DWC, Visual PRO/5, Character, All)
-- Docusaurus tabs component used for cross-generation comparisons
-- Mermaid diagrams converted from ASCII art (infrastructure, VSCode architecture, chat system)
-- Training data JSON examples formatted with proper highlighting
-- All code blocks self-contained or include minimal setup context
-- Comparison tables styled with recommendations highlighted
-
-**Addresses features:**
-- Custom BBj syntax highlighting (competitive differentiator, HIGH priority)
-- Generation-labeled code examples (competitive differentiator)
-- Mermaid diagram support (competitive differentiator)
-- Copy button on code blocks (table stakes, theme config)
-- Comparison tables with recommendations (competitive differentiator)
-
-**Avoids pitfalls:**
-- #4: Code examples lose context (generation labels, self-contained)
-- #8: ASCII diagrams render poorly (converted to Mermaid)
-- #12: MDX parsing errors (proper fenced code blocks)
-
-**Research flag:** May need BBj Prism grammar research if no existing grammar found. Otherwise standard patterns.
-
-### Phase 4: Search, Polish & Deploy
-**Rationale:** Search requires content to exist (needs corpus to index). Polish features (status indicators, chapter progress) depend on finalized content. Deployment is final step after all content verified.
-
-**Delivers:**
-- Local search plugin installed and configured (@easyops-cn/docusaurus-search-local)
-- Current status indicators added to roadmap chapter (Research, In Progress, Shipped)
-- Open Graph meta tags configured (per-page frontmatter + site config)
-- Static assets added (logo, favicon, social card image)
-- Edit this page links configured (editUrl in docusaurus.config.ts)
-- Last updated dates enabled (git timestamps)
-- Full site tested in local production build
-- Deployed to GitHub Pages
-- All navigation paths verified in production
-
-**Addresses features:**
-- Full-text search (table stakes)
-- Current status indicators (competitive differentiator)
-- Open Graph meta tags (competitive differentiator)
-- Last updated dates (table stakes)
-- Edit this page links (table stakes)
-
-**Avoids pitfalls:**
-- All critical pitfalls prevented in earlier phases
-- Production testing catches any deployment issues before launch
-
-**Research flag:** Standard patterns, no additional research needed.
+**Phase 7: Documentation + Quality (Optional Extension)**
+- **Rationale:** Document completed pipeline and validate quality with evaluation queries.
+- **Delivers:** `docs/06-rag-database/getting-started.md`, post-ingestion summary report, generation tag distribution analysis, orphan detection
+- **Addresses:** Pipeline documentation, quality reporting, evaluation framework
+- **Avoids:** No evaluation framework (Pitfall #10)
+- **Research flag:** STANDARD — Documentation writing, SQL reporting queries
 
 ### Phase Ordering Rationale
 
-1. **Configuration before content:** GitHub Pages baseUrl and trailingSlash must be correct from day one. Fixing deployment configuration after content is live breaks all existing links.
-
-2. **Content architecture before migration:** Prevents monolithic dump pitfall. Landing page and custom MDX components must exist before content references them.
-
-3. **BBj syntax highlighting after content structure:** Critical for credibility but not blocking initial migration. Developers can review content with fallback highlighting (basic/text), then see proper syntax in Phase 3.
-
-4. **Search and polish last:** Requires content corpus. These are enhancement features that don't block content creation.
-
-This ordering minimizes rework: configuration changes after content deployment are expensive (broken links), but polish features added after content is stable are straightforward enhancements.
+- **Schema first:** All downstream code depends on data models and database schema. Defining these as contracts prevents mid-flight schema changes.
+- **Flare before other sources:** Flare is the primary corpus (largest volume, highest complexity). Getting Flare right validates the entire architecture. Other parsers are simpler in comparison.
+- **Tagging/classification before chunking:** Document type determines chunk size; generation tags are metadata on chunks. Both must exist before chunking runs.
+- **One source end-to-end before breadth:** Completing Flare → parse → tag → chunk → embed → store enables retrieval testing and quality validation before adding the other 4 sources. This prevents building 5 parsers before discovering the chunking or embedding strategy is wrong.
+- **Documentation last:** Documenting what was built, not what might be built. The getting-started page reflects the actual implementation.
 
 ### Research Flags
 
-**Phases needing deeper research during planning:**
-- **Phase 3:** Custom BBj Prism grammar — May need to research existing BASIC Prism grammars or write custom tokenizer. If no suitable grammar exists, this becomes a mini-project within Phase 3.
+**Needs deeper research during phase planning:**
+- **Phase 2 (Flare parser):** MadCap Clean XHTML vs. web crawl trade-offs, dynamic site structure, TOC parsing for hierarchy
+- **Phase 3 (Generation tagger):** BBj generation classification heuristics, API signature extraction from programming guide PDF
+- **Phase 6 (WordPress parser):** WordPress REST API availability, LearnPress LMS content structure, dynamic content loading
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 1:** Docusaurus scaffolding and GitHub Pages deployment are well-documented with official workflows
-- **Phase 2:** Content migration and custom MDX components follow standard Docusaurus patterns
-- **Phase 4:** Search plugin installation and Open Graph configuration are standard features
+**Standard patterns (skip research-phase):**
+- **Phase 1 (Schema):** PostgreSQL schema design, pgvector setup, Pydantic models
+- **Phase 4 (Chunking):** Contextual chunk headers, text splitting with overlap, code block detection
+- **Phase 5 (Embedder):** sentence-transformers batch encoding, pgvector HNSW indexing
+- **Phase 6 (PDF/MDX/code parsers):** pymupdf4llm usage, frontmatter extraction, file I/O
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | **Very High** | All versions verified on npm (published 2025-10-17 to 2026-01-29). Docusaurus 3.9.2 is current stable. GitHub Actions workflow is from official docs. No untested tools. |
-| Features | **High** | 70% are Docusaurus defaults (verified). Custom features (audience badges, decision callouts, BBj syntax) are straightforward MDX components or Prism config, following documented patterns. |
-| Architecture | **Very High** | Docusaurus architecture is well-established. Numbered folder prefixes + autogenerated sidebars is a common pattern. GitHub Pages deployment with actions/deploy-pages is the modern recommended approach. |
-| Pitfalls | **High** | Critical pitfalls (baseUrl, monolithic dump, audience clarity) are well-documented Docusaurus failure modes. Prevention strategies are proven. Some pitfalls (MDX parsing, ASCII diagrams) are based on common issues but specific to this content. |
+| Stack | **HIGH** | All libraries verified on PyPI/GitHub with 2026-01-31 versions. Qwen3-Embedding-0.6B benchmarks confirmed on HuggingFace. psycopg3 + pgvector integration documented in official examples. |
+| Features | **HIGH** | Chapter 6 design (generation taxonomy, document types, chunk sizes) provides explicit feature requirements. Table stakes vs. differentiators validated against RAG best practices from multiple sources. Anti-features clearly bounded by "starter kit" scope. |
+| Architecture | **HIGH** | Directory structure, data flow, and component boundaries verified against uv project standards and Docusaurus monorepo patterns. Database schema matches pgvector documentation. Single-table design appropriate for <50K chunks. |
+| Pitfalls | **MEDIUM-HIGH** | MadCap Flare and pgvector pitfalls verified with official docs (HIGH confidence). PDF extraction and WordPress scraping pitfalls verified with multiple 2025-2026 sources (MEDIUM confidence). Generation tagging pitfalls are domain-specific extrapolation from version management research (MEDIUM confidence but critical impact). |
 
-**Overall confidence:** **HIGH**
+**Overall confidence:** HIGH
 
-The research is grounded in verified sources (npm registry, official Docusaurus docs, GitHub releases). The recommended stack is production-ready and actively maintained. The architecture follows established Docusaurus patterns. The primary unknowns are content-specific (how well the strategy paper maps to web documentation) rather than technical.
+The research is grounded in verified technical documentation (MadCap Flare Clean XHTML specs, pgvector GitHub, sentence-transformers PyPI, pymupdf4llm benchmarks), current web sources (all dated 2025-2026), and the existing Chapter 6 design document which provides explicit requirements. The weakest area is generation tagging heuristics, which are BBj-specific and cannot be verified against external sources—but the BBj GUI programming guide PDF provides the ground truth for building classification rules.
 
 ### Gaps to Address
 
-**BBj Prism syntax grammar:** No built-in Prism language for BBj. Research identified this need but did not produce a grammar. During Phase 3, either:
-- Search for existing BASIC/Visual Basic Prism grammars that approximate BBj syntax
-- Write a custom Prism language definition (50-100 lines of tokenizer rules)
-- Use fallback highlighting (basic/text) if timeline is tight, with proper grammar as v2 enhancement
+**During Phase 2 (Flare parser):**
+- **Gap:** MadCap Flare TOC file format (`.fltoc`) is described conceptually but not verified against actual export. May need to inspect actual TOC XML structure.
+- **Handling:** Prototype with actual Flare export from engineering team. If TOC parsing is too complex, fall back to heading-based hierarchy inference.
 
-**Recommendation:** Attempt custom grammar in Phase 3; fallback to `basic` highlighting if it exceeds 4 hours of effort. The site is usable with fallback highlighting; proper BBj syntax is a polish feature, not a blocker.
+**During Phase 3 (Generation tagger):**
+- **Gap:** BBj generation classification signals are inferred from documentation patterns and the GUI programming guide, but not validated against complete API inventories per generation.
+- **Handling:** Build initial classifier with known API patterns (e.g., `sysgui!` = vpro5/bbj-gui, `BBjWindow` = bbj-gui/dwc, `PRINT @(x,y)` = character). Tag ambiguous cases as `all` (conservative default). Refine with manual review of generated tag distribution during Phase 7.
 
-**Internal vs. public content:** The strategy paper contains budget estimates ($200K-$300K), personnel allocations, and competitive positioning that may not be appropriate for a public site. Research flagged this (pitfall #11) but did not make content decisions. During Phase 2 content migration, explicitly review:
-- Chapter 7 (Implementation Roadmap): Resources section has dollar amounts and personnel percentages
-- Chapter 1 (BBj Challenge): Competitive comparisons mention GitHub Copilot by name
+**During Phase 6 (WordPress parser):**
+- **Gap:** WordPress REST API availability for `basis.cloud/knowledge-base/` and `basis.cloud/advantage-index/` is assumed but not confirmed.
+- **Handling:** Test REST API endpoints (`/wp-json/wp/v2/posts`, `/wp-json/lp/v1/`) as first step of Phase 6. If API is disabled or returns excerpts only, fall back to Crawl4AI with Playwright.
 
-**Recommendation:** Redact specific dollar amounts, replace with ranges or "to be determined." Reframe competitive comparisons as capability requirements rather than product criticism.
-
-**Audience path effectiveness:** Research identified the three-audience requirement and proposed solutions (audience badges, progressive disclosure, landing page entry paths), but these are untested patterns. The effectiveness depends on editorial discipline during content migration.
-
-**Recommendation:** After Phase 2 initial content migration, conduct a review pass with the question: "If I land on this page from search as a [developer/leader/customer], can I tell if this page is relevant to me within 10 seconds?" Add or adjust audience indicators as needed.
+**During Phase 5 (Embedder):**
+- **Gap:** Optimal chunk size and overlap for BBj documentation (API refs vs. prose vs. code) needs empirical validation.
+- **Handling:** Start with Chapter 6 recommendations (API: 200-400 tokens, concept: 400-600 tokens, 10-15% overlap). After initial ingestion, run evaluation queries and tune based on retrieval quality metrics.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- npm registry: Versions verified for @docusaurus/core, @docusaurus/preset-classic, @docusaurus/faster, @docusaurus/theme-mermaid, @easyops-cn/docusaurus-search-local (all checked 2026-01-31)
-- Docusaurus official documentation (docusaurus.io): Deployment guides, GitHub Pages configuration, theme configuration, MDX usage
-- GitHub releases (facebook/docusaurus): Version timeline, feature history (3.6.0 introduced Faster, 3.7.0 added React 19 support, etc.)
-- GitHub Actions documentation: actions/deploy-pages@v4, actions/upload-pages-artifact@v3
-- PROJECT.md: Project scope, out-of-scope items, audience definition
-- bbj-llm-strategy.md: Source content structure, chapter breakdown, code examples
+- Chapter 6: RAG Database Design (`/docs/06-rag-database/index.md`) — schema, chunking strategy, generation taxonomy, retrieval architecture
+- [MadCap Flare Clean XHTML Blog Post](https://www.madcapsoftware.com/blog/new-feature-highlight-clean-xhtml-output-madcap-flare-2017/) — Clean XHTML stripping behavior
+- [MadCap Flare Clean XHTML Official Docs](https://help.madcapsoftware.com/flare2021r2/Content/Flare/Step4-Developing-Targets/Output-Types/Clean-XHTML/Clean-XHTML-Output.htm) — What gets stripped vs. preserved
+- [Qwen3-Embedding Blog Post](https://qwenlm.github.io/blog/qwen3-embedding/) — Official benchmarks, architecture details
+- [Qwen3-Embedding-0.6B HuggingFace](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) — Model card, usage examples, version requirements
+- [pgvector-python GitHub](https://github.com/pgvector/pgvector-python) — Version 0.4.2, driver support, usage examples (Jan 22, 2026)
+- [chonkie GitHub](https://github.com/chonkie-inc/chonkie) — Chunking strategies, pgvector integration, version 1.5.2 (Jan 5, 2026)
+- [pymupdf4llm PyPI](https://pypi.org/project/pymupdf4llm/) — Latest release Jan 10, 2026, RAG-focused PDF extraction
+- [sentence-transformers PyPI](https://pypi.org/project/sentence-transformers/) — Model loading, batch encoding
+- [uv Project Docs](https://docs.astral.sh/uv/guides/projects/) — pyproject.toml setup, dependency management
 
 ### Secondary (MEDIUM confidence)
-- Docusaurus community plugins: @easyops-cn/docusaurus-search-local GitHub repo (1400+ stars, actively maintained)
-- Reference documentation sites: Stripe docs, Vercel docs, Tailwind docs (studied for feature patterns)
-- Architecture Decision Records (ADR) pattern: General best practice for strategy documentation
+- [BentoML Open Source Embedding Models Guide 2026](https://www.bentoml.com/blog/a-guide-to-open-source-embedding-models) — Embedding model landscape
+- [Snowflake FinanceBench](https://www.snowflake.com/en/engineering-blog/impact-retrieval-chunking-finance-rag/) — Contextual chunk headers (83% vs. 19% baseline)
+- [Firecrawl Best Chunking Strategies RAG 2025](https://www.firecrawl.dev/blog/best-chunking-strategies-rag-2025) — 400-token chunks, 10-20% overlap, variable sizing 9% improvement
+- [crawl4ai Documentation](https://docs.crawl4ai.com/) — Deep crawling, Markdown generation, content filtering
+- [FlareToSphinx GitHub](https://github.com/boltzmann-brain/FlareToSphinx) — Prior art for Python-based Flare parsing
+- [Unstract PDF Library Benchmarks 2026](https://unstract.com/blog/evaluating-python-pdf-to-text-libraries/) — PyMuPDF vs. pdfplumber benchmarks
+- [LlamaParse RAG Benchmarks 2025](https://infinityai.medium.com/3-proven-techniques-to-accurately-parse-your-pdfs-2c01c5badb84) — LlamaParse 10/10 for RAG
+- [ICCV 2025: OCR Hinders RAG](https://openaccess.thecvf.com/content/ICCV2025/papers/Zhang_OCR_Hinders_RAG_Evaluating_the_Cascading_Impact_of_OCR_on_ICCV_2025_paper.pdf) — OCR noise degrades retrieval
+- [AWS Blog: pgvector HNSW vs IVFFlat](https://aws.amazon.com/blogs/database/optimize-generative-ai-applications-with-pgvector-indexing-a-deep-dive-into-ivfflat-and-hnsw-techniques/) — Index comparison
+- [Nile: Debunking pgvector Myths](https://www.thenile.dev/blog/pgvector_myth_debunking) — Index not always needed, distance operator matching
 
 ### Tertiary (LOW confidence, needs validation)
-- Custom BBj Prism grammar: No existing grammar found. Assumption that BASIC/Visual Basic grammars may provide approximation. Needs testing in Phase 3.
+- WordPress REST API availability for `basis.cloud/knowledge-base/` — assumed based on WordPress standard, not verified
+- Advantage article count (~6 visible on index page, may have more behind pagination)
+- BBj generation classification signals — inferred from documentation patterns, not validated against complete API inventory
 
 ---
 *Research completed: 2026-01-31*
