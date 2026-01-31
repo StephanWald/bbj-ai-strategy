@@ -112,7 +112,7 @@ The data collection strategy is sequential:
 
 **Alternatives considered:** Bulk scraping of BBj source repositories (risk of including broken/outdated code), fully automated synthetic generation (risk of compounding errors without human review).
 
-**Status:** Training data schema defined. Curation tooling not yet built.
+**Status:** Approximately 10,000 training examples curated. Generation labeling system in active use. Ongoing expansion continues with targeted additions for underrepresented patterns.
 :::
 
 ## Base Model Selection
@@ -400,12 +400,16 @@ Model updates are distributed as GGUF files. Customers download new versions fro
 
 ## Current Status
 
-**Training data:** Schema and generation labeling system are defined. No curated examples exist yet. The training data format is based on proven instruction-tuning patterns but has not been validated against Unsloth's data loader.
+:::note[Where Things Stand -- January 2026]
+**Training data:** Approximately 10,000 training examples have been curated using the generation labeling system described above. Results are promising and ongoing expansion continues with targeted additions for underrepresented patterns and generations.
 
-**Base model:** Qwen2.5-Coder-7B-Base selected based on benchmark analysis. No fine-tuning experiments have been run. The model is available on [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-Coder-7B) and has been validated to load in Unsloth.
+**Base model:** Qwen2.5-Coder-7B-Base selected and actively being fine-tuned. Experiments are producing promising results. The model is available on [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-Coder-7B) and loads successfully in Unsloth.
 
-**Toolchain:** Unsloth, llama.cpp, and Ollama are all publicly available and actively maintained. The pipeline described in this chapter is based on documented workflows, not custom engineering. No integration testing of the full pipeline has been performed.
+**Toolchain:** The fine-tuning pipeline is validated through active use. Unsloth, llama.cpp, and Ollama are all publicly available and actively maintained. The workflow described in this chapter is operational, not speculative.
 
-**Hosting:** Ollama infrastructure is well-understood and validated for general use. The specific Modelfile configuration for the BBj fine-tuned model is speculative -- it will need tuning during initial deployment.
+**Hosting:** Ollama infrastructure is validated and in use for model evaluation. The Modelfile configuration is being refined based on real inference results.
 
-**What's next:** The immediate next step is curating an initial set of 2,000-5,000 training examples, running a first fine-tuning experiment, and evaluating the results against a BBj-specific benchmark. The implementation roadmap in [Chapter 7](/docs/implementation-roadmap) provides timelines and resource allocation.
+**What's next:** Continue expanding the training dataset with targeted examples for weak areas identified during evaluation. Establish formal evaluation benchmarks for the [IDE completion use case](/docs/ide-integration). The [implementation roadmap](/docs/implementation-roadmap) in Chapter 7 provides the full phasing and timeline.
+:::
+
+The fine-tuned model is the foundation that both the [IDE extension](/docs/ide-integration) and the planned [documentation chat](/docs/documentation-chat) depend on. As the model improves through continued fine-tuning, every consumer application benefits immediately -- this is the core value of the [unified architecture](/docs/strategic-architecture).

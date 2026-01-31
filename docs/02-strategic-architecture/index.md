@@ -193,14 +193,22 @@ The unified architecture creates different value for different stakeholders.
 
 ## Current Status
 
-The strategic architecture is defined and validated at the design level. Implementation is progressing on the foundation components:
+:::note[Where Things Stand -- January 2026]
+The unified architecture is being built incrementally -- foundation first, consumers next.
+
+- **Shipped:** The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, completion, diagnostics, formatting, and code execution. This is the first consumer application of the shared foundation.
+- **In progress:** The [fine-tuned BBj model](/docs/fine-tuning) -- the core of the shared foundation -- is being trained on Qwen2.5-Coder-7B with approximately 10,000 curated examples and showing promising results.
+- **In progress:** [Copilot BYOK integration](/docs/ide-integration#the-copilot-bridge) is in early exploration as an interim bridge for chat-based BBj assistance.
+- **Planned:** The [RAG pipeline](/docs/rag-database) (shared foundation component #2) -- source corpus identified (MadCap Flare documentation), ingestion pipeline not yet built.
+- **Planned:** [Documentation chat](/docs/documentation-chat) -- architectural requirements defined, implementation depends on the model and RAG pipeline.
+:::
 
 | Component | Status | Next Steps |
 |-----------|--------|------------|
-| Fine-tuned BBj model | Training data structure defined; base model selected (Qwen2.5-Coder-7B) | Curate training examples, run QLoRA fine-tuning, evaluate |
+| Fine-tuned BBj model | ~10K training examples curated; Qwen2.5-Coder-7B fine-tuning in progress | Expand dataset, establish evaluation benchmarks, validate for IDE completion |
 | RAG database | Schema designed with generation-aware tagging | Build ingestion pipeline, index BBj documentation |
-| VSCode extension | Architecture planned; Langium integration designed | Implement language server, integrate with Ollama |
-| Documentation chat | Architecture planned | Build chat backend, embed in documentation site |
-| Ollama deployment | Proven locally for model serving | Formalize deployment configuration, test customer self-hosting |
+| VSCode extension | v0.5.0 shipped on Marketplace; AI integration planned | Add ghost text completion via fine-tuned model |
+| Documentation chat | Architecture defined | Build chat backend after model and RAG are operational |
+| Ollama deployment | Validated for model serving | Package fine-tuned model, test customer self-hosting |
 
-The chapters that follow cover each component in implementation-level detail: model fine-tuning (Chapter 3), IDE integration (Chapter 4), documentation chat (Chapter 5), RAG database design (Chapter 6), and the implementation roadmap with timelines and resource planning (Chapter 7).
+The chapters that follow cover each component in implementation-level detail: [model fine-tuning](/docs/fine-tuning) (Chapter 3), [IDE integration](/docs/ide-integration) (Chapter 4), [documentation chat](/docs/documentation-chat) (Chapter 5), [RAG database design](/docs/rag-database) (Chapter 6), and the [implementation roadmap](/docs/implementation-roadmap) with timelines and resource planning (Chapter 7).
