@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Phase 4 in progress -- Execution Chapters. Chapters 4 (IDE Integration), 5 (Documentation Chat), and 6 (RAG Database Design) complete.
+**Current focus:** Phase 4 in progress -- Execution Chapters. Chapters 4-7 complete, cross-chapter quality pass remaining.
 
 ## Current Position
 
 Phase: 4 of 5 (Execution Chapters) -- In progress
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-31 -- Completed 04-03-PLAN.md (Chapter 6: RAG Database Design)
+Last activity: 2026-01-31 -- Completed 04-04-PLAN.md (Chapter 7: Implementation Roadmap)
 
-Progress: [###########░░░░] 73% (11/15 plans)
+Progress: [############░░░] 80% (12/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 4 min
-- Total execution time: 0.63 hours
+- Total execution time: 0.70 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [###########░░░░] 73% (11/15 plans)
 | 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
 | 02-content-architecture-landing-page | 2/2 | 6 min | 3 min |
 | 03-foundation-chapters | 4/4 | 9 min | 2.25 min |
-| 04-execution-chapters | 3/5 | 9 min | 3 min |
+| 04-execution-chapters | 4/5 | 13 min | 3.25 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (3 min), 04-01 (3 min), 04-02 (3 min), 04-03 (3 min)
-- Trend: consistent 3 min for execution chapter tasks
+- Last 5 plans: 04-01 (3 min), 04-02 (3 min), 04-03 (3 min), 04-04 (4 min)
+- Trend: consistent 3-4 min for execution chapter tasks
 
 *Updated after each plan completion*
 
@@ -80,6 +80,10 @@ Recent decisions affecting current work:
 - [04-03]: Clean XHTML export from MadCap Flare as ingestion format -- strips proprietary tags, standard HTML parsing
 - [04-03]: Variable chunk sizes by document type -- API refs (200-400 tokens), concepts (400-600), code examples (intact)
 - [04-03]: pgvector as default vector store -- BBj corpus under 50K chunks, identical performance to dedicated vector DBs at this scale
+- [04-04]: Roadmap built from current state (shipped language server, ~10K data points) -- not from zero
+- [04-04]: Hardware/infrastructure costs only, no staffing estimates -- varies too much by organization
+- [04-04]: NIST AI RMF referenced for risk assessment credibility
+- [04-04]: MVP checkpoints as explicit safe stopping points with standalone value description
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31 10:39 UTC
-Stopped at: Completed 04-03-PLAN.md (Chapter 6: RAG Database Design). Phase 4 (Execution Chapters) in progress -- 3 of 5 plans complete.
+Last session: 2026-01-31 10:41 UTC
+Stopped at: Completed 04-04-PLAN.md (Chapter 7: Implementation Roadmap). Phase 4 (Execution Chapters) in progress -- 4 of 5 plans complete. Only cross-chapter quality pass (04-05) remaining.
 Resume file: None
