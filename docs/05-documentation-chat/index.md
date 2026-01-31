@@ -89,7 +89,7 @@ When a user asks a question without specifying a generation, the system defaults
 >
 > *Source: [BBjSysGui.addWindow documentation]*
 >
-> *Note: If you are maintaining legacy Visual PRO/5 code, the older `WINDOW CREATE` verb is also supported. Let me know if you need help with that syntax instead.*
+> *Note: If you are maintaining legacy Visual PRO/5 code, the older mnemonic-based syntax (`PRINT (sysgui)'WINDOW'(...)`) is also supported. Let me know if you need help with that syntax instead.*
 
 ### Legacy Context Detection
 
@@ -99,15 +99,17 @@ When the query contains explicit or implicit generation signals, the system adju
 
 **Response (legacy generation context):**
 
-> In Visual PRO/5, you create windows using the `WINDOW CREATE` verb:
+> In Visual PRO/5, you create windows by opening a SYSGUI device and sending mnemonic strings:
 >
 > ```bbj
-> WINDOW CREATE wnd_id, @(0,0), 80, 24, "My Application"
+> sysgui = unt
+> open (sysgui)"X0"
+> print (sysgui)'window'(100,100,400,300,"My Application",$00010003$,$00000000$)
 > ```
 >
-> The parameters are: window ID variable, position (column, row), columns, rows, and title. Window sizing uses character cells, not pixels.
+> The parameters are: x position, y position, width, height, title, flags, and event mask. The SYSGUI channel must be opened first with `open (sysgui)"X0"`.
 >
-> *Source: [Visual PRO/5 WINDOW CREATE reference]*
+> *Source: [Visual PRO/5 GUI Mnemonic Reference]*
 >
 > *Consider: For new development or gradual modernization, the BBjAPI approach offers more flexibility and better browser support through DWC. I can show you how to migrate this pattern if you are interested.*
 
@@ -115,7 +117,7 @@ When the query contains explicit or implicit generation signals, the system adju
 
 The generation detection pipeline processes each query through three stages:
 
-1. **Query analysis** -- The system scans the user's message for explicit generation markers ("Visual PRO/5", "DWC", "legacy") and implicit signals (verb-style syntax like `WINDOW CREATE` vs. object-style syntax like `addWindow()`). Conversation history also provides context -- if the user has been asking about legacy code, subsequent questions inherit that context.
+1. **Query analysis** -- The system scans the user's message for explicit generation markers ("Visual PRO/5", "DWC", "legacy") and implicit signals (mnemonic-style syntax like `PRINT (sysgui)'WINDOW'(...)` vs. object-style syntax like `addWindow()`). Conversation history also provides context -- if the user has been asking about legacy code, subsequent questions inherit that context.
 
 2. **RAG filtering** -- The detected generation hint is passed to the [RAG database](/docs/rag-database) as a metadata filter. If the user is asking about Visual PRO/5, retrieval prioritizes documentation tagged with the `vpro5` generation label. If no generation is detected, retrieval is unfiltered (with a slight bias toward modern documentation).
 
