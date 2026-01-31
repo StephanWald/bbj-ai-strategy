@@ -82,36 +82,36 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOC-01 | TBD | Pending |
-| DOC-02 | TBD | Pending |
-| DOC-03 | TBD | Pending |
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
-| INFRA-03 | TBD | Pending |
-| INFRA-04 | TBD | Pending |
-| INFRA-05 | TBD | Pending |
-| PARSE-01 | TBD | Pending |
-| PARSE-02 | TBD | Pending |
-| PARSE-03 | TBD | Pending |
-| PARSE-04 | TBD | Pending |
-| PARSE-05 | TBD | Pending |
-| PARSE-06 | TBD | Pending |
-| PARSE-07 | TBD | Pending |
-| PARSE-08 | TBD | Pending |
-| BBJ-01 | TBD | Pending |
-| BBJ-02 | TBD | Pending |
-| BBJ-03 | TBD | Pending |
-| EMBED-01 | TBD | Pending |
-| EMBED-02 | TBD | Pending |
-| EMBED-03 | TBD | Pending |
-| QUAL-01 | TBD | Pending |
-| QUAL-02 | TBD | Pending |
+| DOC-01 | Phase 8 | Pending |
+| INFRA-01 | Phase 8 | Pending |
+| INFRA-02 | Phase 9 | Pending |
+| INFRA-03 | Phase 9 | Pending |
+| INFRA-04 | Phase 9 | Pending |
+| INFRA-05 | Phase 9 | Pending |
+| PARSE-01 | Phase 10 | Pending |
+| PARSE-02 | Phase 10 | Pending |
+| PARSE-03 | Phase 10 | Pending |
+| BBJ-01 | Phase 11 | Pending |
+| BBJ-02 | Phase 11 | Pending |
+| BBJ-03 | Phase 11 | Pending |
+| EMBED-01 | Phase 12 | Pending |
+| EMBED-02 | Phase 12 | Pending |
+| EMBED-03 | Phase 12 | Pending |
+| PARSE-04 | Phase 13 | Pending |
+| PARSE-05 | Phase 13 | Pending |
+| PARSE-06 | Phase 13 | Pending |
+| PARSE-07 | Phase 13 | Pending |
+| PARSE-08 | Phase 13 | Pending |
+| DOC-02 | Phase 14 | Pending |
+| DOC-03 | Phase 14 | Pending |
+| QUAL-01 | Phase 14 | Pending |
+| QUAL-02 | Phase 14 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 24 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 24
+- Mapped to phases: 24
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after initial definition*
+*Last updated: 2026-01-31 after roadmap creation (all 24 requirements mapped to Phases 8-14)*
