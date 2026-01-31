@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Phase 2 complete. Ready for Phase 3 - Foundation Chapters
+**Current focus:** Phase 3 - Foundation Chapters (BBj syntax highlighting done, writing chapters next)
 
 ## Current Position
 
-Phase: 2 of 5 (Content Architecture & Landing Page) -- COMPLETE
-Plan: 2 of 2 in current phase (all complete)
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 02-01-PLAN.md (Landing page with problem-first hero, audience routing)
+Phase: 3 of 5 (Foundation Chapters)
+Plan: 1 of 4 in current phase
+Status: In progress
+Last activity: 2026-01-31 -- Completed 03-01-PLAN.md (BBj syntax highlighting & Chapter 1 MDX)
 
-Progress: [####░░░░░░░░░░░] 27% (4/15 plans)
+Progress: [#####░░░░░░░░░░] 33% (5/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 5 min
-- Total execution time: 0.3 hours
+- Total plans completed: 5
+- Average duration: 4 min
+- Total execution time: 0.35 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [####░░░░░░░░░░░] 27% (4/15 plans)
 |-------|-------|-------|----------|
 | 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
 | 02-content-architecture-landing-page | 2/2 | 6 min | 3 min |
+| 03-foundation-chapters | 1/4 | 1 min | 1 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (7 min), 01-02 (5 min), 02-02 (3 min), 02-01 (3 min)
-- Trend: accelerating, UI/content tasks consistently fast
+- Last 5 plans: 01-02 (5 min), 02-02 (3 min), 02-01 (3 min), 03-01 (1 min)
+- Trend: accelerating, config-only tasks very fast
 
 *Updated after each plan completion*
 
@@ -56,6 +57,8 @@ Recent decisions affecting current work:
 - [02-01]: Landing page hero leads with problem-first headline ("Generic LLMs Fail on BBj"), not product name
 - [02-01]: Audience routing uses inline cards with chapter links, not separate per-audience landing pages
 - [02-01]: All landing page styling via CSS modules and Infima variables -- no additional npm packages
+- [03-01]: BBj Prism grammar confirmed to exist in prismjs -- no custom grammar or fallback needed (resolves research concern)
+- [03-01]: Used git mv for Chapter 1 rename to preserve file history cleanly
 
 ### Pending Todos
 
@@ -63,11 +66,10 @@ None.
 
 ### Blockers/Concerns
 
-- [Research]: BBj Prism grammar may not exist -- fallback to `basic` highlighting if custom grammar exceeds effort budget
 - [01-01]: Rspack deprecation warning about experiments.lazyBarrel appears during builds -- cosmetic, no action needed
 
 ## Session Continuity
 
-Last session: 2026-01-31 08:37 UTC
-Stopped at: Completed 02-01-PLAN.md. Phase 2 fully complete. Ready for Phase 3.
+Last session: 2026-01-31 09:36 UTC
+Stopped at: Completed 03-01-PLAN.md. BBj syntax highlighting configured. Ready for 03-02 (Chapter 1 content).
 Resume file: None
