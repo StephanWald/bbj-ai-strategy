@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Scaffold & Deploy Pipeline** - Docusaurus project with chapter structure, build pipeline, and GitHub Pages deployment
 - [x] **Phase 2: Content Architecture & Landing Page** - Landing page, content patterns (TL;DR, decision callouts, Mermaid), audience routing
-- [ ] **Phase 3: Foundation Chapters** - Chapters 1-3 (BBj Challenge, Strategic Architecture, Fine-Tuning) with BBj syntax highlighting
+- [x] **Phase 3: Foundation Chapters** - Chapters 1-3 (BBj Challenge, Strategic Architecture, Fine-Tuning) with BBj syntax highlighting
 - [ ] **Phase 4: Execution Chapters** - Chapters 4-7 (IDE, Chat, RAG, Roadmap) with research depth and execution guidance across all chapters
 - [ ] **Phase 5: Search, SEO & Launch** - Full-text search, navigation polish, Open Graph tags, production verification
 
@@ -63,10 +63,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Configure BBj syntax highlighting (additionalLanguages config) and rename Chapter 1 to .mdx for Tabs support
-- [ ] 03-02-PLAN.md -- Research and write Chapter 1: The BBj Challenge (4 generations, cross-generation code comparisons, generic LLM failure, webforJ contrast)
-- [ ] 03-03-PLAN.md -- Research and write Chapter 2: Strategic Architecture (unified infrastructure vision, shared model + RAG, three initiatives overview)
-- [ ] 03-04-PLAN.md -- Research and write Chapter 3: Fine-Tuning the Model (training data, Qwen2.5-Coder selection, QLoRA/Unsloth pipeline, Ollama hosting)
+- [x] 03-01-PLAN.md -- Configure BBj syntax highlighting (additionalLanguages config) and rename Chapter 1 to .mdx for Tabs support
+- [x] 03-02-PLAN.md -- Research and write Chapter 1: The BBj Challenge (4 generations, cross-generation code comparisons, generic LLM failure, webforJ contrast)
+- [x] 03-03-PLAN.md -- Research and write Chapter 2: Strategic Architecture (unified infrastructure vision, shared model + RAG, three initiatives overview)
+- [x] 03-04-PLAN.md -- Research and write Chapter 3: Fine-Tuning the Model (training data, Qwen2.5-Coder selection, QLoRA/Unsloth pipeline, Ollama hosting)
 
 ### Phase 4: Execution Chapters
 **Goal**: All 7 chapters are complete with current best practices, execution guidance, and decision rationale -- the full strategy is documented to depth
@@ -111,6 +111,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|---------------|--------|-----------|
 | 1. Scaffold & Deploy Pipeline | 2/2 | Complete | 2026-01-31 |
 | 2. Content Architecture & Landing Page | 2/2 | Complete | 2026-01-31 |
-| 3. Foundation Chapters | 0/4 | Planned | - |
+| 3. Foundation Chapters | 4/4 | Complete | 2026-01-31 |
 | 4. Execution Chapters | 0/5 | Not started | - |
 | 5. Search, SEO & Launch | 0/2 | Not started | - |
