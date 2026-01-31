@@ -1,0 +1,29 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        files: ^rag-ingestion/
+      - id: end-of-file-fixer
+        files: ^rag-ingestion/
+      - id: check-yaml
+        files: ^rag-ingestion/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^rag-ingestion/
+      - id: ruff-format
+        files: ^rag-ingestion/
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: bash -c 'cd rag-ingestion && uv run mypy src/'
+        language: system
+        types: [python]
+        files: ^rag-ingestion/
+        pass_filenames: false

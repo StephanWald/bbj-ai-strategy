@@ -21,3 +21,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Python (rag-ingestion/)
+rag-ingestion/.venv/
+rag-ingestion/.mypy_cache/
+rag-ingestion/.ruff_cache/
+rag-ingestion/.pytest_cache/
+rag-ingestion/dist/
+__pycache__/
+*.pyc
