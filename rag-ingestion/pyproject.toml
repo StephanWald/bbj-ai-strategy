@@ -3,7 +3,12 @@ name = "bbj-rag"
 version = "0.1.0"
 description = "RAG ingestion pipeline for BBj documentation"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.3,<4",
+    "pgvector>=0.4,<0.5",
+    "pydantic>=2.12,<3",
+    "pydantic-settings>=2.12,<3",
+]
 
 [build-system]
 requires = ["hatchling"]
