@@ -14,10 +14,10 @@
 ### Infrastructure
 
 - [x] **INFRA-01**: Python project scaffolded at `rag-ingestion/` with uv, pyproject.toml, and dependency management
-- [ ] **INFRA-02**: pgvector schema DDL with generation array column, tsvector for BM25, HNSW index for cosine similarity
-- [ ] **INFRA-03**: Pydantic data models for parsed documents and chunks (common interface across all parsers)
-- [ ] **INFRA-04**: Configuration system for source paths, database connection, embedding model, chunk sizes
-- [ ] **INFRA-05**: Content-hash deduplication for idempotent re-ingestion
+- [x] **INFRA-02**: pgvector schema DDL with generation array column, tsvector for BM25, HNSW index for cosine similarity
+- [x] **INFRA-03**: Pydantic data models for parsed documents and chunks (common interface across all parsers)
+- [x] **INFRA-04**: Configuration system for source paths, database connection, embedding model, chunk sizes
+- [x] **INFRA-05**: Content-hash deduplication for idempotent re-ingestion
 
 ### Parsers
 
@@ -84,10 +84,10 @@
 |-------------|-------|--------|
 | DOC-01 | Phase 8 | Complete |
 | INFRA-01 | Phase 8 | Complete |
-| INFRA-02 | Phase 9 | Pending |
-| INFRA-03 | Phase 9 | Pending |
-| INFRA-04 | Phase 9 | Pending |
-| INFRA-05 | Phase 9 | Pending |
+| INFRA-02 | Phase 9 | Complete |
+| INFRA-03 | Phase 9 | Complete |
+| INFRA-04 | Phase 9 | Complete |
+| INFRA-05 | Phase 9 | Complete |
 | PARSE-01 | Phase 10 | Pending |
 | PARSE-02 | Phase 10 | Pending |
 | PARSE-03 | Phase 10 | Pending |

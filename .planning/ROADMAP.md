@@ -13,7 +13,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 ## Phases
 
 - [x] **Phase 8: Project Scaffold & README** - Python sub-project setup and repo README
-- [ ] **Phase 9: Schema & Data Models** - pgvector DDL, Pydantic models, config system, deduplication
+- [x] **Phase 9: Schema & Data Models** - pgvector DDL, Pydantic models, config system, deduplication
 - [ ] **Phase 10: Flare Parser** - MadCap Flare XHTML parser (project files + condition tags + crawl fallback)
 - [ ] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
 - [ ] **Phase 12: Embedding Pipeline** - Embedding model, pgvector storage, hybrid search validation (end-to-end for Flare)
@@ -47,8 +47,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- Pydantic data models (Document/Chunk), config system (pydantic-settings + TOML), content-hash dedup, unit tests
-- [ ] 09-02-PLAN.md -- pgvector schema DDL, database connection module (psycopg3 + register_vector), schema helper, DB tests
+- [x] 09-01-PLAN.md -- Pydantic data models (Document/Chunk), config system (pydantic-settings + TOML), content-hash dedup, unit tests
+- [x] 09-02-PLAN.md -- pgvector schema DDL, database connection module (psycopg3 + register_vector), schema helper, DB tests
 
 ### Phase 10: Flare Parser
 **Goal**: The MadCap Flare documentation corpus (the largest and most complex source) is parseable into structured Document objects, validating the entire pipeline architecture
@@ -166,7 +166,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 8. Project Scaffold & README | v1.2 | 1/1 | Complete | 2026-01-31 |
-| 9. Schema & Data Models | v1.2 | 0/2 | Not started | - |
+| 9. Schema & Data Models | v1.2 | 2/2 | Complete | 2026-01-31 |
 | 10. Flare Parser | v1.2 | 0/2 | Not started | - |
 | 11. BBj Intelligence | v1.2 | 0/2 | Not started | - |
 | 12. Embedding Pipeline | v1.2 | 0/2 | Not started | - |
