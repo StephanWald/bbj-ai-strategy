@@ -7,9 +7,9 @@ const config: Config = {
   tagline: 'Intelligent Code Assistance Across Four Generations of Business BASIC',
   favicon: 'img/favicon.ico',
 
-  url: 'https://beff.github.io',
+  url: 'https://StephanWald.github.io',
   baseUrl: '/bbj-ai-strategy/',
-  organizationName: 'beff',
+  organizationName: 'StephanWald',
   projectName: 'bbj-ai-strategy',
   trailingSlash: false,
 
@@ -60,7 +60,7 @@ const config: Config = {
           label: 'Strategy',
         },
         {
-          href: 'https://github.com/beff/bbj-ai-strategy',
+          href: 'https://github.com/StephanWald/bbj-ai-strategy',
           label: 'GitHub',
           position: 'right',
         },
