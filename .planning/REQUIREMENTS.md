@@ -17,10 +17,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Content Architecture
 
-- [ ] **ARCH-01**: Landing page with executive summary and audience routing (developers, leadership, customers)
-- [ ] **ARCH-02**: TL;DR summary blocks at the top of each chapter for quick orientation
-- [ ] **ARCH-03**: Decision record callouts highlighting key strategic choices and their rationale
-- [ ] **ARCH-04**: Mermaid diagrams replacing ASCII art for architecture visualizations
+- [x] **ARCH-01**: Landing page with executive summary and audience routing (developers, leadership, customers)
+- [x] **ARCH-02**: TL;DR summary blocks at the top of each chapter for quick orientation
+- [x] **ARCH-03**: Decision record callouts highlighting key strategic choices and their rationale
+- [x] **ARCH-04**: Mermaid diagrams replacing ASCII art for architecture visualizations
 
 ### Content Chapters
 
@@ -88,10 +88,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCAF-03 | Phase 1 | Complete |
 | SCAF-04 | Phase 1 | Complete |
 | SCAF-05 | Phase 3 | Pending |
-| ARCH-01 | Phase 2 | Pending |
-| ARCH-02 | Phase 2 | Pending |
-| ARCH-03 | Phase 2 | Pending |
-| ARCH-04 | Phase 2 | Pending |
+| ARCH-01 | Phase 2 | Complete |
+| ARCH-02 | Phase 2 | Complete |
+| ARCH-03 | Phase 2 | Complete |
+| ARCH-04 | Phase 2 | Complete |
 | CONT-01 | Phase 3 | Pending |
 | CONT-02 | Phase 3 | Pending |
 | CONT-03 | Phase 3 | Pending |
