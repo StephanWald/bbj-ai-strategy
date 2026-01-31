@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Phase 1 complete. Ready for Phase 2 - Content Architecture & Landing Page
+**Current focus:** Phase 2 in progress - Content Architecture & Landing Page
 
 ## Current Position
 
-Phase: 1 of 5 (Scaffold & Deploy Pipeline) -- COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 01-02-PLAN.md (GitHub Actions deploy pipeline)
+Phase: 2 of 5 (Content Architecture & Landing Page) -- IN PROGRESS
+Plan: 2 of 2 in current phase (02-02 complete, 02-01 pending)
+Status: In progress
+Last activity: 2026-01-31 -- Completed 02-02-PLAN.md (Content patterns: Mermaid, admonitions, sample content)
 
-Progress: [##░░░░░░░░░░░░░] 13% (2/15 plans)
+Progress: [###░░░░░░░░░░░░] 20% (3/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 6 min
-- Total execution time: 0.20 hours
+- Total plans completed: 3
+- Average duration: 5 min
+- Total execution time: 0.25 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
+| 02-content-architecture-landing-page | 1/2 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (7 min), 01-02 (5 min)
-- Trend: stable, fast execution
+- Last 5 plans: 01-01 (7 min), 01-02 (5 min), 02-02 (3 min)
+- Trend: accelerating, infrastructure tasks getting faster
 
 *Updated after each plan completion*
 
@@ -49,6 +50,9 @@ Recent decisions affecting current work:
 - [01-02]: Deployed under StephanWald GitHub account (not beff) -- gh CLI authenticated as StephanWald, site live at stephanwald.github.io/bbj-ai-strategy
 - [01-02]: Used upload-pages-artifact@v3 (not v4) to preserve .nojekyll and _-prefixed directories
 - [01-02]: Added .claude/ to .gitignore to exclude local agent settings
+- [02-02]: Admonition type allocation: :::tip reserved for TL;DR, :::info for decision records, :::note/warning/danger for general use
+- [02-02]: Mermaid theme pairing: neutral (light) / dark (dark) for clean professional rendering
+- [02-02]: CSS uses Infima variable overrides rather than custom class names, staying within Docusaurus conventions
 
 ### Pending Todos
 
@@ -61,6 +65,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31 07:20 UTC
-Stopped at: Completed 01-02-PLAN.md, Phase 1 fully complete. Ready for Phase 2.
+Last session: 2026-01-31 08:33 UTC
+Stopped at: Completed 02-02-PLAN.md. Phase 2 plan 02-01 (landing page) still pending.
 Resume file: None
