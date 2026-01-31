@@ -14,7 +14,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 
 - [x] **Phase 8: Project Scaffold & README** - Python sub-project setup and repo README
 - [x] **Phase 9: Schema & Data Models** - pgvector DDL, Pydantic models, config system, deduplication
-- [ ] **Phase 10: Flare Parser** - MadCap Flare XHTML parser (project files + condition tags + crawl fallback)
+- [x] **Phase 10: Flare Parser** - MadCap Flare XHTML parser (project files + condition tags + crawl fallback)
 - [ ] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
 - [ ] **Phase 12: Embedding Pipeline** - Embedding model, pgvector storage, hybrid search validation (end-to-end for Flare)
 - [ ] **Phase 13: Additional Parsers** - PDF, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code
@@ -62,9 +62,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Parser foundation: dependencies, DocumentParser protocol, TOC index builder, condition tag extractor
-- [ ] 10-02-PLAN.md -- Flare XHTML parser: MadCap tag handling, snippet resolution, code blocks, tables, hierarchy paths
-- [ ] 10-03-PLAN.md -- Web crawl fallback parser: httpx + BeautifulSoup for documentation.basis.cloud
+- [x] 10-01-PLAN.md -- Parser foundation: dependencies, DocumentParser protocol, TOC index builder, condition tag extractor
+- [x] 10-02-PLAN.md -- Flare XHTML parser: MadCap tag handling, snippet resolution, code blocks, tables, hierarchy paths
+- [x] 10-03-PLAN.md -- Web crawl fallback parser: httpx + BeautifulSoup for documentation.basis.cloud
 
 ### Phase 11: BBj Intelligence
 **Goal**: Every parsed document is automatically classified by BBj generation and document type, and chunks carry contextual headers derived from the source hierarchy -- this is the BBj-specific intelligence that makes the pipeline valuable
@@ -168,7 +168,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 8. Project Scaffold & README | v1.2 | 1/1 | Complete | 2026-01-31 |
 | 9. Schema & Data Models | v1.2 | 2/2 | Complete | 2026-01-31 |
-| 10. Flare Parser | v1.2 | 0/3 | Not started | - |
+| 10. Flare Parser | v1.2 | 3/3 | Complete | 2026-01-31 |
 | 11. BBj Intelligence | v1.2 | 0/2 | Not started | - |
 | 12. Embedding Pipeline | v1.2 | 0/2 | Not started | - |
 | 13. Additional Parsers | v1.2 | 0/3 | Not started | - |

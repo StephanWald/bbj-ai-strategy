@@ -21,9 +21,9 @@
 
 ### Parsers
 
-- [ ] **PARSE-01**: MadCap Flare XHTML parser — parses raw project files from Flare Content/ directory, extracts text from MadCap namespace tags, uses TOC files for hierarchy
-- [ ] **PARSE-02**: MadCap Flare condition tag extractor — reads Primary.flcts and per-topic MadCap:conditions attributes for generation/deprecation signals
-- [ ] **PARSE-03**: MadCap Flare web crawl parser (fallback for documentation.basis.cloud when project files unavailable)
+- [x] **PARSE-01**: MadCap Flare XHTML parser — parses raw project files from Flare Content/ directory, extracts text from MadCap namespace tags, uses TOC files for hierarchy
+- [x] **PARSE-02**: MadCap Flare condition tag extractor — reads Primary.flcts and per-topic MadCap:conditions attributes for generation/deprecation signals
+- [x] **PARSE-03**: MadCap Flare web crawl parser (fallback for documentation.basis.cloud when project files unavailable)
 - [ ] **PARSE-04**: PDF parser for standalone documents (e.g., GuideToGuiProgrammingInBBj.pdf)
 - [ ] **PARSE-05**: WordPress/HTML parser for Advantage magazine articles (basis.cloud/advantage-index/)
 - [ ] **PARSE-06**: WordPress/LearnPress parser for Knowledge Base (basis.cloud/knowledge-base/)
@@ -88,9 +88,9 @@
 | INFRA-03 | Phase 9 | Complete |
 | INFRA-04 | Phase 9 | Complete |
 | INFRA-05 | Phase 9 | Complete |
-| PARSE-01 | Phase 10 | Pending |
-| PARSE-02 | Phase 10 | Pending |
-| PARSE-03 | Phase 10 | Pending |
+| PARSE-01 | Phase 10 | Complete |
+| PARSE-02 | Phase 10 | Complete |
+| PARSE-03 | Phase 10 | Complete |
 | BBJ-01 | Phase 11 | Pending |
 | BBJ-02 | Phase 11 | Pending |
 | BBJ-03 | Phase 11 | Pending |
