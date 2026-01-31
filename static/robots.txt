@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://stephanwald.github.io/bbj-ai-strategy/sitemap.xml
