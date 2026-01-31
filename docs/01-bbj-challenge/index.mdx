@@ -63,15 +63,17 @@ Character-mode programs are still in active production at enterprises running BB
 
 ### Visual PRO/5 (1990s -- 2000s)
 
-The first graphical generation. Visual PRO/5 introduced Windows-style GUI elements through a verb-based syntax: `WINDOW CREATE`, `BUTTON CREATE`, `CTRL()` for reading control values. Positioning still used character-cell coordinates (`@(col,row)`), but programs could now display windows, buttons, menus, and dialogs.
+The first graphical generation. Visual PRO/5 introduced Windows-style GUI elements through a SYSGUI channel and mnemonic strings: programs open a system GUI device, then use `PRINT (sysgui)'WINDOW'(...)` to create windows, `PRINT (sysgui)'BUTTON'(...)` to create controls, and `CTRL(sysgui,id,index)` to read control values. Programs could now display windows, buttons, menus, and dialogs.
 
-```bbj title="Visual PRO/5 -- Verb-Based GUI"
-WINDOW CREATE wnd_id, @(0,0), 80, 24, "Order Entry"
-BUTTON CREATE btn_id, wnd_id, "Save", @(10,20), 12, 1
-status = CTRL(wnd_id, 6)
+```bbj title="Visual PRO/5 -- Mnemonic-Based GUI"
+sysgui = unt
+open (sysgui)"X0"
+print (sysgui)'window'(100,100,400,300,"Order Entry",$00010003$,$00000000$)
+print (sysgui)'button'(201,10,250,100,30,"Save",$$)
+status$ = ctrl(sysgui,201,0)
 ```
 
-Visual PRO/5 is largely superseded by BBj GUI, but legacy code in this style still exists and occasionally needs maintenance. An AI tool that does not understand the `WINDOW CREATE` / `BUTTON CREATE` verb pattern will misinterpret this code entirely.
+Visual PRO/5 is largely superseded by BBj GUI, but legacy code in this style still exists and occasionally needs maintenance. An AI tool that does not understand the `PRINT (sysgui)'WINDOW'(...)` / `'BUTTON'(...)` mnemonic pattern will misinterpret this code entirely.
 
 ### BBj GUI / Swing (2000s -- present)
 
@@ -118,8 +120,10 @@ INPUT x$
 <TabItem value="vpro5" label="Visual PRO/5">
 
 ```bbj title="Visual PRO/5 (1990s)"
-WINDOW CREATE wnd, @(5,3), 40, 8, "Welcome"
-BUTTON CREATE btn, wnd, "Continue", @(14,5), 12, 1
+sysgui = unt
+open (sysgui)"X0"
+print (sysgui)'window'(200,150,400,200,"Welcome",$00010003$,$00000000$)
+print (sysgui)'button'(101,120,130,160,30,"Continue",$$)
 ```
 
 </TabItem>
@@ -137,9 +141,9 @@ window!.addButton(101, 150, 120, 100, 30, "Continue")
 
 ```bbj title="DWC / Browser (2010s)"
 sysgui! = BBjAPI().getSysGui()
-window! = sysgui!.addWindow("Welcome", $01101000$)
-window!.addStaticText(100, "Welcome to Order Entry")
-window!.addButton(101, "Continue")
+window! = sysgui!.addWindow(200,150,400,200,"Welcome",$00010003$,$00000000$)
+window!.addStaticText(100,20,30,360,25,"Welcome to Order Entry")
+window!.addButton(101,120,130,160,30,"Continue",$$)
 bui! = BBjAPI().getWebManager()
 bui!.setTitle("Welcome to Order Entry")
 ```
@@ -165,11 +169,11 @@ CLOSE (1)
 <TabItem value="vpro5" label="Visual PRO/5">
 
 ```bbj title="Visual PRO/5 (1990s)"
-custId$ = CTRL(wnd, 3)
-OPEN (1)"customers.dat"
-READ (1, KEY=custId$, err=*next) name$, balance
-CTRL(wnd, 5, 0) = name$
-CLOSE (1)
+custId$ = ctrl(sysgui,102,0)
+open (1)"customers.dat"
+read (1,key=custId$,err=*next)name$,balance
+ctrl(sysgui,105,0)=name$
+close (1)
 ```
 
 </TabItem>
@@ -212,7 +216,7 @@ BBj's shared core is substantial. String handling, numeric operations, control f
 | **Modern BBj** | BBj GUI + DWC | `class`/`classend`, `method`/`methodend`, `use`, object references (`!` suffix), `BBjAPI()`, field references (`#` prefix) |
 | **Any GUI** | Visual PRO/5 + BBj GUI + DWC | Window and control concepts (syntax varies by generation) |
 | **DWC Only** | DWC | `BBjWebManager`, `executeAsyncScript`, browser events |
-| **Legacy GUI** | Visual PRO/5 | `WINDOW CREATE`, `BUTTON CREATE`, `CTRL()` |
+| **Legacy GUI** | Visual PRO/5 | `PRINT (sysgui)'WINDOW'(...)`, `PRINT (sysgui)'BUTTON'(...)`, `CTRL(sysgui,id,index)` |
 | **Character Only** | Character UI | `@(x,y)` positioning, terminal mnemonics (`'CS'`, `'SF'`, `'SB'`) |
 
 This distinction matters enormously for AI tooling. A model that understands only modern BBj syntax will fail on legacy character-mode code. A model trained only on universal patterns will not know how to create a window. The training data must be **generation-tagged** so the model learns which patterns apply where.
