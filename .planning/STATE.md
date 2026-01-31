@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Phase 4 in progress -- Execution Chapters. Chapter 4 (IDE Integration) complete.
+**Current focus:** Phase 4 in progress -- Execution Chapters. Chapters 4 (IDE Integration) and 5 (Documentation Chat) complete.
 
 ## Current Position
 
 Phase: 4 of 5 (Execution Chapters) -- In progress
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-31 -- Completed 04-01-PLAN.md (Chapter 4: IDE Integration)
+Last activity: 2026-01-31 -- Completed 04-02-PLAN.md (Chapter 5: Documentation Chat)
 
-Progress: [#########░░░░░░] 60% (9/15 plans)
+Progress: [##########░░░░░] 67% (10/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 10
 - Average duration: 4 min
-- Total execution time: 0.53 hours
+- Total execution time: 0.58 hours
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [#########░░░░░░] 60% (9/15 plans)
 | 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
 | 02-content-architecture-landing-page | 2/2 | 6 min | 3 min |
 | 03-foundation-chapters | 4/4 | 9 min | 2.25 min |
-| 04-execution-chapters | 1/5 | 3 min | 3 min |
+| 04-execution-chapters | 2/5 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (3 min), 03-03 (2 min), 03-04 (3 min), 04-01 (3 min)
+- Last 5 plans: 03-03 (2 min), 03-04 (3 min), 04-01 (3 min), 04-02 (3 min)
 - Trend: consistent 2-3 min for content tasks
 
 *Updated after each plan completion*
@@ -74,6 +74,9 @@ Recent decisions affecting current work:
 - [04-01]: Two-layer completion architecture: deterministic Langium popup + generative LLM ghost text as separate mechanisms
 - [04-01]: Extension API (InlineCompletionItemProvider) now, LSP 3.18 migration path later for multi-editor support
 - [04-01]: Copilot BYOK is complementary (chat only), custom inline completion provider is the strategic path
+- [04-02]: Shared infrastructure for documentation chat -- same Ollama + RAG as IDE extension, no separate AI system
+- [04-02]: Hybrid deployment recommended but not committed -- all three options presented with trade-offs
+- [04-02]: SSE over WebSockets for chat streaming -- better compatibility with corporate HTTP infrastructure
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31 10:37 UTC
-Stopped at: Completed 04-01-PLAN.md (Chapter 4: IDE Integration). Phase 4 (Execution Chapters) in progress -- 1 of 5 plans complete.
+Last session: 2026-01-31 10:38 UTC
+Stopped at: Completed 04-02-PLAN.md (Chapter 5: Documentation Chat). Phase 4 (Execution Chapters) in progress -- 2 of 5 plans complete.
 Resume file: None
