@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Phase 3 complete -- Foundation Chapters all written. Ready for Phase 4 (Execution Chapters).
+**Current focus:** Phase 4 in progress -- Execution Chapters. Chapter 4 (IDE Integration) complete.
 
 ## Current Position
 
-Phase: 3 of 5 (Foundation Chapters) -- COMPLETE
-Plan: 4 of 4 in current phase -- COMPLETE
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 03-04-PLAN.md (Chapter 3: Fine-Tuning the Model)
+Phase: 4 of 5 (Execution Chapters) -- In progress
+Plan: 1 of 5 in current phase
+Status: In progress
+Last activity: 2026-01-31 -- Completed 04-01-PLAN.md (Chapter 4: IDE Integration)
 
-Progress: [########░░░░░░░] 53% (8/15 plans)
+Progress: [#########░░░░░░] 60% (9/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 4 min
-- Total execution time: 0.48 hours
+- Total execution time: 0.53 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [########░░░░░░░] 53% (8/15 plans)
 | 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
 | 02-content-architecture-landing-page | 2/2 | 6 min | 3 min |
 | 03-foundation-chapters | 4/4 | 9 min | 2.25 min |
+| 04-execution-chapters | 1/5 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (1 min), 03-02 (3 min), 03-03 (2 min), 03-04 (3 min)
-- Trend: consistent 1-3 min for content tasks
+- Last 5 plans: 03-02 (3 min), 03-03 (2 min), 03-04 (3 min), 04-01 (3 min)
+- Trend: consistent 2-3 min for content tasks
 
 *Updated after each plan completion*
 
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [03-04]: QLoRA via Unsloth as training approach ($1,500 GPU vs $50K+ for full fine-tuning)
 - [03-04]: Sequential fine-tuning (continued pretraining then instruction fine-tuning) for near-zero-exposure languages
 - [03-04]: Q4_K_M quantization recommended over Q4_0 default for code generation quality
+- [04-01]: Two-layer completion architecture: deterministic Langium popup + generative LLM ghost text as separate mechanisms
+- [04-01]: Extension API (InlineCompletionItemProvider) now, LSP 3.18 migration path later for multi-editor support
+- [04-01]: Copilot BYOK is complementary (chat only), custom inline completion provider is the strategic path
 
 ### Pending Todos
 
@@ -81,6 +85,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31 09:43 UTC
-Stopped at: Completed 03-04-PLAN.md. Phase 3 (Foundation Chapters) is fully complete. All 3 foundation chapters written and building cleanly. Ready for Phase 4 (Execution Chapters).
+Last session: 2026-01-31 10:37 UTC
+Stopped at: Completed 04-01-PLAN.md (Chapter 4: IDE Integration). Phase 4 (Execution Chapters) in progress -- 1 of 5 plans complete.
 Resume file: None
