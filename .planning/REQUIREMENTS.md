@@ -32,9 +32,9 @@
 
 ### BBj Intelligence
 
-- [ ] **BBJ-01**: Generation tagger — classifies chunks using condition tags, file paths (bbjobjects/, dwc/, commands/, mnemonic/), API name patterns, and syntax patterns
-- [ ] **BBJ-02**: Document type classifier — categorizes as api-reference, concept, example, migration, language-reference, best-practice, or version-note based on content structure
-- [ ] **BBJ-03**: Contextual chunk headers — uses TOC hierarchy + heading structure to prepend context path to every chunk
+- [x] **BBJ-01**: Generation tagger — classifies chunks using condition tags, file paths (bbjobjects/, dwc/, commands/, mnemonic/), API name patterns, and syntax patterns
+- [x] **BBJ-02**: Document type classifier — categorizes as api-reference, concept, example, migration, language-reference, best-practice, or version-note based on content structure
+- [x] **BBJ-03**: Contextual chunk headers — uses TOC hierarchy + heading structure to prepend context path to every chunk
 
 ### Embedding & Storage
 
@@ -91,9 +91,9 @@
 | PARSE-01 | Phase 10 | Complete |
 | PARSE-02 | Phase 10 | Complete |
 | PARSE-03 | Phase 10 | Complete |
-| BBJ-01 | Phase 11 | Pending |
-| BBJ-02 | Phase 11 | Pending |
-| BBJ-03 | Phase 11 | Pending |
+| BBJ-01 | Phase 11 | Complete |
+| BBJ-02 | Phase 11 | Complete |
+| BBJ-03 | Phase 11 | Complete |
 | EMBED-01 | Phase 12 | Pending |
 | EMBED-02 | Phase 12 | Pending |
 | EMBED-03 | Phase 12 | Pending |

@@ -15,7 +15,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 - [x] **Phase 8: Project Scaffold & README** - Python sub-project setup and repo README
 - [x] **Phase 9: Schema & Data Models** - pgvector DDL, Pydantic models, config system, deduplication
 - [x] **Phase 10: Flare Parser** - MadCap Flare XHTML parser (project files + condition tags + crawl fallback)
-- [ ] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
+- [x] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
 - [ ] **Phase 12: Embedding Pipeline** - Embedding model, pgvector storage, hybrid search validation (end-to-end for Flare)
 - [ ] **Phase 13: Additional Parsers** - PDF, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code
 - [ ] **Phase 14: Documentation & Quality** - Getting Started page, sub-project README, ingestion quality reports
@@ -78,8 +78,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md -- Generation tagger with multi-signal classification (StrEnum, path/condition/content signals, report), model updates (context_header, deprecated), DDL changes
-- [ ] 11-02-PLAN.md -- Document type classifier (7 types, extensible rule registry) and contextual chunk header builder
+- [x] 11-01-PLAN.md -- Generation tagger with multi-signal classification (StrEnum, path/condition/content signals, report), model updates (context_header, deprecated), DDL changes
+- [x] 11-02-PLAN.md -- Document type classifier (7 types, extensible rule registry) and contextual chunk header builder
 
 ### Phase 12: Embedding Pipeline
 **Goal**: The full pipeline runs end-to-end for the Flare source -- parse, tag, chunk, embed, store -- producing searchable vectors in pgvector with working hybrid retrieval
@@ -169,7 +169,7 @@ Plans:
 | 8. Project Scaffold & README | v1.2 | 1/1 | Complete | 2026-01-31 |
 | 9. Schema & Data Models | v1.2 | 2/2 | Complete | 2026-01-31 |
 | 10. Flare Parser | v1.2 | 3/3 | Complete | 2026-01-31 |
-| 11. BBj Intelligence | v1.2 | 0/2 | Not started | - |
+| 11. BBj Intelligence | v1.2 | 2/2 | Complete | 2026-01-31 |
 | 12. Embedding Pipeline | v1.2 | 0/2 | Not started | - |
 | 13. Additional Parsers | v1.2 | 0/3 | Not started | - |
 | 14. Documentation & Quality | v1.2 | 0/2 | Not started | - |
