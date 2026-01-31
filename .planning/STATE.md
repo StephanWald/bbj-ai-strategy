@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Stakeholders can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Phase 1 - Scaffold & Deploy Pipeline
+**Current focus:** Phase 1 complete. Ready for Phase 2 - Content Architecture & Landing Page
 
 ## Current Position
 
-Phase: 1 of 5 (Scaffold & Deploy Pipeline)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-31 -- Completed 01-01-PLAN.md (Docusaurus scaffold)
+Phase: 1 of 5 (Scaffold & Deploy Pipeline) -- COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-01-31 -- Completed 01-02-PLAN.md (GitHub Actions deploy pipeline)
 
-Progress: [#░░░░░░░░░░░░░░] 7% (1/15 plans)
+Progress: [##░░░░░░░░░░░░░] 13% (2/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 7 min
-- Total execution time: 0.12 hours
+- Total plans completed: 2
+- Average duration: 6 min
+- Total execution time: 0.20 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-scaffold-deploy-pipeline | 1/2 | 7 min | 7 min |
+| 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (7 min)
-- Trend: baseline established
+- Last 5 plans: 01-01 (7 min), 01-02 (5 min)
+- Trend: stable, fast execution
 
 *Updated after each plan completion*
 
@@ -46,6 +46,9 @@ Recent decisions affecting current work:
 - [Roadmap]: BBj Prism syntax highlighting placed in Phase 3 (with first content chapters) rather than Phase 1 (scaffold)
 - [01-01]: Docusaurus numberPrefix stripping is default -- doc IDs and URLs exclude numeric folder prefix (e.g., bbj-challenge/index not 01-bbj-challenge/index)
 - [01-01]: Migrated onBrokenMarkdownLinks to markdown.hooks for v4 compatibility
+- [01-02]: Deployed under StephanWald GitHub account (not beff) -- gh CLI authenticated as StephanWald, site live at stephanwald.github.io/bbj-ai-strategy
+- [01-02]: Used upload-pages-artifact@v3 (not v4) to preserve .nojekyll and _-prefixed directories
+- [01-02]: Added .claude/ to .gitignore to exclude local agent settings
 
 ### Pending Todos
 
@@ -58,6 +61,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31
-Stopped at: Completed 01-01-PLAN.md, ready for 01-02-PLAN.md
+Last session: 2026-01-31 07:20 UTC
+Stopped at: Completed 01-02-PLAN.md, Phase 1 fully complete. Ready for Phase 2.
 Resume file: None

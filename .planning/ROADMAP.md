@@ -12,7 +12,7 @@ This roadmap delivers a Docusaurus documentation site that communicates BASIS In
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Scaffold & Deploy Pipeline** - Docusaurus project with chapter structure, build pipeline, and GitHub Pages deployment
+- [x] **Phase 1: Scaffold & Deploy Pipeline** - Docusaurus project with chapter structure, build pipeline, and GitHub Pages deployment
 - [ ] **Phase 2: Content Architecture & Landing Page** - Landing page, content patterns (TL;DR, decision callouts, Mermaid), audience routing
 - [ ] **Phase 3: Foundation Chapters** - Chapters 1-3 (BBj Challenge, Strategic Architecture, Fine-Tuning) with BBj syntax highlighting
 - [ ] **Phase 4: Execution Chapters** - Chapters 4-7 (IDE, Chat, RAG, Roadmap) with research depth and execution guidance across all chapters
@@ -32,8 +32,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Scaffold Docusaurus with Rspack, configure for GitHub Pages, create 7-chapter folder structure with placeholders
-- [ ] 01-02-PLAN.md -- Create GitHub Actions deploy/test workflows, push to main, verify live deployment
+- [x] 01-01-PLAN.md -- Scaffold Docusaurus with Rspack, configure for GitHub Pages, create 7-chapter folder structure with placeholders
+- [x] 01-02-PLAN.md -- Create GitHub Actions deploy/test workflows, push to main, verify live deployment
 
 ### Phase 2: Content Architecture & Landing Page
 **Goal**: Visitors land on a professional landing page with audience routing, and content patterns (TL;DR blocks, decision callouts, Mermaid diagrams) are ready for chapter authoring
@@ -109,7 +109,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 1. Scaffold & Deploy Pipeline | 0/2 | Not started | - |
+| 1. Scaffold & Deploy Pipeline | 2/2 | Complete | 2026-01-31 |
 | 2. Content Architecture & Landing Page | 0/2 | Not started | - |
 | 3. Foundation Chapters | 0/4 | Not started | - |
 | 4. Execution Chapters | 0/5 | Not started | - |
