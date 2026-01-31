@@ -52,7 +52,7 @@ The documentation chat system must satisfy six non-negotiable requirements, deri
 
 4. **Provides source citations.** Every answer must link back to the documentation it draws from. This builds trust and lets users verify answers against the authoritative source.
 
-5. **Adapts answers to the user's target generation.** The system must detect generation context from the query (explicit mentions like "Visual PRO/5" or implicit signals like verb-style syntax) and tailor both retrieval and response generation accordingly.
+5. **Adapts answers to the user's target generation.** The system must detect generation context from the query (explicit mentions like "Visual PRO/5" or implicit signals like mnemonic-style syntax) and tailor both retrieval and response generation accordingly.
 
 6. **Leverages shared infrastructure.** The chat system must not build its own model or its own retrieval pipeline. It consumes the same Ollama instance and RAG database that the IDE extension uses.
 

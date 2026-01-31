@@ -106,7 +106,7 @@ The critical design choice is **generation-aware tagging**. Every document chunk
 
 - `"all"` -- universal syntax like `FOR/NEXT`, string functions, file I/O
 - `["bbj-gui", "dwc"]` -- modern object-oriented API patterns
-- `["vpro5"]` -- legacy Visual PRO/5 verb-based syntax
+- `["vpro5"]` -- legacy Visual PRO/5 mnemonic-based syntax
 - `["character"]` -- character terminal mnemonics
 
 This tagging enables the retrieval layer to prioritize generation-appropriate documentation. When a developer is working in DWC code, the system surfaces modern API references first -- while still including legacy documentation when relevant for migration context.
