@@ -78,14 +78,14 @@ Plans:
   3. Chapter 6 details the RAG database schema, multi-generation document structure, and retrieval strategy with enough specificity to guide implementation
   4. Chapter 7 presents implementation phases, resource requirements, risk assessment, and success metrics -- a leadership reader can evaluate feasibility
   5. Every chapter across the site reflects 2025/2026 best practices (not just the original paper), includes execution guidance where the paper was abstract, and documents current status and decision rationale
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 04-01: Research and write Chapter 4 (IDE Integration)
-- [ ] 04-02: Research and write Chapter 5 (Documentation Chat)
-- [ ] 04-03: Research and write Chapter 6 (RAG Database Design)
-- [ ] 04-04: Research and write Chapter 7 (Implementation Roadmap)
-- [ ] 04-05: Cross-cutting quality pass -- verify research depth, execution guidance, and status/rationale across all 7 chapters
+- [ ] 04-01-PLAN.md -- Write Chapter 4: IDE Integration (VSCode extension architecture, Langium, ghost text completion, Copilot bridge)
+- [ ] 04-02-PLAN.md -- Write Chapter 5: Documentation Chat (why generic services fail, generation-aware responses, deployment options)
+- [ ] 04-03-PLAN.md -- Write Chapter 6: RAG Database Design (MadCap Flare ingestion, generation metadata, pgvector, hybrid retrieval)
+- [ ] 04-04-PLAN.md -- Write Chapter 7: Implementation Roadmap (phased plan, infrastructure costs, risk assessment, success metrics)
+- [ ] 04-05-PLAN.md -- Cross-chapter quality pass (Current Status retrofit to Ch 1-3, Chapter 3 updates, cross-reference audit)
 
 ### Phase 5: Search, SEO & Launch
 **Goal**: The site is discoverable, navigable, and ready for public sharing with full-text search, proper link previews, and verified production deployment
