@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 9 (Schema & Data Models)
+**Current focus:** v1.2 -- Phase 10 (Flare Parser)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
-Phase: 9 of 14 (Schema & Data Models)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 09-02-PLAN.md (Database Schema and pgvector Setup)
+Phase: 10 of 14 (Flare Parser)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-31 -- Completed 10-01-PLAN.md (Parser Foundations)
 
-Progress: ███░░░░░░░░░░░ 3/14 (21%)
+Progress: ████░░░░░░░░░░ 4/14 (29%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3 (v1.2)
-- Average duration: 4min
-- Total execution time: 11min
+- Total plans completed: 4 (v1.2)
+- Average duration: 5min
+- Total execution time: 18min
 
 **By Phase:**
 
@@ -30,6 +30,7 @@ Progress: ███░░░░░░░░░░░ 3/14 (21%)
 |-------|-------|-------|----------|
 | 08-project-scaffold-readme | 1/1 | 3min | 3min |
 | 09-schema-data-models | 2/2 | 8min | 4min |
+| 10-flare-parser | 1/3 | 7min | 7min |
 
 *Updated after each plan completion*
 
@@ -54,6 +55,10 @@ Recent decisions affecting current work:
 - Standalone SQL DDL file (sql/schema.sql) separated from Python execution (schema.py)
 - ON CONFLICT (content_hash) DO NOTHING for idempotent re-ingestion dedup
 - register_vector() called on every connection for pgvector type handling
+- runtime_checkable on DocumentParser Protocol for isinstance checks
+- Frozen dataclass with slots for ConditionTag (immutable, memory-efficient)
+- LinkedTitle resolution chain: <title> -> <h1> -> filename stem
+- Default to generations=["bbj"] when no conditions or no generation-relevant conditions found
 
 ### Pending Todos
 
@@ -65,7 +70,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-01-31T18:52Z
-Stopped at: Completed 09-02-PLAN.md (Database Schema and pgvector Setup)
+Last session: 2026-01-31T20:37Z
+Stopped at: Completed 10-01-PLAN.md (Parser Foundations)
 Resume file: None
-Next action: Execute Phase 10 (Flare Parser)
+Next action: Execute 10-02-PLAN.md (Flare XHTML Parser)
