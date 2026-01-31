@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 4
 title: "IDE Integration"
 description: "How the bbj-language-server, Langium parsing, and a fine-tuned LLM combine to deliver AI-powered code completion for BBj in VS Code."
 ---

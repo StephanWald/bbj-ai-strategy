@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 5
 title: "Documentation Chat"
 description: "Why generic chat services fail for BBj, and how a generation-aware documentation chat leveraging the shared fine-tuned model and RAG infrastructure delivers accurate, cited answers."
 ---

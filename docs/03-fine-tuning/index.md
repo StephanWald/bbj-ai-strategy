@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 3
 title: "Fine-Tuning the Model"
 description: "How to create a BBj-aware language model using QLoRA fine-tuning on Qwen2.5-Coder, with self-hosted deployment via Ollama."
 ---

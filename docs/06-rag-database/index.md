@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 6
 title: "RAG Database Design"
 description: "Designing a generation-tagged retrieval pipeline for BBj documentation: from MadCap Flare ingestion through chunking, embedding, and hybrid search with pgvector."
 ---

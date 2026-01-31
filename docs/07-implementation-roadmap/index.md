@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 7
 title: "Implementation Roadmap"
 description: "Phased implementation plan with MVP checkpoints, infrastructure costs, risk assessment, and success metrics for the BBj AI strategy."
 ---
