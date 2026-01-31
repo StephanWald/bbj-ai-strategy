@@ -31,7 +31,7 @@
 
 /*
  * Admonition type allocation (site-wide convention):
- *   :::tip     = TL;DR summary blocks (green, prominent)
+ *   :::tip     = TL;DR summary blocks (blue, prominent)
  *   :::info    = Decision records (blue, structured)
  *   :::note    = General notes
  *   :::warning = Caveats / limitations
@@ -40,16 +40,16 @@
 
 /* --- TL;DR blocks (:::tip -> .alert--success) --- */
 .alert--success {
-  --ifm-alert-background-color: rgba(46, 133, 85, 0.08);
-  --ifm-alert-background-color-highlight: rgba(46, 133, 85, 0.15);
+  --ifm-alert-background-color: rgba(37, 99, 235, 0.08);
+  --ifm-alert-background-color-highlight: rgba(37, 99, 235, 0.15);
   --ifm-alert-border-color: var(--ifm-color-primary);
   border-left-width: 5px;
   font-size: 1.05rem;
 }
 
 [data-theme='dark'] .alert--success {
-  --ifm-alert-background-color: rgba(37, 194, 160, 0.08);
-  --ifm-alert-background-color-highlight: rgba(37, 194, 160, 0.15);
+  --ifm-alert-background-color: rgba(96, 165, 250, 0.08);
+  --ifm-alert-background-color-highlight: rgba(96, 165, 250, 0.15);
 }
 
 /* --- Decision callouts (:::info -> .alert--info) --- */
