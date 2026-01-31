@@ -44,11 +44,11 @@ Plans:
   2. Pydantic `Document` and `Chunk` models validate parsed content with required fields (source_url, content, title, doc_type, generations) and reject malformed data
   3. Configuration loads source paths, database connection string, embedding model name, and chunk sizes from a config file without hardcoded values
   4. Inserting a chunk with the same content hash is idempotent -- no duplicate rows created on re-ingestion
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: Create pgvector schema DDL and database connection module
-- [ ] 09-02: Define Pydantic data models, configuration system, and content-hash deduplication
+- [ ] 09-01-PLAN.md -- Pydantic data models (Document/Chunk), config system (pydantic-settings + TOML), content-hash dedup, unit tests
+- [ ] 09-02-PLAN.md -- pgvector schema DDL, database connection module (psycopg3 + register_vector), schema helper, DB tests
 
 ### Phase 10: Flare Parser
 **Goal**: The MadCap Flare documentation corpus (the largest and most complex source) is parseable into structured Document objects, validating the entire pipeline architecture
