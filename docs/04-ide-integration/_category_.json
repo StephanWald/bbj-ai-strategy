@@ -1,0 +1,8 @@
+{
+  "label": "IDE Integration",
+  "position": 4,
+  "link": {
+    "type": "doc",
+    "id": "ide-integration/index"
+  }
+}

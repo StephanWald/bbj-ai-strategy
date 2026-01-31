@@ -7,6 +7,44 @@ import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
 
+const chapters = [
+  {
+    title: 'The BBj Challenge',
+    href: '/docs/bbj-challenge',
+    description: 'Why generic LLMs fail on four generations of Business BASIC.',
+  },
+  {
+    title: 'Strategic Architecture',
+    href: '/docs/strategic-architecture',
+    description: 'A unified infrastructure powering all AI capabilities.',
+  },
+  {
+    title: 'Fine-Tuning the Model',
+    href: '/docs/fine-tuning',
+    description: 'Training a BBj-aware language model with LoRA and Ollama.',
+  },
+  {
+    title: 'IDE Integration',
+    href: '/docs/ide-integration',
+    description: 'Bringing BBj intelligence into the developer\'s editor.',
+  },
+  {
+    title: 'Documentation Chat',
+    href: '/docs/documentation-chat',
+    description: 'Generation-aware answers embedded in the docs site.',
+  },
+  {
+    title: 'RAG Database Design',
+    href: '/docs/rag-database',
+    description: 'Multi-generation retrieval for precise, context-aware results.',
+  },
+  {
+    title: 'Implementation Roadmap',
+    href: '/docs/implementation-roadmap',
+    description: 'Phased delivery, resources, risks, and success metrics.',
+  },
+];
+
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
   return (
@@ -19,7 +57,7 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs">
+            to="/docs/bbj-challenge">
             Read the Strategy
           </Link>
         </div>
@@ -28,14 +66,43 @@ function HomepageHeader() {
   );
 }
 
+function ChapterOverview() {
+  return (
+    <section className={styles.chapters}>
+      <div className="container">
+        <div className={styles.chapterGrid}>
+          {chapters.map((chapter, idx) => (
+            <Link key={idx} className={styles.chapterCard} to={chapter.href}>
+              <Heading as="h3">{chapter.title}</Heading>
+              <p>{chapter.description}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home(): ReactNode {
-  const {siteConfig} = useDocusaurusContext();
   return (
     <Layout
       title="Home"
       description="Intelligent Code Assistance Across Four Generations of Business BASIC">
       <HomepageHeader />
-      <main />
+      <main>
+        <section className={styles.about}>
+          <div className="container">
+            <p>
+              This site presents a comprehensive strategy for building AI-powered
+              developer tools tailored to BBj -- a language that spans four
+              generations of Business BASIC. From fine-tuned models to IDE
+              extensions to documentation chat, each chapter covers a key piece
+              of the architecture.
+            </p>
+          </div>
+        </section>
+        <ChapterOverview />
+      </main>
     </Layout>
   );
 }
