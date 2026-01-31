@@ -9,30 +9,30 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 
 ## Current Position
 
-Phase: 2 of 5 (Content Architecture & Landing Page) -- IN PROGRESS
-Plan: 2 of 2 in current phase (02-02 complete, 02-01 pending)
-Status: In progress
-Last activity: 2026-01-31 -- Completed 02-02-PLAN.md (Content patterns: Mermaid, admonitions, sample content)
+Phase: 2 of 5 (Content Architecture & Landing Page) -- COMPLETE
+Plan: 2 of 2 in current phase (all complete)
+Status: Phase complete
+Last activity: 2026-01-31 -- Completed 02-01-PLAN.md (Landing page with problem-first hero, audience routing)
 
-Progress: [###░░░░░░░░░░░░] 20% (3/15 plans)
+Progress: [####░░░░░░░░░░░] 27% (4/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 5 min
-- Total execution time: 0.25 hours
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-scaffold-deploy-pipeline | 2/2 | 12 min | 6 min |
-| 02-content-architecture-landing-page | 1/2 | 3 min | 3 min |
+| 02-content-architecture-landing-page | 2/2 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (7 min), 01-02 (5 min), 02-02 (3 min)
-- Trend: accelerating, infrastructure tasks getting faster
+- Last 5 plans: 01-01 (7 min), 01-02 (5 min), 02-02 (3 min), 02-01 (3 min)
+- Trend: accelerating, UI/content tasks consistently fast
 
 *Updated after each plan completion*
 
@@ -53,6 +53,9 @@ Recent decisions affecting current work:
 - [02-02]: Admonition type allocation: :::tip reserved for TL;DR, :::info for decision records, :::note/warning/danger for general use
 - [02-02]: Mermaid theme pairing: neutral (light) / dark (dark) for clean professional rendering
 - [02-02]: CSS uses Infima variable overrides rather than custom class names, staying within Docusaurus conventions
+- [02-01]: Landing page hero leads with problem-first headline ("Generic LLMs Fail on BBj"), not product name
+- [02-01]: Audience routing uses inline cards with chapter links, not separate per-audience landing pages
+- [02-01]: All landing page styling via CSS modules and Infima variables -- no additional npm packages
 
 ### Pending Todos
 
@@ -65,6 +68,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31 08:33 UTC
-Stopped at: Completed 02-02-PLAN.md. Phase 2 plan 02-01 (landing page) still pending.
+Last session: 2026-01-31 08:37 UTC
+Stopped at: Completed 02-01-PLAN.md. Phase 2 fully complete. Ready for Phase 3.
 Resume file: None

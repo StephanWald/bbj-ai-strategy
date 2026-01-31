@@ -13,7 +13,7 @@ This roadmap delivers a Docusaurus documentation site that communicates BASIS In
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Scaffold & Deploy Pipeline** - Docusaurus project with chapter structure, build pipeline, and GitHub Pages deployment
-- [ ] **Phase 2: Content Architecture & Landing Page** - Landing page, content patterns (TL;DR, decision callouts, Mermaid), audience routing
+- [x] **Phase 2: Content Architecture & Landing Page** - Landing page, content patterns (TL;DR, decision callouts, Mermaid), audience routing
 - [ ] **Phase 3: Foundation Chapters** - Chapters 1-3 (BBj Challenge, Strategic Architecture, Fine-Tuning) with BBj syntax highlighting
 - [ ] **Phase 4: Execution Chapters** - Chapters 4-7 (IDE, Chat, RAG, Roadmap) with research depth and execution guidance across all chapters
 - [ ] **Phase 5: Search, SEO & Launch** - Full-text search, navigation polish, Open Graph tags, production verification
@@ -47,8 +47,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Redesign landing page with problem-first hero, executive summary, audience routing cards, and chapter grid
-- [ ] 02-02-PLAN.md -- Install Mermaid theme, create admonition CSS for TL;DR and decision callouts, demonstrate all patterns in sample chapters
+- [x] 02-01-PLAN.md -- Redesign landing page with problem-first hero, executive summary, audience routing cards, and chapter grid
+- [x] 02-02-PLAN.md -- Install Mermaid theme, create admonition CSS for TL;DR and decision callouts, demonstrate all patterns in sample chapters
 
 ### Phase 3: Foundation Chapters
 **Goal**: A reader can understand why BBj needs a custom AI strategy, what the unified architecture looks like, and how the model will be fine-tuned -- through three researched, well-structured chapters with proper BBj syntax highlighting
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Scaffold & Deploy Pipeline | 2/2 | Complete | 2026-01-31 |
-| 2. Content Architecture & Landing Page | 0/2 | Not started | - |
+| 2. Content Architecture & Landing Page | 2/2 | Complete | 2026-01-31 |
 | 3. Foundation Chapters | 0/4 | Not started | - |
 | 4. Execution Chapters | 0/5 | Not started | - |
 | 5. Search, SEO & Launch | 0/2 | Not started | - |
