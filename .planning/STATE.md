@@ -5,30 +5,31 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 8 (Project Scaffold & README)
+**Current focus:** v1.2 -- Phase 9 (Schema & Data Models)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
-Phase: 8 of 14 (Project Scaffold & README)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 08-01-PLAN.md (Project Scaffold & README)
+Phase: 9 of 14 (Schema & Data Models)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-01-31 -- Completed 09-01-PLAN.md (Pydantic Data Models and Configuration)
 
-Progress: █░░░░░░░░░░░░░ 1/14 (7%)
+Progress: ██░░░░░░░░░░░░ 2/14 (14%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1 (v1.2)
-- Average duration: 3min
-- Total execution time: 3min
+- Total plans completed: 2 (v1.2)
+- Average duration: 4min
+- Total execution time: 7min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 08-project-scaffold-readme | 1/1 | 3min | 3min |
+| 09-schema-data-models | 1/2 | 4min | 4min |
 
 *Updated after each plan completion*
 
@@ -45,6 +46,10 @@ Recent decisions affecting current work:
 - hatchling build backend (not uv_build) for stable src-layout support
 - Pre-commit hooks at repo root scoped to rag-ingestion/ via files filter
 - ruff 0.14.x with select rules: E, W, F, I, B, UP, RUF
+- str_strip_whitespace=True on Pydantic models to normalize input at boundary
+- Chunk.from_content() as canonical factory to ensure hash/content consistency
+- Settings field defaults serve as fallbacks when TOML/env absent (useful for tests)
+- settings_customise_sources override required for pydantic-settings 2.12 TOML loading
 
 ### Pending Todos
 
@@ -56,7 +61,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-01-31T18:08Z
-Stopped at: Completed 08-01-PLAN.md (Project Scaffold & README)
+Last session: 2026-01-31T18:45Z
+Stopped at: Completed 09-01-PLAN.md (Pydantic Data Models and Configuration)
 Resume file: None
-Next action: /gsd:plan-phase 9
+Next action: Execute 09-02-PLAN.md (Database Schema and pgvector Setup)
