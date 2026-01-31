@@ -202,10 +202,14 @@ def url_to_hierarchy(url: str, base_url: str) -> str:
 
 
 def _canonicalize(url: str) -> str:
-    """Normalise a URL by removing fragments and trailing slashes on path."""
+    """Normalise a URL by removing fragments.
+
+    Trailing slashes are preserved on directory-like paths (no file extension)
+    so that ``urljoin`` resolves relative hrefs correctly.
+    """
     parsed = urlparse(url)
-    path = parsed.path.rstrip("/") if not parsed.path.endswith(".htm") else parsed.path
-    return f"{parsed.scheme}://{parsed.netloc}{path}"
+    # Strip fragment only; keep path as-is.
+    return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
 
 
 def _is_disallowed(url: str, disallowed: list[str]) -> bool:
