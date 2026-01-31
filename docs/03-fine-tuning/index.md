@@ -52,7 +52,7 @@ The **generation label** uses a simple schema:
 |-------|-------|---------|
 | `"all"` | Universal patterns | FOR/NEXT loops, file I/O, string functions |
 | `"character"` | Character UI (1980s) | `PRINT @(x,y)`, `INPUT` |
-| `"vpro5"` | Visual PRO/5 (1990s) | `WINDOW CREATE`, `BUTTON CREATE`, `CTRL()` |
+| `"vpro5"` | Visual PRO/5 (1990s) | `PRINT (sysgui)'WINDOW'(...)`, `PRINT (sysgui)'BUTTON'(...)`, `CTRL(sysgui,id,index)` |
 | `"bbj-gui"` | BBj GUI/Swing (2000s) | `BBjAPI().getSysGui()`, `addWindow()` |
 | `"dwc"` | DWC/Browser (2010s+) | `getWebManager()`, `executeAsyncScript` |
 | `["bbj-gui", "dwc"]` | Subset array | Patterns shared by modern generations |

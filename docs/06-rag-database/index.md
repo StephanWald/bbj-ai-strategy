@@ -139,7 +139,7 @@ The RAG database uses the same generation labeling schema as the [training data]
 |-------|-------|----------------|
 | `"all"` | Universal patterns | FOR/NEXT loops, file I/O, string functions |
 | `"character"` | Character UI (1980s) | `PRINT @(x,y)`, `INPUT` statements |
-| `"vpro5"` | Visual PRO/5 (1990s) | `WINDOW CREATE`, `BUTTON CREATE`, `CTRL()` |
+| `"vpro5"` | Visual PRO/5 (1990s) | `PRINT (sysgui)'WINDOW'(...)`, `PRINT (sysgui)'BUTTON'(...)`, `CTRL(sysgui,id,index)` |
 | `"bbj-gui"` | BBj GUI/Swing (2000s) | `BBjAPI().getSysGui()`, `addWindow()` |
 | `"dwc"` | DWC/Browser (2010s+) | `getWebManager()`, `executeAsyncScript` |
 
@@ -189,15 +189,15 @@ A document can carry multiple generation labels. An API method like `BBjSysGui.a
 {
     "id": "vpro5-window-create-001",
     "type": "api-reference",
-    "verb": "WINDOW CREATE",
+    "verb": "PRINT (sysgui)'WINDOW'(...)",
     "generation": ["vpro5"],
     "deprecated_in": "12.00",
     "still_valid": true,
-    "content": "Creates a GUI window using Visual PRO/5 syntax. WINDOW CREATE wnd_id, @(row,col), rows, cols, title$...",
+    "content": "Creates a GUI window using Visual PRO/5 mnemonic syntax. print (sysgui)'window'(x,y,w,h,title$,flags$,eventmask$)...",
     "superseded_by": "bbj-addwindow-001",
     "migration_note": "For new development, use BBjSysGui.addWindow() for better DWC compatibility.",
     "keywords": ["window", "gui", "create", "vpro5", "legacy"],
-    "contextual_header": "Visual PRO/5 > GUI > WINDOW CREATE"
+    "contextual_header": "Visual PRO/5 > GUI > PRINT (sysgui)'WINDOW'(...)"
 }
 ```
 
@@ -211,7 +211,7 @@ The `supersedes` and `superseded_by` links create a graph of modernization paths
 | `api-reference` | Varies | Method/class documentation | BBjSysGui.addWindow() |
 | `concept` | Varies | Conceptual explanation | "Understanding BBj Events" |
 | `example` | Varies | Working code sample | "Creating a Grid Application" |
-| `migration` | N/A (has from/to) | How to modernize legacy code | "Migrating from WINDOW CREATE" |
+| `migration` | N/A (has from/to) | How to modernize legacy code | "Migrating from PRINT (sysgui)'WINDOW'(...)" |
 | `best-practice` | Often `"all"` | Recommended patterns | "Error Handling in BBj" |
 | `version-note` | Varies | Version-specific behavior | "New in BBj 23.04: await parameter" |
 
@@ -344,7 +344,7 @@ LIMIT 20;
 
 ### Stage 2: Sparse Keyword Search (BM25)
 
-Use PostgreSQL's built-in full-text search to find chunks containing the query's exact terms. This is critical for BBj because API names, method signatures, and BBj-specific keywords (like `BBjSysGui`, `addWindow`, `CTRL()`, `WINDOW CREATE`) are exact identifiers that semantic search may not rank highly.
+Use PostgreSQL's built-in full-text search to find chunks containing the query's exact terms. This is critical for BBj because API names, method signatures, and BBj-specific keywords (like `BBjSysGui`, `addWindow`, `CTRL()`, `PRINT (sysgui)'WINDOW'(...)`) are exact identifiers that semantic search may not rank highly.
 
 ```sql
 -- PostgreSQL full-text search for keyword matching
@@ -489,11 +489,11 @@ Consider a developer working in a DWC context who asks: "How do I create a windo
 The retrieval system:
 1. **Semantic search** finds chunks about window creation across all generations
 2. **Keyword search** matches "window" and "create" in API references
-3. **Fusion** merges results, surfacing `BBjSysGui.addWindow()` and `WINDOW CREATE`
+3. **Fusion** merges results, surfacing `BBjSysGui.addWindow()` and `PRINT (sysgui)'WINDOW'(...)`
 4. **Reranking** evaluates relevance to the specific query
-5. **Generation scoring** boosts the `BBjSysGui.addWindow()` chunk (generation `["bbj-gui", "dwc"]`, score 100) and deprioritizes the `WINDOW CREATE` chunk (generation `["vpro5"]`, score 70 due to GUI proximity)
+5. **Generation scoring** boosts the `BBjSysGui.addWindow()` chunk (generation `["bbj-gui", "dwc"]`, score 100) and deprioritizes the `PRINT (sysgui)'WINDOW'(...)` chunk (generation `["vpro5"]`, score 70 due to GUI proximity)
 
-The response includes the modern `addWindow()` documentation first, with a reference to the legacy `WINDOW CREATE` syntax for context -- exactly what a developer migrating or maintaining cross-generation code needs.
+The response includes the modern `addWindow()` documentation first, with a reference to the legacy `PRINT (sysgui)'WINDOW'(...)` syntax for context -- exactly what a developer migrating or maintaining cross-generation code needs.
 
 ## Current Status
 

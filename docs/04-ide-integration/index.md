@@ -170,7 +170,7 @@ graph TD
 
 ## Generation-Aware Completion
 
-The most distinctive aspect of BBj AI completion is **generation detection**. As [Chapter 1](/docs/bbj-challenge) establishes, BBj spans four generations of syntax and idioms. Suggesting a `WINDOW CREATE` verb in DWC code -- or a `getWebManager()` call in a character UI program -- is worse than no suggestion at all. The LLM must know which generation it is operating in.
+The most distinctive aspect of BBj AI completion is **generation detection**. As [Chapter 1](/docs/bbj-challenge) establishes, BBj spans four generations of syntax and idioms. Suggesting a `PRINT (sysgui)'WINDOW'(...)` mnemonic in DWC code -- or a `getWebManager()` call in a character UI program -- is worse than no suggestion at all. The LLM must know which generation it is operating in.
 
 The Langium parser can detect the code generation by analyzing AST patterns:
 
@@ -195,8 +195,8 @@ function detectGeneration(ast: BbjProgram): GenerationContext {
     }
 
     // Visual PRO/5 signals
-    if (hasStatement(ast, 'WINDOW CREATE')) {
-        signals.push('vpro5:window-verb');
+    if (hasStatement(ast, "PRINT (sysgui)'WINDOW'")) {
+        signals.push('vpro5:window-mnemonic');
     }
 
     // Character UI signals
@@ -260,7 +260,7 @@ Signals: BBjAPI().getSysGui(), BBjTopLevelWindow, setCallback()
 <rules>
 - Generate code matching the BBj DWC generation
 - Use object-oriented patterns (window!, button!, etc.)
-- Do NOT suggest Visual PRO/5 verbs (WINDOW CREATE)
+- Do NOT suggest Visual PRO/5 mnemonics (PRINT (sysgui)'WINDOW'(...))
 - Do NOT suggest character mnemonics (@(x,y)) for GUI code
 </rules>
 

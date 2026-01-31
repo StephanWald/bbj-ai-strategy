@@ -148,7 +148,7 @@ The IDE integration combines **Langium-powered language server capabilities** wi
 
 Langium provides deterministic, 100%-correct completions for symbols, types, and keywords -- the things a parser can resolve definitively. The fine-tuned model provides generative completions for multi-line code, pattern completion, and context-aware suggestions -- the things that require understanding intent.
 
-The extension is generation-aware: it detects whether the developer is working in character UI, Visual PRO/5, BBj GUI, or DWC code and adjusts its suggestions accordingly. A developer editing a 1990s Visual PRO/5 module receives `WINDOW CREATE` suggestions; a developer building a new DWC application receives `BBjAPI()` patterns.
+The extension is generation-aware: it detects whether the developer is working in character UI, Visual PRO/5, BBj GUI, or DWC code and adjusts its suggestions accordingly. A developer editing a 1990s Visual PRO/5 module receives `PRINT (sysgui)'WINDOW'(...)` suggestions; a developer building a new DWC application receives `BBjAPI()` patterns.
 
 ### Documentation Chat (Chapter 5)
 
