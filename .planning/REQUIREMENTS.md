@@ -37,10 +37,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Search & Navigation
 
-- [ ] **NAV-01**: Local search plugin (`@easyops-cn/docusaurus-search-local`) for full-text search
-- [ ] **NAV-02**: Chapter pagination (previous/next) between pages
-- [ ] **NAV-03**: Table of contents per page from headings
-- [ ] **NAV-04**: Open Graph and SEO meta tags for proper link previews
+- [x] **NAV-01**: Local search plugin (`@easyops-cn/docusaurus-search-local`) for full-text search
+- [x] **NAV-02**: Chapter pagination (previous/next) between pages
+- [x] **NAV-03**: Table of contents per page from headings
+- [x] **NAV-04**: Open Graph and SEO meta tags for proper link previews
 
 ## v2 Requirements
 
@@ -102,10 +102,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONT-08 | Phase 4 | Complete |
 | CONT-09 | Phase 4 | Complete |
 | CONT-10 | Phase 4 | Complete |
-| NAV-01 | Phase 5 | Pending |
-| NAV-02 | Phase 5 | Pending |
-| NAV-03 | Phase 5 | Pending |
-| NAV-04 | Phase 5 | Pending |
+| NAV-01 | Phase 5 | Complete |
+| NAV-02 | Phase 5 | Complete |
+| NAV-03 | Phase 5 | Complete |
+| NAV-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 23 total
@@ -114,4 +114,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after roadmap creation*
+*Last updated: 2026-01-31 after Phase 5 completion*
