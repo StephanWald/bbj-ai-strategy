@@ -29,11 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Pushing to main triggers GitHub Actions and the site is live on GitHub Pages within minutes
   3. All 7 chapter folders appear in the sidebar with correct ordering and clickable placeholder pages
   4. The site loads correctly at its GitHub Pages URL (no broken CSS, JS, or images from baseUrl mismatch)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: Initialize Docusaurus with Rspack, configure for GitHub Pages, create chapter folder structure
-- [ ] 01-02: Set up GitHub Actions deployment workflow and verify end-to-end deploy
+- [ ] 01-01-PLAN.md -- Scaffold Docusaurus with Rspack, configure for GitHub Pages, create 7-chapter folder structure with placeholders
+- [ ] 01-02-PLAN.md -- Create GitHub Actions deploy/test workflows, push to main, verify live deployment
 
 ### Phase 2: Content Architecture & Landing Page
 **Goal**: Visitors land on a professional landing page with audience routing, and content patterns (TL;DR blocks, decision callouts, Mermaid diagrams) are ready for chapter authoring
