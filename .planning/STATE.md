@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
 Phase: 20 of 24 (Docker + Database Foundation)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-02-01 -- Roadmap created
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-01 -- Completed 20-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 12%
 
 ## Performance Metrics
 
@@ -25,7 +25,7 @@ Progress: [░░░░░░░░░░] 0%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 5 phases, 8 plans (RAG deployment -- in progress)
-- **Total: 24 phases, 53 plans (45 complete)**
+- **Total: 24 phases, 53 plans (46 complete)**
 
 ## Accumulated Context
 
@@ -38,6 +38,10 @@ Recent decisions affecting current work:
 - Host Ollama (not containerized) for macOS Metal GPU acceleration
 - REST API + thin MCP server (clean separation)
 - Python for MCP server (same language as existing pipeline)
+- uv 0.9.28 pinned in Dockerfile (matches local install)
+- Health endpoint uses existing database_url field; Plan 02 refactors to keyword args
+- DB password fail-fast via :? syntax in compose
+- External ports above 10000 (10800 app, 10432 db)
 
 ### Pending Todos
 
@@ -52,6 +56,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Roadmap created for v1.4 (5 phases, 24 requirements mapped)
+Stopped at: Completed 20-01-PLAN.md (Docker infra + FastAPI skeleton)
 Resume file: None
-Next action: `/gsd:plan-phase 20`
+Next action: `/gsd:execute-phase` 20-02-PLAN.md
