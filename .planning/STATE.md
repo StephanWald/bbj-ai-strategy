@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Stakeholders (developers, leadership, customers) can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** v1.3 MCP Architecture Integration -- Phase 16 complete, ready for Phase 17
+**Current focus:** v1.3 MCP Architecture Integration -- Phase 17 in progress (plan 02 of 02 complete)
 
 ## Current Position
 
 Milestone: v1.3 MCP Architecture Integration
-Phase: 16 of 19 (Compiler Validation)
+Phase: 17 of 19 (Chat & Cross-References)
 Plan: 02 of 02
-Status: Phase complete
-Last activity: 2026-02-01 -- Completed 16-02-PLAN.md
+Status: In progress (plan 01 pending)
+Last activity: 2026-02-01 -- Completed 17-02-PLAN.md
 
-Progress: [████░░░░░░] 40% (4/10 plans)
+Progress: [█████░░░░░] 50% (5/10 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4 (v1.3)
-- Average duration: 3min
-- Total execution time: 10min
+- Total plans completed: 5 (v1.3)
+- Average duration: 2min
+- Total execution time: 12min
 
 **By Phase:**
 
@@ -30,6 +30,7 @@ Progress: [████░░░░░░] 40% (4/10 plans)
 |-------|-------|-------|----------|
 | 15 | 2/2 | 6min | 3min |
 | 16 | 2/2 | 4min | 2min |
+| 17 | 1/2 | 2min | 2min |
 
 ## Accumulated Context
 
@@ -51,6 +52,8 @@ Recent decisions:
 - bbjcpltool proof-of-concept documented at concept level only -- no implementation details exposed
 - TL;DR kept to 4 sentences -- compiler validation woven into existing narrative rather than appended
 - Status block structured as 2 Shipped + 1 In progress + 1 Planned for Chapter 4
+- Ch3 status block date NOT updated when adding MCP cross-reference subsection -- cross-reference is not a status change
+- Ch6 status block updated to reflect v1.2 shipped pipeline (removed stale "Not built" text)
 
 ### Pending Todos
 
@@ -62,7 +65,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T14:04:31Z
-Stopped at: Completed 16-02-PLAN.md (Chapter 4 fully updated -- all IDE requirements satisfied)
+Last session: 2026-02-01T15:27:44Z
+Stopped at: Completed 17-02-PLAN.md (Chapters 3 and 6 MCP cross-references and Ch6 status update)
 Resume file: None
-Next action: Plan Phase 17 (Documentation Chat chapter updates)
+Next action: Execute 17-01-PLAN.md (Chapter 5 restructure with two-path framing)
