@@ -16,12 +16,12 @@
 
 ### Data Configuration & Ingestion
 
-- [ ] **DATA-01**: All 6 source paths wired to real data locations (Flare at `/Users/beff/bbjdocs/`, PDF at project root, MDX tutorials, BBj source dirs, WordPress URLs, web crawl URLs)
-- [ ] **DATA-02**: Config supports multiple MDX source directories (not just single path)
-- [ ] **DATA-03**: Full ingestion pipeline runs successfully against all 6 real sources
-- [ ] **DATA-04**: Ingestion supports resume/retry for interrupted large corpus processing
+- [x] **DATA-01**: All 6 source paths wired to real data locations (Flare at `/Users/beff/bbjdocs/`, PDF at project root, MDX tutorials, BBj source dirs, WordPress URLs, web crawl URLs)
+- [x] **DATA-02**: Config supports multiple MDX source directories (not just single path)
+- [x] **DATA-03**: Full ingestion pipeline runs successfully against all 6 real sources
+- [x] **DATA-04**: Ingestion supports resume/retry for interrupted large corpus processing
 - [x] **DATA-05**: Configuration works in Docker via environment variables (not dependent on TOML file presence)
-- [ ] **DATA-06**: Ingestion orchestration script runs all 6 parsers in sequence with a single command
+- [x] **DATA-06**: Ingestion orchestration script runs all 6 parsers in sequence with a single command
 
 ### REST Retrieval API
 
@@ -86,12 +86,12 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 | DOCK-04 | Phase 20 | Complete |
 | DOCK-05 | Phase 20 | Complete |
 | DOCK-06 | Phase 20 | Complete |
-| DATA-01 | Phase 21 | Pending |
-| DATA-02 | Phase 21 | Pending |
-| DATA-03 | Phase 21 | Pending |
-| DATA-04 | Phase 21 | Pending |
+| DATA-01 | Phase 21 | Complete |
+| DATA-02 | Phase 21 | Complete |
+| DATA-03 | Phase 21 | Complete |
+| DATA-04 | Phase 21 | Complete |
 | DATA-05 | Phase 20 | Complete |
-| DATA-06 | Phase 21 | Pending |
+| DATA-06 | Phase 21 | Complete |
 | API-01 | Phase 22 | Pending |
 | API-02 | Phase 22 | Pending |
 | API-03 | Phase 22 | Pending |
@@ -112,4 +112,4 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-01 after phase 20 completion*
+*Last updated: 2026-02-01 after phase 21 completion*

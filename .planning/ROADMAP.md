@@ -11,7 +11,7 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 ## Phases
 
 - [x] **Phase 20: Docker + Database Foundation** - Containerized pgvector and Python app with schema initialization, Ollama connectivity, and env-based config
-- [ ] **Phase 21: Data Configuration + Ingestion** - All 6 real sources wired and ingested into pgvector via Docker
+- [x] **Phase 21: Data Configuration + Ingestion** - All 6 real sources wired and ingested into pgvector via Docker
 - [ ] **Phase 22: REST Retrieval API** - FastAPI endpoints for search, health, and stats over the populated corpus
 - [ ] **Phase 23: MCP Server** - `search_bbj_knowledge` tool via stdio transport for Claude Desktop
 - [ ] **Phase 24: End-to-End Validation** - Prove the full pipeline works: query in, relevant BBj docs out, through both interfaces
@@ -50,8 +50,8 @@ Plans:
 4. An interrupted ingestion run can be resumed without re-processing already-completed sources
 
 Plans:
-- [ ] 21-01-PLAN.md -- Source config infrastructure: sources.toml, config loader, multi-MDX prefix support, report fix
-- [ ] 21-02-PLAN.md -- Ingestion orchestration CLI: bbj-ingest-all with fail-fast, resume, clean, summary table
+- [x] 21-01-PLAN.md -- Source config infrastructure: sources.toml, config loader, multi-MDX prefix support, report fix
+- [x] 21-02-PLAN.md -- Ingestion orchestration CLI: bbj-ingest-all with fail-fast, resume, clean, summary table
 
 ### Phase 22: REST Retrieval API
 
@@ -139,7 +139,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 20. Docker + Database Foundation | v1.4 | 2/2 | Complete | 2026-02-01 |
-| 21. Data Configuration + Ingestion | v1.4 | 0/2 | Not started | - |
+| 21. Data Configuration + Ingestion | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 22. REST Retrieval API | v1.4 | 0/2 | Not started | - |
 | 23. MCP Server | v1.4 | 0/1 | Not started | - |
 | 24. End-to-End Validation | v1.4 | 0/1 | Not started | - |
@@ -147,4 +147,4 @@ Plans:
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-01 (Phase 20 complete)_
+_Last updated: 2026-02-01 (Phase 21 complete)_
