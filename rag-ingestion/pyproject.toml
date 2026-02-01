@@ -64,6 +64,7 @@ markers = ["search_validation: requires database with embedded chunks"]
 
 [project.scripts]
 bbj-rag = "bbj_rag.cli:cli"
+bbj-ingest-all = "bbj_rag.ingest_all:ingest_all"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bbj_rag"]
