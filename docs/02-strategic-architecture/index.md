@@ -233,9 +233,75 @@ BASIS already ships a [webforJ MCP server](https://mcp.webforj.com/) that expose
 **Status:** Architecture defined. Three tool schemas specified. Generate-validate-fix loop validated by bbjcpltool proof-of-concept. MCP server implementation planned.
 :::
 
+## Integration Patterns
+
+The MCP server enables several concrete integration patterns. Each pattern demonstrates a different way clients combine the three tools to solve real development problems.
+
+### Generate-Validate-Fix
+
+The most important pattern is the generate-validate-fix loop. A client requests code generation, validates the result with the BBj compiler, and feeds any errors back for correction. This is the key innovation in the architecture -- the BBj compiler provides ground-truth validation that eliminates hallucinated syntax before code ever reaches a developer. The loop continues until the code compiles cleanly or a maximum iteration count is reached, ensuring that generated BBj code meets the same standard as hand-written code.
+
+```mermaid
+sequenceDiagram
+    participant Host as MCP Host<br/>(IDE / Chat)
+    participant Server as BBj MCP Server
+    participant RAG as RAG Database<br/>(pgvector)
+    participant Model as Fine-Tuned Model<br/>(Ollama)
+    participant Compiler as BBj Compiler<br/>(bbjcpl)
+
+    Host->>Server: search_bbj_knowledge(query, generation)
+    Server->>RAG: Embed + hybrid search
+    RAG-->>Server: Relevant docs + examples
+    Server-->>Host: Documentation context
+
+    Host->>Server: generate_bbj_code(prompt, generation, context)
+    Server->>Model: Enriched prompt + RAG context
+    Model-->>Server: Generated BBj code
+    Server-->>Host: Code response
+
+    Host->>Server: validate_bbj_syntax(code)
+    Server->>Compiler: bbjcpl -N temp.bbj
+    Compiler-->>Server: Validation result
+    Server-->>Host: Valid / errors
+
+    alt Compiler reports errors
+        Note over Host,Compiler: Generate-Validate-Fix Loop
+        Host->>Server: generate_bbj_code(prompt + errors)
+        Server->>Model: Original code + compiler errors
+        Model-->>Server: Corrected BBj code
+        Server-->>Host: Corrected code
+        Host->>Server: validate_bbj_syntax(corrected code)
+        Server->>Compiler: bbjcpl -N temp.bbj
+        Compiler-->>Server: Valid
+        Server-->>Host: Validated code
+    end
+```
+
+This pattern was validated by the bbjcpltool v1 proof-of-concept, which confirmed that compiler feedback meaningfully improves generated code quality across iterations.
+
+### Documentation Query
+
+The simplest pattern -- a client sends a natural language question, the server searches the RAG database with generation-aware filtering, and returns relevant documentation with source citations. No code generation or compilation is involved. This is the pattern that the documentation chat system primarily uses, and it is the same pattern that any MCP-compatible host (Claude, Cursor, or a custom chat interface) can invoke with zero custom code by calling `search_bbj_knowledge`.
+
+### Code Review and Migration
+
+For legacy codebase modernization, a client submits existing BBj code and the server combines all three tools. It uses `search_bbj_knowledge` to find relevant migration documentation and modern API patterns, `generate_bbj_code` to suggest modernized alternatives in the target BBj generation, and `validate_bbj_syntax` to confirm the suggestions compile. This pattern is useful for automated migration analysis -- scanning a legacy Visual PRO/5 codebase and producing DWC equivalents that are verified by the compiler before a developer reviews them.
+
+## Deployment Options
+
+The MCP server supports two deployment modes, matching different organizational needs for privacy, performance, and team collaboration.
+
+### Local Deployment (stdio)
+
+The MCP server runs as a local process on the developer's machine, communicating with the MCP host via stdio. All data stays local -- model inference through Ollama, RAG queries against a local pgvector instance, and compiler validation through the local BBj installation happen on the same machine. This is the default mode for individual developers and organizations that require complete data privacy, ensuring that proprietary BBj source code never leaves the developer's workstation.
+
+### Remote Deployment (Streamable HTTP)
+
+For team environments, the MCP server can be deployed as a shared service accessible via Streamable HTTP. Multiple developers connect to the same server instance, sharing the fine-tuned model and RAG database without each needing local GPU resources or a local database. This follows the same deployment pattern as the webforJ MCP server at [mcp.webforj.com](https://mcp.webforj.com/). Streamable HTTP replaces the older HTTP+SSE transport in the current MCP specification (2025-11-25), providing simpler connection management and better compatibility with standard HTTP infrastructure.
+
 ## Three Initiatives
 
-The shared foundation supports three planned consumer applications. Each is introduced briefly here and covered in full in its own chapter.
+The shared foundation supports three planned consumer applications, each acting as an MCP client that connects to the BBj MCP server. Each initiative is introduced briefly here and covered in full in its own chapter.
 
 ### VSCode Extension (Chapter 4)
 
