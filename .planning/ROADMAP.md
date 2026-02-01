@@ -23,7 +23,7 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 **Goal**: `docker compose up` starts pgvector and Python app containers with schema applied, Ollama reachable, source data mounted, and configuration driven by environment variables
 **Depends on**: Nothing (foundation phase)
 **Requirements**: DOCK-01, DOCK-02, DOCK-03, DOCK-04, DOCK-05, DOCK-06, DATA-05
-**Plans**: TBD
+**Plans**: 2 plans
 
 **Success Criteria** (what must be TRUE):
 1. `docker compose up` starts both containers and they reach healthy state without manual intervention
@@ -33,8 +33,8 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 5. Settings load entirely from environment variables with no TOML file present in the container
 
 Plans:
-- [ ] 20-01: Docker Compose + Dockerfile + schema initialization
-- [ ] 20-02: Ollama connectivity + config env-var hardening + volume mounts
+- [ ] 20-01-PLAN.md -- Docker Compose + Dockerfile + FastAPI skeleton + health endpoint
+- [ ] 20-02-PLAN.md -- Config refactor + startup wiring + Docker integration verification
 
 ### Phase 21: Data Configuration + Ingestion
 
