@@ -295,6 +295,50 @@ Expected output: `setData(rs!)`
 
 The model does not have to guess that `#custGrid!` is a `CustomerGrid` or that `setData` accepts a `BBjRecordSet`. Langium already resolved the types and members. The LLM's job is reduced from "understand everything about this code" to "pick the most likely next action given full context."
 
+## Compiler Validation: Ground-Truth Syntax Checking
+
+The fine-tuned model described above generates BBj code that is usually correct, but not always. Even a model trained on BBj-specific data can hallucinate syntax, particularly BBj's distinctive variable suffixes (`!`, `$`, `#`) and generation-specific APIs. A model that confuses BBj with another BASIC variant might omit the `!` suffix on object references or use method signatures that do not exist. The question is: how do you catch these errors before the developer sees them as ghost text?
+
+The BBj compiler (`bbjcpl`) provides a ground-truth answer. Unlike pattern matching or heuristic analysis, the compiler performs full syntax validation: the code either compiles or it does not. By running every AI-generated snippet through `bbjcpl` before presenting it as ghost text, the system eliminates an entire class of hallucination errors at the source. The compiler's `-N` flag enables syntax-only validation without execution, making it suitable for rapid checks during the completion pipeline.
+
+The generate-validate-fix loop makes this practical. The LLM generates code, the compiler validates it, and if errors are found, the LLM receives the compiler's error messages and corrects the code. This loop runs automatically, invisible to the developer -- they see only the validated result. The generate-validate-fix loop described in [Chapter 2](/docs/strategic-architecture#generate-validate-fix) defines this pattern at the architecture level; here we examine how it applies specifically to IDE completion.
+
+Consider what happens when an LLM generates the following BBj code:
+
+```bbj
+rem Create a window and add a button
+sysgui! = BBjAPI().openSysGui("X0")
+window = sysgui!.addWindow(100, 100, 400, 300, "My App")
+button = window.addButton(101, 10, 250, 100, 25, "Click Me")
+```
+
+The LLM assigned object return values to plain numeric variables (`window` and `button` instead of `window!` and `button!`). This is a hallucination pattern where the model confuses BBj with a BASIC variant that does not use type suffixes. It also called `addButton` on a plain variable instead of an object reference. The compiler catches this immediately:
+
+```
+temp.bbj: error at line 3 (3): window = sysgui!.addWindow(100, 100, 400, 300, "My App")
+```
+
+The compiler reports an error because assigning an object return value to a plain numeric variable is a type violation. The LLM receives this error and produces corrected code:
+
+```bbj
+rem Create a window and add a button
+sysgui! = BBjAPI().openSysGui("X0")
+window! = sysgui!.addWindow(100, 100, 400, 300, "My App")
+button! = window!.addButton(101, 10, 250, 100, 25, "Click Me")
+```
+
+This is a single illustrative example, but the pattern applies to any syntax error the compiler can detect -- the model learns from the compiler's feedback in real time.
+
+The compiler validation capability is not limited to the custom VS Code extension. Because it is exposed as the `validate_bbj_syntax` MCP tool (defined in [Chapter 2](/docs/strategic-architecture#validate_bbj_syntax)), any MCP-compatible host -- Claude, Cursor, VS Code, or custom applications -- can validate BBj syntax against the compiler. The custom extension provides the richest integration (Langium semantic context enriches the generation step), but the MCP server makes compiler validation accessible to any AI-powered development tool without custom code.
+
+### bbjcpltool: Proof of Concept
+
+To validate the compiler-in-the-loop concept, a proof-of-concept tool (bbjcpltool v1) was developed that automatically invokes the BBj compiler after every AI-generated code change. When the compiler detects syntax errors, the error messages are surfaced to the AI assistant, which then corrects the code before the developer sees the result.
+
+The proof-of-concept demonstrated three key findings: first, the BBj compiler reliably catches syntax errors that the LLM produces, including the variable suffix hallucinations described above; second, LLMs can interpret `bbjcpl` error messages and self-correct without human intervention; and third, the correction cycle adds minimal latency -- a single validation-and-fix pass typically resolves the error.
+
+The bbjcpltool v1 transforms compiler validation from a theoretical architecture pattern into a demonstrated capability. The generate-validate-fix loop works in practice, not just on paper.
+
 ## LSP 3.18: Server-Side Inline Completion
 
 The VS Code `InlineCompletionItemProvider` API works, but it is an editor-specific extension API. [LSP 3.18](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/) introduces `textDocument/inlineCompletion` as a **protocol-level feature**, meaning inline completion can be served from the language server itself rather than requiring editor-specific extension code.
