@@ -46,7 +46,7 @@ Phase 14: Documentation & Quality
 **Milestone Goal:** Weave MCP server architecture, compiler validation, and ecosystem integration into existing chapters -- making the concrete "how it all connects" visible to all three audiences.
 
 - [x] **Phase 15: Strategic Architecture** - Chapter 2 updated with MCP server as the concrete unified architecture
-- [ ] **Phase 16: Compiler Validation** - Chapter 4 updated with bbjcpl validation module and proof-of-concept
+- [x] **Phase 16: Compiler Validation** - Chapter 4 updated with bbjcpl validation module and proof-of-concept
 - [ ] **Phase 17: Chat & Cross-References** - Chapters 5, 3, 6 updated with MCP tool integration and cross-references
 - [ ] **Phase 18: Implementation Roadmap** - Chapter 7 updated with MCP deliverables and revised risk assessment
 - [ ] **Phase 19: Final Consistency Pass** - Quality verification across all updated chapters
@@ -82,8 +82,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — New Compiler Validation section with bbjcpl concept, error example, proof-of-concept, MCP note, sequence diagram, and decision callout
-- [ ] 16-02-PLAN.md — TL;DR update, opening paragraph update, Current Status block update
+- [x] 16-01-PLAN.md — New Compiler Validation section with bbjcpl concept, error example, proof-of-concept, MCP note, sequence diagram, and decision callout
+- [x] 16-02-PLAN.md — TL;DR update, opening paragraph update, Current Status block update
 
 ### Phase 17: Chat & Cross-References
 **Goal**: Chapters 5, 3, and 6 connect to the MCP architecture established in Chapter 2 -- readers following any chapter path encounter consistent MCP integration framing
@@ -136,7 +136,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Strategic Architecture | 2/2 | ✓ Complete | 2026-02-01 |
-| 16. Compiler Validation | 0/2 | Not started | - |
+| 16. Compiler Validation | 2/2 | ✓ Complete | 2026-02-01 |
 | 17. Chat & Cross-References | 0/TBD | Not started | - |
 | 18. Implementation Roadmap | 0/TBD | Not started | - |
 | 19. Final Consistency Pass | 0/TBD | Not started | - |
