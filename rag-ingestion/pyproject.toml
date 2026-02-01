@@ -14,6 +14,8 @@ dependencies = [
     "ollama>=0.6,<1",
     "click>=8.1,<9",
     "pyyaml>=6.0,<7",
+    "pymupdf4llm>=0.2.9",
+    "python-frontmatter>=1.1,<2",
 ]
 
 [build-system]
