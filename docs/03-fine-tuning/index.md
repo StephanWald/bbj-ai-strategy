@@ -398,6 +398,14 @@ graph TD
 
 Model updates are distributed as GGUF files. Customers download new versions from a model registry (which could be a simple file server, Hugging Face Hub, or the Ollama model library) and update with `ollama create bbj-coder -f Modelfile`. No retraining on the customer side.
 
+### MCP Integration
+
+The fine-tuned model described in this chapter is not accessed directly by consumer applications. Instead, it is consumed through the BBj MCP server's `generate_bbj_code` tool, defined in [Chapter 2](/docs/strategic-architecture#generate_bbj_code). The tool accepts a natural language prompt, a target BBj generation, and optional surrounding code context. It assembles RAG-retrieved documentation into an enriched prompt and forwards it to the Ollama-hosted model -- the same model built through the QLoRA pipeline described above.
+
+This means any MCP-compatible client -- Claude, Cursor, VS Code, or a custom application -- can generate BBj code using the fine-tuned model without building custom Ollama integration code. The model's generation awareness, trained through the labeled examples in this chapter, is available to every client through a single standard tool interface. When the model improves through continued fine-tuning, every client benefits immediately.
+
+For the complete MCP server architecture, tool schemas, and integration patterns, see [Chapter 2: Strategic Architecture](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer).
+
 ## Current Status
 
 :::note[Where Things Stand -- January 2026]
