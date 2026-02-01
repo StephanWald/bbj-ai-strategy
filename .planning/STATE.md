@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 11 complete, ready for Phase 12
+**Current focus:** v1.2 -- Phase 12 in progress (Embedding Pipeline)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
-Phase: 11 of 14 (BBj Intelligence)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-31 -- Completed 11-02-PLAN.md (Doc Type Classifier / Context Headers)
+Phase: 12 of 14 (Embedding Pipeline)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-01 -- Completed 12-01-PLAN.md (Embedding Pipeline Core)
 
-Progress: ████████░░░░░░ 8/14 (57%)
+Progress: █████████░░░░░ 9/14 (64%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (v1.2)
+- Total plans completed: 9 (v1.2)
 - Average duration: 5min
-- Total execution time: 42min
+- Total execution time: 49min
 
 **By Phase:**
 
@@ -32,6 +32,7 @@ Progress: ████████░░░░░░ 8/14 (57%)
 | 09-schema-data-models | 2/2 | 8min | 4min |
 | 10-flare-parser | 3/3 | 23min | 8min |
 | 11-bbj-intelligence | 2/2 | 8min | 4min |
+| 12-embedding-pipeline | 1/2 | 7min | 7min |
 
 *Updated after each plan completion*
 
@@ -75,6 +76,12 @@ Recent decisions affecting current work:
 - Rules without required_headings use min_score=0.15 (not 0.5) to avoid false negatives
 - API reference boost +0.2 when Parameters/Return Value present alongside Syntax heading
 - url_path_to_hierarchy delegates to web_crawl.url_to_hierarchy (single source of truth)
+- vector(1024) matching Qwen3-Embedding-0.6B default output dimensions (changed from 1536)
+- Ollama as default embedding provider with OpenAI as configurable fallback
+- 400-token target chunk size with 50-token (~12%) overlap for heading-aware chunking
+- Context header prepended to chunk content before embedding for richer semantic representation
+- Binary COPY via staging table + INSERT ON CONFLICT for idempotent bulk inserts
+- _fatal() helper for NoReturn-typed CLI error exits (keeps mypy strict mode clean)
 
 ### Pending Todos
 
@@ -86,7 +93,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-01-31T21:54Z
-Stopped at: Completed 11-02-PLAN.md (Doc Type Classifier / Context Headers)
+Last session: 2026-02-01T07:18Z
+Stopped at: Completed 12-01-PLAN.md (Embedding Pipeline Core)
 Resume file: None
-Next action: Begin Phase 12 research/planning.
+Next action: Execute 12-02-PLAN.md (Search Validation).
