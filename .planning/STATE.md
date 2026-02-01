@@ -4,33 +4,25 @@
 
 See: .planning/PROJECT.md (updated 2026-02-01)
 
-**Core value:** Stakeholders (developers, leadership, customers) can understand the BBj AI strategy, why it's necessary, and how it will be executed — through a well-structured, publicly accessible documentation site backed by executable RAG infrastructure.
-**Current focus:** Planning next milestone
+**Core value:** Stakeholders (developers, leadership, customers) can understand the BBj AI strategy, why it's necessary, and how it will be executed — through a well-structured, publicly accessible documentation site.
+**Current focus:** v1.3 MCP Architecture Integration — Defining requirements
 
 ## Current Position
 
-Milestone: v1.2 RAG Ingestion Pipeline — SHIPPED
-Phase: 14 of 14 (all complete)
-Plan: N/A — milestone archived
-Status: Ready for next milestone
-Last activity: 2026-02-01 — v1.2 milestone complete
-
-Progress: ███████████████ 14/14 (100%) — SHIPPED
-
-## Performance Metrics
-
-**v1.2 Summary:**
-- Total plans completed: 15
-- Total phases: 7 (Phases 8-14)
-- Total execution time: ~76min
-- Tests: 310 passing
-- Source code: 5,004 lines Python + 4,906 lines tests
+Milestone: v1.3 MCP Architecture Integration
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-01 — Milestone v1.3 started
 
 ## Accumulated Context
 
 ### Decisions
 
 See .planning/PROJECT.md Key Decisions table for full log.
+
+Recent decisions:
+- MCP architecture woven into existing chapters (not standalone Ch8) — MCP is the integration layer, not a separate initiative
 
 ### Pending Todos
 
@@ -43,6 +35,6 @@ None open.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: v1.2 milestone complete and archived
+Stopped at: Defining v1.3 requirements
 Resume file: None
-Next action: `/gsd:new-milestone` to start v1.3 (or whichever version is next)
+Next action: Complete requirements definition and roadmap creation

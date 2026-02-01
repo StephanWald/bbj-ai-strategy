@@ -38,7 +38,11 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 
 ### Active
 
-(None — next milestone requirements TBD via `/gsd:new-milestone`)
+- [ ] Chapter 2 updated with MCP server as the concrete unified architecture — tool definitions, generate-validate-fix loop, deployment options
+- [ ] Chapter 4 updated with compiler validation module and bbjcpltool proof-of-concept — ground-truth syntax checking as AI feedback loop
+- [ ] Chapter 5 updated with MCP-based RAG search tool definition and documentation query pattern
+- [ ] Chapters 3, 6, 7 updated with cross-references to MCP orchestration and any revised recommendations
+- [ ] All new BBj code samples compiler-validated before publishing
 
 ### Out of Scope
 
@@ -59,7 +63,9 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.2 shipped 2026-02-01. RAG ingestion pipeline complete with 6 source parsers, generation-aware intelligence, embedding pipeline, and hybrid search. v1.1 shipped 2026-01-31 with code corrections and branding. 2,441 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
+- **Current state:** v1.2 shipped 2026-02-01. RAG ingestion pipeline complete with 6 source parsers, generation-aware intelligence, embedding pipeline, and hybrid search. v1.3 in progress: weaving MCP server architecture, compiler validation, and ecosystem integration into existing chapters. 2,441 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
+- **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
+- **bbjcpltool:** Working proof-of-concept at `/Users/beff/bbjcpltool/` — v1 shipped. PostToolUse hook runs `bbjcpl -N` on every `.bbj` file Claude writes/edits, plus shared BBj language reference at `~/.claude/bbj-reference.md`. Validates the compiler-in-the-loop concept described in the MCP paper.
 - **RAG source corpus:** 6 sources with working parsers: (1) MadCap Flare XHTML (7,079 topics), (2) standalone PDFs (GUI programming guide), (3) Advantage magazine articles, (4) Knowledge Base (WordPress/ECKB), (5) DWC-Course (Docusaurus MDX), (6) BBj source code samples.
 - **Flare access:** Engineers have both Flare project access (raw XHTML with MadCap namespace tags) and the live site (crawl fallback). Both paths implemented as parsers.
 - **BBj code reference:** `GuideToGuiProgrammingInBBj.pdf` (project root) — authoritative reference for all BBj GUI patterns across 4 generations. Contains complete working sample programs (cust-cui.txt, cust-gui.txt, cust-bbj.txt, cust-obj.txt).
@@ -101,5 +107,7 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | Pipeline intelligence bypass for non-Flare parsers | Non-Flare parsers pre-populate doc_type/generations; avoids Flare-specific logic | ✓ Good |
 | 400-token chunks with 50-token overlap | Heading-aware splitting preserves semantic coherence at section boundaries | ✓ Good |
 
+| MCP architecture woven into existing chapters (not standalone Ch8) | MCP is the integration layer connecting Ch3-6, not a separate initiative; fits as the concrete realization of Ch2's unified architecture promise | — Pending |
+
 ---
-*Last updated: 2026-02-01 after v1.2 milestone*
+*Last updated: 2026-02-01 after v1.3 milestone started*
