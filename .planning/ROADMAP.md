@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS
 **Phases:** 20-24
-**Total Plans:** TBD
+**Total Plans:** 8
 
 ## Overview
 
@@ -10,7 +10,7 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 
 ## Phases
 
-- [ ] **Phase 20: Docker + Database Foundation** - Containerized pgvector and Python app with schema initialization, Ollama connectivity, and env-based config
+- [x] **Phase 20: Docker + Database Foundation** - Containerized pgvector and Python app with schema initialization, Ollama connectivity, and env-based config
 - [ ] **Phase 21: Data Configuration + Ingestion** - All 6 real sources wired and ingested into pgvector via Docker
 - [ ] **Phase 22: REST Retrieval API** - FastAPI endpoints for search, health, and stats over the populated corpus
 - [ ] **Phase 23: MCP Server** - `search_bbj_knowledge` tool via stdio transport for Claude Desktop
@@ -147,4 +147,4 @@ Plans:
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-01_
+_Last updated: 2026-02-01 (Phase 20 complete)_

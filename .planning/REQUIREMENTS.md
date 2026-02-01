@@ -7,12 +7,12 @@
 
 ### Docker Infrastructure
 
-- [ ] **DOCK-01**: Docker Compose orchestrates pgvector and Python app containers with `docker compose up`
-- [ ] **DOCK-02**: pgvector container uses `pgvector/pgvector:0.8.0-pg17` with schema auto-initialized on first run
-- [ ] **DOCK-03**: App container uses `python:3.12-slim-bookworm` base with uv for dependency installation
-- [ ] **DOCK-04**: App container reaches host Ollama via `host.docker.internal:11434`
-- [ ] **DOCK-05**: Local source data directories (Flare, PDF, MDX, BBj source) are volume-mounted into app container
-- [ ] **DOCK-06**: pgvector container has `shm_size` configured for HNSW index builds on real corpus
+- [x] **DOCK-01**: Docker Compose orchestrates pgvector and Python app containers with `docker compose up`
+- [x] **DOCK-02**: pgvector container uses `pgvector/pgvector:0.8.0-pg17` with schema auto-initialized on first run
+- [x] **DOCK-03**: App container uses `python:3.12-slim-bookworm` base with uv for dependency installation
+- [x] **DOCK-04**: App container reaches host Ollama via `host.docker.internal:11434`
+- [x] **DOCK-05**: Local source data directories (Flare, PDF, MDX, BBj source) are volume-mounted into app container
+- [x] **DOCK-06**: pgvector container has `shm_size` configured for HNSW index builds on real corpus
 
 ### Data Configuration & Ingestion
 
@@ -20,7 +20,7 @@
 - [ ] **DATA-02**: Config supports multiple MDX source directories (not just single path)
 - [ ] **DATA-03**: Full ingestion pipeline runs successfully against all 6 real sources
 - [ ] **DATA-04**: Ingestion supports resume/retry for interrupted large corpus processing
-- [ ] **DATA-05**: Configuration works in Docker via environment variables (not dependent on TOML file presence)
+- [x] **DATA-05**: Configuration works in Docker via environment variables (not dependent on TOML file presence)
 - [ ] **DATA-06**: Ingestion orchestration script runs all 6 parsers in sequence with a single command
 
 ### REST Retrieval API
@@ -80,17 +80,17 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOCK-01 | Phase 20 | Pending |
-| DOCK-02 | Phase 20 | Pending |
-| DOCK-03 | Phase 20 | Pending |
-| DOCK-04 | Phase 20 | Pending |
-| DOCK-05 | Phase 20 | Pending |
-| DOCK-06 | Phase 20 | Pending |
+| DOCK-01 | Phase 20 | Complete |
+| DOCK-02 | Phase 20 | Complete |
+| DOCK-03 | Phase 20 | Complete |
+| DOCK-04 | Phase 20 | Complete |
+| DOCK-05 | Phase 20 | Complete |
+| DOCK-06 | Phase 20 | Complete |
 | DATA-01 | Phase 21 | Pending |
 | DATA-02 | Phase 21 | Pending |
 | DATA-03 | Phase 21 | Pending |
 | DATA-04 | Phase 21 | Pending |
-| DATA-05 | Phase 20 | Pending |
+| DATA-05 | Phase 20 | Complete |
 | DATA-06 | Phase 21 | Pending |
 | API-01 | Phase 22 | Pending |
 | API-02 | Phase 22 | Pending |
@@ -112,4 +112,4 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-01 after roadmap creation*
+*Last updated: 2026-02-01 after phase 20 completion*
