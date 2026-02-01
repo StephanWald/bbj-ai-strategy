@@ -66,36 +66,37 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ARCH-01 | — | Pending |
-| ARCH-02 | — | Pending |
-| ARCH-03 | — | Pending |
-| ARCH-04 | — | Pending |
-| ARCH-05 | — | Pending |
-| ARCH-06 | — | Pending |
-| ARCH-07 | — | Pending |
-| ARCH-08 | — | Pending |
-| ARCH-09 | — | Pending |
-| ARCH-10 | — | Pending |
-| IDE-01 | — | Pending |
-| IDE-02 | — | Pending |
-| IDE-03 | — | Pending |
-| IDE-04 | — | Pending |
-| IDE-05 | — | Pending |
-| IDE-06 | — | Pending |
-| CHAT-01 | — | Pending |
-| CHAT-02 | — | Pending |
-| CHAT-03 | — | Pending |
-| CHAT-04 | — | Pending |
-| CHAT-05 | — | Pending |
-| XREF-01 | — | Pending |
-| XREF-02 | — | Pending |
-| XREF-03 | — | Pending |
-| XREF-04 | — | Pending |
-| QUAL-01 | — | Pending |
-| QUAL-02 | — | Pending |
-| QUAL-03 | — | Pending |
-| QUAL-04 | — | Pending |
-| QUAL-05 | — | Pending |
+| ARCH-01 | Phase 15 | Pending |
+| ARCH-02 | Phase 15 | Pending |
+| ARCH-03 | Phase 15 | Pending |
+| ARCH-04 | Phase 15 | Pending |
+| ARCH-05 | Phase 15 | Pending |
+| ARCH-06 | Phase 15 | Pending |
+| ARCH-07 | Phase 15 | Pending |
+| ARCH-08 | Phase 15 | Pending |
+| ARCH-09 | Phase 15 | Pending |
+| ARCH-10 | Phase 15 | Pending |
+| IDE-01 | Phase 16 | Pending |
+| IDE-02 | Phase 16 | Pending |
+| IDE-03 | Phase 16 | Pending |
+| IDE-04 | Phase 16 | Pending |
+| IDE-05 | Phase 16 | Pending |
+| IDE-06 | Phase 16 | Pending |
+| CHAT-01 | Phase 17 | Pending |
+| CHAT-02 | Phase 17 | Pending |
+| CHAT-03 | Phase 17 | Pending |
+| CHAT-04 | Phase 17 | Pending |
+| CHAT-05 | Phase 17 | Pending |
+| XREF-01 | Phase 17 | Pending |
+| XREF-02 | Phase 17 | Pending |
+| XREF-03 | Phase 18 | Pending |
+| XREF-04 | Phase 18 | Pending |
+| QUAL-01 | Phase 19 | Pending |
+| QUAL-02 | Phase 19 | Pending |
+| QUAL-03 | Phase 19 | Pending |
+| QUAL-04 | Phase 19 | Pending |
+| QUAL-05 | Phase 19 | Pending |
 
 ---
 *Created: 2026-02-01 for milestone v1.3 MCP Architecture Integration*
+*Updated: 2026-02-01 — Phase mappings added from roadmap*
