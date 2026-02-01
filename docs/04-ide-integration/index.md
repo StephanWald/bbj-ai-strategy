@@ -339,6 +339,49 @@ The proof-of-concept demonstrated three key findings: first, the BBj compiler re
 
 The bbjcpltool v1 transforms compiler validation from a theoretical architecture pattern into a demonstrated capability. The generate-validate-fix loop works in practice, not just on paper.
 
+The following diagram shows the complete IDE completion pipeline, including the compiler validation step between code generation and ghost text presentation:
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant Ext as VS Code Extension
+    participant LS as Language Server<br/>(Langium)
+    participant MCP as MCP Server
+    participant LLM as Fine-Tuned Model<br/>(Ollama)
+    participant Comp as BBj Compiler<br/>(bbjcpl)
+
+    Dev->>Ext: Types code (pause triggers ghost text)
+    Ext->>LS: Request semantic context
+    LS-->>Ext: Generation, scope, types
+    Ext->>MCP: generate_bbj_code(prompt, context)
+    MCP->>LLM: Enriched prompt
+    LLM-->>MCP: Generated BBj code
+    MCP->>Comp: validate_bbj_syntax(code)
+    Comp-->>MCP: Validation result
+
+    alt Compiler reports errors
+        MCP->>LLM: Code + compiler errors
+        LLM-->>MCP: Corrected code
+        MCP->>Comp: Re-validate
+        Comp-->>MCP: Valid
+    end
+
+    MCP-->>Ext: Validated code
+    Ext-->>Dev: Ghost text suggestion
+```
+
+The `alt` block shows the generate-validate-fix cycle -- the same pattern described in [Chapter 2](/docs/strategic-architecture#generate-validate-fix), viewed from the IDE completion perspective.
+
+:::info[Decision: Compiler Validation via bbjcpl]
+**Choice:** Use the BBj compiler (`bbjcpl`) as a ground-truth validation step in the code generation pipeline, verifying every AI-generated BBj snippet before it reaches the developer.
+
+**Rationale:** A fine-tuned model hallucinates less than a generic LLM, but it still produces syntax errors -- particularly with BBj's distinctive variable suffixes (`!`, `$`, `#`) and generation-specific APIs. The compiler provides a binary, authoritative answer: the code either compiles or it does not. This eliminates an entire class of errors that statistical confidence alone cannot catch.
+
+**Alternatives considered:** Language server / static analysis (catches patterns and known symbols, but does not validate full syntax -- BBj does not have a standalone linter, and the language server is the closest alternative, which is already used for deterministic completions); LLM self-check (the model that hallucinated the error cannot reliably detect its own mistakes -- this is asking the source of the problem to be the solution).
+
+**Status:** Concept validated. bbjcpltool v1 proof-of-concept demonstrates compiler-in-the-loop validation in a working development environment. Integration as the `validate_bbj_syntax` MCP tool is planned.
+:::
+
 ## LSP 3.18: Server-Side Inline Completion
 
 The VS Code `InlineCompletionItemProvider` API works, but it is an editor-specific extension API. [LSP 3.18](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/) introduces `textDocument/inlineCompletion` as a **protocol-level feature**, meaning inline completion can be served from the language server itself rather than requiring editor-specific extension code.
