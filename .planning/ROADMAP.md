@@ -75,7 +75,7 @@ Plans:
 **Goal**: Claude Desktop can invoke `search_bbj_knowledge` to retrieve relevant BBj documentation from the running system
 **Depends on**: Phase 22 (REST API validates search integration patterns that MCP reuses)
 **Requirements**: MCP-01, MCP-02, MCP-03, MCP-04
-**Plans**: TBD
+**Plans**: 1 plan
 
 **Success Criteria** (what must be TRUE):
 1. `search_bbj_knowledge` tool appears in Claude Desktop's tool list after configuring the MCP server
@@ -84,7 +84,7 @@ Plans:
 4. MCP server runs on the host via stdio transport (not inside Docker)
 
 Plans:
-- [ ] 23-01: MCP server module + stdio transport + Claude Desktop config
+- [ ] 23-01-PLAN.md -- MCP server module + stdio transport + Claude Desktop config
 
 ### Phase 24: End-to-End Validation
 
@@ -147,4 +147,4 @@ Plans:
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-01 (Phase 22 complete)_
+_Last updated: 2026-02-02 (Phase 23 planned)_
