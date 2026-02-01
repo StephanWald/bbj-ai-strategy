@@ -91,11 +91,11 @@ Plans:
   3. A dense vector similarity query returns relevant Flare documentation chunks for a sample BBj query
   4. A BM25 keyword search query returns relevant chunks for BBj-specific terms (e.g., "BBjWindow addButton")
   5. CLI orchestrates the full pipeline (parse -> tag -> chunk -> embed -> store) for Flare with progress output
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: Implement embedding pipeline with batch processing, pgvector bulk storage, and CLI orchestration
-- [ ] 12-02: Implement hybrid search validation (dense vector + BM25 keyword queries)
+- [ ] 12-01-PLAN.md -- Chunker, embedder, bulk storage, config/schema updates, pipeline orchestrator, and Click CLI
+- [ ] 12-02-PLAN.md -- Search functions (dense, BM25, hybrid RRF), YAML validation cases, parametrized test suite
 
 ### Phase 13: Additional Parsers
 **Goal**: The remaining four source types (PDFs, WordPress articles, WordPress knowledge base, Docusaurus MDX, BBj source code) plug into the proven pipeline, completing source coverage
