@@ -497,15 +497,17 @@ Langium AI is an initiative to watch rather than a current dependency. If the ve
 
 ## Current Status
 
-:::note[Where Things Stand -- January 2026]
+:::note[Where Things Stand -- February 2026]
 **Shipped:** The bbj-language-server (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, code completion, diagnostics, formatting, BBj Properties viewing, and code execution. It is actively maintained with 450+ commits and 13 contributors.
 
-**In progress:** The fine-tuned BBj model is under active development with approximately 10,000 training data points and promising early results (see [Chapter 3](/docs/fine-tuning)). Copilot BYOK integration is in early exploration -- initial testing of the fine-tuned model through Copilot Chat shows encouraging results.
+**Shipped:** bbjcpltool v1 proof-of-concept — validates the compiler-in-the-loop concept for BBj syntax checking. Demonstrates that LLMs can interpret `bbjcpl` error messages and self-correct without human intervention.
 
-**Planned:** LLM-powered ghost text completion via `InlineCompletionItemProvider`, generation detection in the Langium parser, semantic context API for enriched prompts, and eventual migration to LSP 3.18 `textDocument/inlineCompletion` for multi-editor support.
+**In progress:** The fine-tuned BBj model is under active development with approximately 10,000 training data points and promising early results (see [Chapter 3](/docs/fine-tuning)). Copilot BYOK integration is in early exploration.
+
+**Planned:** LLM-powered ghost text completion via `InlineCompletionItemProvider` with compiler validation in the pipeline, generation detection in the Langium parser, semantic context API for enriched prompts, and integration of `validate_bbj_syntax` as an MCP tool for cross-client compiler validation. Eventual migration to LSP 3.18 `textDocument/inlineCompletion` for multi-editor support.
 :::
 
-The path from current state to AI-powered completion is incremental, not revolutionary. The language server already provides the Langium parser, AST, scope resolution, and VS Code integration. Adding generation detection, a semantic context API, and an LLM completion provider extends the existing architecture without replacing it.
+The path from current state to AI-powered completion is incremental, not revolutionary. The language server already provides the Langium parser, AST, scope resolution, and VS Code integration. Adding generation detection, a semantic context API, an LLM completion provider, and compiler validation extends the existing architecture without replacing it.
 
 ## What Comes Next
 
