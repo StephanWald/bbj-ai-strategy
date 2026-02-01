@@ -495,15 +495,24 @@ The retrieval system:
 
 The response includes the modern `addWindow()` documentation first, with a reference to the legacy `PRINT (sysgui)'WINDOW'(...)` syntax for context -- exactly what a developer migrating or maintaining cross-generation code needs.
 
+### MCP Integration
+
+The retrieval pipeline described in this chapter is exposed through the BBj MCP server's `search_bbj_knowledge` tool, defined in [Chapter 2](/docs/strategic-architecture#search_bbj_knowledge). The tool accepts a natural language query and an optional generation filter, performs the hybrid search pipeline described above (dense vector search, BM25 keyword matching, reciprocal rank fusion, cross-encoder reranking), and returns ranked results with source citations.
+
+This is the primary interface for the [documentation chat](/docs/documentation-chat) and for any MCP-compatible client that needs to query BBj documentation. Whether a developer asks a question through the chat interface, through Claude, or through Cursor, the same retrieval pipeline returns the same generation-aware results. The generation metadata, chunking strategy, and hybrid search logic described in this chapter are what make those results accurate.
+
+For the complete MCP server architecture and the other two tools (`generate_bbj_code` and `validate_bbj_syntax`), see [Chapter 2: Strategic Architecture](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer).
+
 ## Current Status
 
-:::note[Where Things Stand -- January 2026]
+:::note[Where Things Stand -- February 2026]
+- **Shipped:** RAG ingestion pipeline (v1.2) -- 6 source parsers, embedding pipeline, generation-aware tagging, hybrid search. Built and tested, awaiting deployment against production corpus.
 - **Defined:** Source corpus identified -- MadCap Flare documentation (primary), BBj source code, API references, and knowledge base articles. Generation metadata schema established (shared with [training data](/docs/fine-tuning)).
-- **Not built:** Ingestion pipeline, vector store, embedding computation, retrieval API. No infrastructure provisioned.
-- **Planned next:** Pilot with a subset of API reference documentation. Parse a representative sample of MadCap Flare XHTML topics, chunk with contextual headers, embed, store in pgvector, and validate retrieval quality before processing the full corpus.
+- **Planned:** Retrieval exposed via MCP `search_bbj_knowledge` tool ([Chapter 2](/docs/strategic-architecture#search_bbj_knowledge)) for consumption by documentation chat and any MCP client.
+- **Planned next:** Deploy pipeline against production corpus. Index full BBj documentation, tune retrieval quality, validate with representative queries.
 :::
 
-The RAG database is designed but not yet implemented. The generation metadata schema is shared with the [fine-tuning training data](/docs/fine-tuning), ensuring consistency between what the model learned and what the retrieval system provides. Implementation is tracked in the [implementation roadmap](/docs/implementation-roadmap).
+The RAG ingestion pipeline is built and tested (v1.2), and the next step is deployment against the production corpus. The generation metadata schema is shared with the [fine-tuning training data](/docs/fine-tuning), ensuring consistency between what the model learned and what the retrieval system provides. Implementation is tracked in the [implementation roadmap](/docs/implementation-roadmap).
 
 ## What Comes Next
 
