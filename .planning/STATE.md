@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** A running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via REST API and MCP server.
-**Current focus:** Phase 22 -- REST Retrieval API (in progress)
+**Current focus:** Phase 23 -- MCP Server (next)
 
 ## Current Position
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
 Phase: 22 of 24 (REST Retrieval API)
-Plan: 1 of 2 in current phase
-Status: In progress -- Plan 22-01 complete, Plan 22-02 next
-Last activity: 2026-02-01 -- Completed 22-01-PLAN.md (search endpoint + pool)
+Plan: 2 of 2 in current phase
+Status: Phase 22 complete -- all plans executed
+Last activity: 2026-02-01 -- Completed 22-02-PLAN.md (stats, health, generation filter)
 
-Progress: [█████░░░░░] 47%
+Progress: [██████░░░░] 49%
 
 ## Performance Metrics
 
@@ -25,7 +25,7 @@ Progress: [█████░░░░░] 47%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 5 phases, 8 plans (RAG deployment -- in progress)
-- **Total: 24 phases, 53 plans (50 complete)**
+- **Total: 24 phases, 53 plans (52 complete)**
 
 ## Accumulated Context
 
@@ -51,6 +51,8 @@ Recent decisions affecting current work:
 - Fresh DB connection per source with try/finally for isolation
 - Resume state as .ingestion-state.json file in working directory
 - Annotated[T, Depends()] pattern for FastAPI DI (ruff B008 compliance)
+- tuple_row cursor factory for mypy-safe row indexing in /stats endpoint
+- Sync psycopg fallback in health check for early startup race condition
 
 ### Pending Todos
 
@@ -65,6 +67,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 22-01-PLAN.md (search endpoint + async pool)
+Stopped at: Completed 22-02-PLAN.md (stats, health, generation filter) -- Phase 22 complete
 Resume file: None
-Next action: `/gsd:execute-phase 22-02` (tests + error handling)
+Next action: Phase 23 (MCP Server)
