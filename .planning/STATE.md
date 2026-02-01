@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Stakeholders (developers, leadership, customers) can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** v1.3 MCP Architecture Integration -- Phase 17 complete, ready for Phase 18
+**Current focus:** v1.3 MCP Architecture Integration -- Phase 18 plan 01 complete, ready for Phase 19
 
 ## Current Position
 
 Milestone: v1.3 MCP Architecture Integration
-Phase: 17 of 19 (Chat & Cross-References)
-Plan: 02 of 02
+Phase: 18 of 19 (Implementation Roadmap)
+Plan: 01 of 01
 Status: Phase complete
-Last activity: 2026-02-01 -- Completed 17-02-PLAN.md (phase complete)
+Last activity: 2026-02-01 -- Completed 18-01-PLAN.md (phase complete)
 
-Progress: [██████░░░░] 60% (6/10 plans)
+Progress: [███████░░░] 70% (7/10 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6 (v1.3)
-- Average duration: 2min
-- Total execution time: 15min
+- Total plans completed: 7 (v1.3)
+- Average duration: 3min
+- Total execution time: 19min
 
 **By Phase:**
 
@@ -31,6 +31,7 @@ Progress: [██████░░░░] 60% (6/10 plans)
 | 15 | 2/2 | 6min | 3min |
 | 16 | 2/2 | 4min | 2min |
 | 17 | 2/2 | 5min | 2min |
+| 18 | 1/1 | 4min | 4min |
 
 ## Accumulated Context
 
@@ -57,6 +58,8 @@ Recent decisions:
 - Chat and MCP are two independent, equally important paths -- not a stepping stone relationship
 - Deployment simplified from three options to one: embedded on documentation site
 - No MCP tool schemas duplicated from Chapter 2 -- all cross-chapter references use links
+- MCP deliverables woven into phase descriptions as bullets, not separate section -- consistent with integration-layer framing
+- Cross-reference anchors must match Docusaurus heading-to-slug conversion exactly
 
 ### Pending Todos
 
@@ -68,7 +71,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T15:27:59Z
-Stopped at: Completed Phase 17 (Chapters 5, 3, 6 updated with MCP integration framing)
+Last session: 2026-02-01T16:07:52Z
+Stopped at: Completed Phase 18 (Chapter 7 updated with Feb 2026 status, MCP deliverables, compiler validation)
 Resume file: None
-Next action: Plan Phase 18 (Implementation Roadmap updates)
+Next action: Plan Phase 19 (Final Review)
