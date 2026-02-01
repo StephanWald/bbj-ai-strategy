@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** A running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via REST API and MCP server.
-**Current focus:** Phase 21 -- Data Configuration + Ingestion (executing)
+**Current focus:** Phase 21 -- Data Configuration + Ingestion (complete)
 
 ## Current Position
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
 Phase: 21 of 24 (Data Configuration + Ingestion)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-01 -- Completed 21-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-01 -- Completed 21-02-PLAN.md
 
-Progress: [███░░░░░░░] 28%
+Progress: [████░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -25,7 +25,7 @@ Progress: [███░░░░░░░] 28%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 5 phases, 8 plans (RAG deployment -- in progress)
-- **Total: 24 phases, 53 plans (48 complete)**
+- **Total: 24 phases, 53 plans (50 complete)**
 
 ## Accumulated Context
 
@@ -47,6 +47,9 @@ Recent decisions affecting current work:
 - sources.toml ships with blank data_dir; resolved via DATA_DIR env var at runtime
 - Each MDX tutorial directory is a separate [[sources]] entry for independent enable/disable
 - MdxParser source_prefix defaults to "dwc-course" for backward compat
+- Sequential execution default for bbj-ingest-all (parallel deferred)
+- Fresh DB connection per source with try/finally for isolation
+- Resume state as .ingestion-state.json file in working directory
 
 ### Pending Todos
 
@@ -61,6 +64,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 21-01-PLAN.md
+Stopped at: Completed 21-02-PLAN.md (Phase 21 complete)
 Resume file: None
-Next action: Execute 21-02-PLAN.md (orchestration script)
+Next action: Execute Phase 22 (REST API + Search)
