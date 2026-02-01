@@ -7,12 +7,12 @@ description: "How the bbj-language-server, Langium parsing, and a fine-tuned LLM
 # IDE Integration
 
 :::tip[TL;DR]
-The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0, shipped on the VS Code Marketplace) provides the foundation for AI-powered BBj development. The architecture layers two completion mechanisms -- deterministic popup completion via Langium and generative ghost text via a fine-tuned LLM served through Ollama -- so developers get both correctness and creativity. A Copilot BYOK bridge provides interim chat-based AI access, but custom inline completion is the strategic path.
+The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0, shipped on the VS Code Marketplace) provides the foundation for AI-powered BBj development. The architecture layers two completion mechanisms -- deterministic popup completion via Langium and generative ghost text via a fine-tuned LLM -- with a compiler validation step that runs every AI-generated snippet through the BBj compiler before presentation. This generate-validate-fix loop ensures ground-truth syntax validation: the code either compiles or the LLM corrects it. A Copilot BYOK bridge provides interim chat-based AI access, but custom inline completion with compiler validation is the strategic path.
 :::
 
 [Chapter 3](/docs/fine-tuning) describes how to build a BBj-aware language model. This chapter answers the next question: how does that model reach the developer? The answer is IDE integration -- specifically, a VS Code extension that combines traditional language intelligence with LLM-powered code generation.
 
-The vision is an editor that understands all four BBj generations natively. When a developer types `#window!.` in a DWC class, the extension offers both a deterministic list of available members (from the Langium parser) and a generative multi-line suggestion (from the fine-tuned model) that matches the surrounding generation context. These are complementary mechanisms, not competing ones.
+The vision is an editor that understands all four BBj generations natively. When a developer types `#window!.` in a DWC class, the extension offers both a deterministic list of available members (from the Langium parser) and a generative multi-line suggestion (from the fine-tuned model) that matches the surrounding generation context. Before any suggestion reaches the developer, the BBj compiler validates it -- ensuring ground-truth syntax correctness that no amount of model training can guarantee alone. These are complementary mechanisms, not competing ones.
 
 What makes this achievable rather than aspirational is that the foundation already exists. The bbj-language-server is a real, shipped product -- not a prototype or a proposal. Building AI-powered completion on top of it is an extension of working infrastructure, not a greenfield project.
 
