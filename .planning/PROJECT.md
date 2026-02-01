@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A public Docusaurus site that communicates BASIS International's AI strategy for BBj — covering LLM fine-tuning, IDE integration, documentation chat, and RAG database design. The site serves three audiences (internal developers, leadership, customers/partners) through 7 researched chapters with full-text search, professional content patterns, BASIS brand identity, and automated deployment. Live at https://stephanwald.github.io/bbj-ai-strategy/.
+A public Docusaurus site that communicates BASIS International's AI strategy for BBj — covering LLM fine-tuning, IDE integration, documentation chat, and RAG database design — plus a Python RAG ingestion pipeline that processes 6 BBj documentation sources into a generation-aware pgvector database. The site serves three audiences (internal developers, leadership, customers/partners) through 7 researched chapters with full-text search, professional content patterns, BASIS brand identity, and automated deployment. The ingestion pipeline bridges strategy documentation with executable code. Live at https://stephanwald.github.io/bbj-ai-strategy/.
 
 ## Core Value
 
@@ -30,14 +30,15 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - ✓ Custom favicon and navbar logo using BASIS DWC brand assets — v1.1
 - ✓ Blue brand color palette (#2563eb/#60a5fa) with matching admonition backgrounds — v1.1
 - ✓ Typography confirmed as Infima defaults (no custom fonts needed) — v1.1
+- ✓ Repo README with project description and link to live site — v1.2
+- ✓ RAG Getting Started sub-page under Chapter 6 with source-by-source ingestion approach and design rationale — v1.2
+- ✓ Python ingestion sub-project (`rag-ingestion/`) with parsers, chunking pipeline, pgvector schema, and embedding pipeline — v1.2
+- ✓ Source coverage: MadCap Flare docs, standalone PDFs, Advantage articles, Knowledge Base, DWC-Course (6 parsers) — v1.2
+- ✓ Current embedding model recommendation: Qwen3-Embedding-0.6B via Ollama (researched Jan 2026) — v1.2
 
 ### Active
 
-- [ ] Repo README with project description and link to live site
-- [ ] RAG Getting Started sub-page under Chapter 6 — concrete source-by-source ingestion approach with design rationale
-- [ ] Python ingestion sub-project (`rag-ingestion/`) with parsers, chunking pipeline, pgvector schema, and embedding pipeline
-- [ ] Source coverage: MadCap Flare docs, standalone PDFs, Advantage articles, Knowledge Base, DWC-Course
-- [ ] Current embedding model recommendation (researched for Jan 2026)
+(None — next milestone requirements TBD via `/gsd:new-milestone`)
 
 ### Out of Scope
 
@@ -46,6 +47,9 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - Production deployment of the RAG pipeline (CI/CD, hosting) — the ingestion sub-project is a starter kit, not production infrastructure
 - Mobile-optimized design beyond Docusaurus defaults — standard responsive is sufficient
 - Internationalization — English only
+- Retrieval API server — v1.2 is a batch ingestion tool, not a running service
+- Embedding fine-tuning — requires baseline retrieval quality measurement first
+- Agentic RAG features — no query routing, agent loops, or multi-step reasoning
 
 ## Context
 
@@ -55,9 +59,9 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.2 in progress. Adding RAG ingestion runbook and starter code. v1.1 shipped 2026-01-31 with all code samples corrected and BASIS brand identity applied. 2,441 lines of content across 7 chapters. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages.
-- **RAG source corpus:** 5 concrete sources identified: (1) MadCap Flare docs at documentation.basis.cloud, (2) standalone PDFs linked from docs (e.g., GUI programming guide), (3) Advantage magazine articles at basis.cloud/advantage-index/, (4) Knowledge Base at basis.cloud/knowledge-base/ (WordPress/LearnPress), (5) DWC-Course at github.com/BasisHub/DWC-Course (Docusaurus MDX + BBj samples).
-- **Flare access:** Engineers have both Flare project access (Clean XHTML export) and the live site (crawl fallback). Both paths documented.
+- **Current state:** v1.2 shipped 2026-02-01. RAG ingestion pipeline complete with 6 source parsers, generation-aware intelligence, embedding pipeline, and hybrid search. v1.1 shipped 2026-01-31 with code corrections and branding. 2,441 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
+- **RAG source corpus:** 6 sources with working parsers: (1) MadCap Flare XHTML (7,079 topics), (2) standalone PDFs (GUI programming guide), (3) Advantage magazine articles, (4) Knowledge Base (WordPress/ECKB), (5) DWC-Course (Docusaurus MDX), (6) BBj source code samples.
+- **Flare access:** Engineers have both Flare project access (raw XHTML with MadCap namespace tags) and the live site (crawl fallback). Both paths implemented as parsers.
 - **BBj code reference:** `GuideToGuiProgrammingInBBj.pdf` (project root) — authoritative reference for all BBj GUI patterns across 4 generations. Contains complete working sample programs (cust-cui.txt, cust-gui.txt, cust-bbj.txt, cust-obj.txt).
 
 ## Constraints
@@ -88,8 +92,14 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | No srcDark navbar logo variant | DWC logo has dark background with white icon; works in both modes | ✓ Good |
 | Infima default typography (no custom fonts) | Clean sans-serif matches reference project; no BASIS font spec exists | ✓ Good |
 
-| Python ingestion sub-project as mono-repo directory | Keeps scripts co-located with strategy docs until ready for CI/CD | — Pending |
-| Both Flare export and crawl ingestion paths | Engineers may or may not have Flare project access; crawl is fallback | — Pending |
+| Python ingestion sub-project as mono-repo directory | Keeps scripts co-located with strategy docs until ready for CI/CD | ✓ Good |
+| Both Flare export and crawl ingestion paths | Engineers may or may not have Flare project access; crawl is fallback | ✓ Good |
+| hatchling build backend for src-layout | Stable src-layout support vs uv_build which was experimental | ✓ Good |
+| Qwen3-Embedding-0.6B via Ollama (1024 dims) | Local inference, no API costs; 0.6B params balances quality and speed | ✓ Good |
+| Multi-signal generation tagging (path + condition + content) | Single signal insufficient for BBj's complex documentation corpus | ✓ Good |
+| Binary COPY via staging table for bulk inserts | psycopg3 COPY protocol with ON CONFLICT dedup for performance + idempotency | ✓ Good |
+| Pipeline intelligence bypass for non-Flare parsers | Non-Flare parsers pre-populate doc_type/generations; avoids Flare-specific logic | ✓ Good |
+| 400-token chunks with 50-token overlap | Heading-aware splitting preserves semantic coherence at section boundaries | ✓ Good |
 
 ---
-*Last updated: 2026-01-31 after v1.2 milestone started*
+*Last updated: 2026-02-01 after v1.2 milestone*

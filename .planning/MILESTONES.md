@@ -1,5 +1,33 @@
 # Project Milestones: BBj AI Strategy Documentation Site
 
+## v1.2 RAG Ingestion Pipeline (Shipped: 2026-02-01)
+
+**Delivered:** A Python-based RAG ingestion pipeline processing 6 BBj documentation sources (MadCap Flare, PDFs, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code) into a generation-aware pgvector database with hybrid search and quality reporting.
+
+**Phases completed:** 8-14 (15 plans total)
+
+**Key accomplishments:**
+
+- Python RAG ingestion sub-project (`rag-ingestion/`) with 5,004 lines of source code across 24 modules and 310 passing tests
+- MadCap Flare parser handling 7,079 XHTML topic files with snippet resolution, code block preservation, and condition tag extraction
+- Multi-signal generation tagger classifying documents into 5 BBj product generations (all, character, vpro5, bbj_gui, dwc) with weighted signal scoring
+- Embedding pipeline with Qwen3-Embedding-0.6B via Ollama, heading-aware chunking, and pgvector bulk storage via binary COPY
+- Five additional parsers (PDF, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code) with pipeline intelligence bypass
+- Quality reporting with DB-based chunk distributions, anomaly detection, and comprehensive developer documentation
+
+**Stats:**
+
+- 108 files created/modified
+- 5,004 lines Python source + 4,906 lines tests
+- 7 phases, 15 plans, ~30 tasks
+- 2 days (2026-01-31 → 2026-02-01)
+
+**Git range:** `feat(08-01)` → `docs(v1.2): milestone audit passed`
+
+**What's next:** v1.3 TBD — potential directions include retrieval API, search UI, CI/CD pipeline, or embedding fine-tuning.
+
+---
+
 ## v1.1 Code Corrections & Branding (Shipped: 2026-01-31)
 
 **Delivered:** Fixed all hallucinated BBj code samples across 6 chapters and applied BASIS International brand identity (favicon, logo, blue color palette) replacing Docusaurus defaults.
