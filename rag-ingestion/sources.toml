@@ -1,0 +1,112 @@
+# sources.toml -- BBj Documentation Source Configuration
+#
+# Defines all documentation sources for the RAG ingestion pipeline.
+# Each [[sources]] entry specifies a parser type, local paths (relative
+# to data_dir), generation tag, and enabled flag.
+#
+# Path resolution:
+#   data_dir is intentionally blank here for portability. At runtime the
+#   actual base directory is resolved in this order:
+#     1. DATA_DIR environment variable  (e.g. DATA_DIR=/data in Docker)
+#     2. --data-dir CLI override
+#     3. data_dir value below (if non-empty)
+#   At least one of these must be set or validation will fail.
+#
+# Disabling a source:
+#   Set  enabled = false  on any entry to skip it during ingestion.
+#   The entry remains in the file for documentation purposes.
+
+data_dir = ""
+
+# ---------------------------------------------------------------------------
+# 1. Flare -- BBj documentation site (.htm files from MadCap Flare export)
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "flare"
+parser = "flare"
+paths = ["bbjdocs"]
+generation_tag = "bbj"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 2. PDF -- GUI programming guide
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "pdf"
+parser = "pdf"
+paths = ["bbj-ai-strategy/GuideToGuiProgrammingInBBj.pdf"]
+generation_tag = "bbj_gui"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 3. MDX -- DWC tutorial (Docusaurus)
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "mdx-dwc"
+parser = "mdx"
+paths = ["bbj-dwc-tutorial/docs"]
+generation_tag = "dwc"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 4. MDX -- Beginner tutorial (Docusaurus)
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "mdx-beginner"
+parser = "mdx"
+paths = ["bbj-beginner-tutorial/docs"]
+generation_tag = "bbj"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 5. MDX -- Database modernization tutorial (Docusaurus)
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "mdx-db-modernization"
+parser = "mdx"
+paths = ["bbj-db-modernization-tutorial/docs"]
+generation_tag = "bbj"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 6. BBj Source -- sample BBj source code files
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "bbj-source"
+parser = "bbj-source"
+paths = [
+    "bbj-dwc-tutorial/samples",
+    "bbj-beginner-tutorial",
+]
+generation_tag = "auto"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 7. WordPress -- Advantage articles (URL-based, no local paths)
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "wordpress-advantage"
+parser = "wordpress-advantage"
+paths = []
+generation_tag = "bbj"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 8. WordPress -- Knowledge Base articles (URL-based, no local paths)
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "wordpress-kb"
+parser = "wordpress-kb"
+paths = []
+generation_tag = "bbj"
+enabled = true
+
+# ---------------------------------------------------------------------------
+# 9. Web Crawl -- documentation.basis.cloud (URL-based, no local paths)
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "web-crawl"
+parser = "web-crawl"
+paths = []
+generation_tag = "bbj"
+enabled = true
