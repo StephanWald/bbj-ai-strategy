@@ -15,12 +15,12 @@
 
 ## IDE Integration & Compiler Validation (Chapter 4)
 
-- [ ] **IDE-01**: New section "Compiler Validation: Ground-Truth Syntax Checking" covering bbjcpl concept, error format, generate-validate-fix loop
-- [ ] **IDE-02**: bbjcpltool proof-of-concept subsection documenting concept validated, not implementation details (no file paths, no hook scripts)
-- [ ] **IDE-03**: MCP integration note — BBj tools work in any MCP-enabled host (Claude, Cursor, VS Code), not just custom extension
-- [ ] **IDE-04**: Updated architecture diagram showing compiler validation in the completion pipeline
-- [ ] **IDE-05**: Decision callout: "Decision: Compiler Validation via bbjcpl" using existing :::info format
-- [ ] **IDE-06**: Current Status block updated to reflect bbjcpltool v1 shipped and compiler-in-the-loop validated
+- [x] **IDE-01**: New section "Compiler Validation: Ground-Truth Syntax Checking" covering bbjcpl concept, error format, generate-validate-fix loop
+- [x] **IDE-02**: bbjcpltool proof-of-concept subsection documenting concept validated, not implementation details (no file paths, no hook scripts)
+- [x] **IDE-03**: MCP integration note — BBj tools work in any MCP-enabled host (Claude, Cursor, VS Code), not just custom extension
+- [x] **IDE-04**: Updated architecture diagram showing compiler validation in the completion pipeline
+- [x] **IDE-05**: Decision callout: "Decision: Compiler Validation via bbjcpl" using existing :::info format
+- [x] **IDE-06**: Current Status block updated to reflect bbjcpltool v1 shipped and compiler-in-the-loop validated
 
 ## Documentation Chat (Chapter 5)
 
@@ -76,12 +76,12 @@
 | ARCH-08 | Phase 15 | Complete |
 | ARCH-09 | Phase 15 | Complete |
 | ARCH-10 | Phase 15 | Complete |
-| IDE-01 | Phase 16 | Pending |
-| IDE-02 | Phase 16 | Pending |
-| IDE-03 | Phase 16 | Pending |
-| IDE-04 | Phase 16 | Pending |
-| IDE-05 | Phase 16 | Pending |
-| IDE-06 | Phase 16 | Pending |
+| IDE-01 | Phase 16 | Complete |
+| IDE-02 | Phase 16 | Complete |
+| IDE-03 | Phase 16 | Complete |
+| IDE-04 | Phase 16 | Complete |
+| IDE-05 | Phase 16 | Complete |
+| IDE-06 | Phase 16 | Complete |
 | CHAT-01 | Phase 17 | Pending |
 | CHAT-02 | Phase 17 | Pending |
 | CHAT-03 | Phase 17 | Pending |
