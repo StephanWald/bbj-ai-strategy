@@ -13,7 +13,8 @@ from typing import Any
 
 import httpx
 import psycopg
-from fastapi import APIRouter, Response
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from bbj_rag.config import Settings
 
@@ -21,14 +22,20 @@ router = APIRouter()
 
 
 @router.get("/health")
-async def health(response: Response) -> dict[str, Any]:
+async def health() -> JSONResponse:
     """Check database and Ollama connectivity."""
     checks: dict[str, str] = {}
 
-    # -- Database check --
+    # -- Database check (keyword args from Settings) --
     try:
         settings = Settings()
-        conn = psycopg.connect(settings.database_url)
+        conn = psycopg.connect(
+            host=settings.db_host,
+            port=settings.db_port,
+            user=settings.db_user,
+            password=settings.db_password,
+            dbname=settings.db_name,
+        )
         conn.execute("SELECT 1")
         conn.close()
         checks["database"] = "ok"
@@ -45,8 +52,9 @@ async def health(response: Response) -> dict[str, Any]:
     except Exception as exc:
         checks["ollama"] = f"error: {exc}"
 
-    status = "healthy" if all(v == "ok" for v in checks.values()) else "degraded"
-    if status == "degraded":
-        response.status_code = 503
+    all_ok = all(v == "ok" for v in checks.values())
+    status = "healthy" if all_ok else "degraded"
+    result: dict[str, Any] = {"status": status, "checks": checks}
+    status_code = 200 if all_ok else 503
 
-    return {"status": status, "checks": checks}
+    return JSONResponse(content=result, status_code=status_code)
