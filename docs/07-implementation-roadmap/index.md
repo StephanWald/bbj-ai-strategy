@@ -79,7 +79,7 @@ This phase is already underway. The fine-tuning effort has accumulated ~10K trai
 - **Evaluation benchmark suite** -- A reproducible test harness covering BBj-specific code generation (syntax validity, generation detection, idiomatic patterns) and general code quality (to ensure the model does not lose broad programming ability during fine-tuning).
 - **Model validation for completion** -- Test the fine-tuned model specifically for the IDE completion use case: given a code prefix, does it produce valid, generation-appropriate continuations? This is the critical gate for Phase 2.
 - **GGUF export and Ollama deployment** -- Package the validated model for [self-hosted inference via Ollama](/docs/fine-tuning#hosting-via-ollama), confirming that it runs within the target hardware constraints (Q4_K_M quantization, ~4GB memory footprint).
-- **MCP tool schema alignment** -- Ensure the model's input/output formats align with the [`generate_bbj_code`](/docs/strategic-architecture#mcp-server-the-concrete-integration-layer) tool schema defined in the MCP server architecture, so the model can serve as a drop-in backend when the server is built.
+- **MCP tool schema alignment** -- Ensure the model's input/output formats align with the [`generate_bbj_code`](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) tool schema defined in the MCP server architecture, so the model can serve as a drop-in backend when the server is built.
 
 **Success criteria:**
 
@@ -104,8 +104,8 @@ This phase connects the fine-tuned model to the development workflow. The bbj-la
 - **Semantic context extraction API** -- Build a service within the language server that assembles rich context (scope information, imported types, generation hints, surrounding code) for LLM prompts.
 - **Inline completion provider** -- Implement the VS Code `InlineCompletionItemProvider` to deliver ghost text completions. The provider calls Ollama's API with semantically-enriched prompts and renders suggestions as translucent ghost text.
 - **Completion quality guardrails** -- Use the Langium parser to validate LLM suggestions before presenting them. Suggestions that fail syntax parsing are filtered out, providing a safety net against hallucinated code.
-- **Compiler validation integration** -- Supplement Langium heuristic validation with [bbjcpl ground-truth checking](/docs/ide-integration#compiler-validation) for completions that pass initial parsing. The compiler catches semantic errors (undeclared variables, type mismatches) that the parser cannot detect.
-- **MCP-ready context API** -- Design the semantic context extraction service to align with the MCP [`generate_bbj_code`](/docs/strategic-architecture#mcp-server-the-concrete-integration-layer) tool interface, enabling future MCP clients to request completions through the same pipeline.
+- **Compiler validation integration** -- Supplement Langium heuristic validation with [bbjcpl ground-truth checking](/docs/ide-integration#compiler-validation-ground-truth-syntax-checking) for completions that pass initial parsing. The compiler catches semantic errors (undeclared variables, type mismatches) that the parser cannot detect.
+- **MCP-ready context API** -- Design the semantic context extraction service to align with the MCP [`generate_bbj_code`](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) tool interface, enabling future MCP clients to request completions through the same pipeline.
 
 **Success criteria:**
 
@@ -130,7 +130,7 @@ This phase implements the second major capability described in the strategy: a d
 - **Vector store with generation-tagged chunks** -- Deploy PostgreSQL with pgvector, store embedded documentation chunks with generation metadata, and implement hybrid search (semantic + keyword) with cross-encoder reranking.
 - **Chat backend** -- Build a service that accepts user queries, retrieves relevant documentation via the RAG pipeline, assembles enriched prompts with the fine-tuned model, and streams generation-aware responses with source citations.
 - **Chat interface** -- Deploy a chat frontend (embedded in documentation site, standalone, or hybrid) that provides conversational access to BBj documentation.
-- **MCP search tool backend** -- Implement the RAG retrieval service as the backend for the [`search_bbj_knowledge`](/docs/strategic-architecture#mcp-server-the-concrete-integration-layer) MCP tool, exposing documentation search to any MCP-compatible client (IDE extensions, CLI tools, chat interfaces).
+- **MCP search tool backend** -- Implement the RAG retrieval service as the backend for the [`search_bbj_knowledge`](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) MCP tool, exposing documentation search to any MCP-compatible client (IDE extensions, CLI tools, chat interfaces).
 
 **Success criteria:**
 
@@ -155,7 +155,7 @@ Phase 4 is not about building new capabilities -- it is about making everything 
 - **Retrieval quality optimization** -- Analyze retrieval logs to identify query patterns with low relevance scores. Tune chunking strategy, embedding model, and reranking weights based on real query data.
 - **Latency optimization** -- Profile and optimize the full request path: context assembly, Ollama inference, RAG retrieval, response streaming. Target P95 latency under 1,500ms for completions and under 5 seconds for chat responses.
 - **Production deployment hardening** -- Monitoring, alerting, graceful degradation (fall back to deterministic completion if Ollama is unavailable), usage analytics, and operational runbooks.
-- **MCP server deployment** -- Package the MCP server for production use, connecting all three tool backends (code generation, knowledge search, syntax validation) through the [unified protocol](/docs/strategic-architecture#mcp-server-the-concrete-integration-layer) defined in the architecture.
+- **MCP server deployment** -- Package the MCP server for production use, connecting all three tool backends (code generation, knowledge search, syntax validation) through the [unified protocol](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) defined in the architecture.
 
 **Success criteria:**
 
@@ -211,7 +211,7 @@ For this project, the most relevant NIST AI RMF considerations are: ensuring the
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| Fine-tuned model hallucinates BBj syntax | Medium | High | Two-tier validation: Langium heuristic parsing catches structural errors before presentation; [bbjcpl compiler validation](/docs/ide-integration#compiler-validation) designed to catch semantic errors (undeclared variables, type mismatches) as ground truth -- concept proven by bbjcpltool v1, production integration planned for Phase 2; evaluation benchmarks with known-bad patterns; Copilot bridge as fallback completion source |
+| Fine-tuned model hallucinates BBj syntax | Medium | High | Two-tier validation: Langium heuristic parsing catches structural errors before presentation; [bbjcpl compiler validation](/docs/ide-integration#compiler-validation-ground-truth-syntax-checking) designed to catch semantic errors (undeclared variables, type mismatches) as ground truth -- concept proven by bbjcpltool v1, production integration planned for Phase 2; evaluation benchmarks with known-bad patterns; Copilot bridge as fallback completion source |
 | Training data insufficient for all 4 generations | Medium | Medium | Prioritize modern generations (BBj GUI + DWC) first where developer activity is highest; ~10K data points collected of an estimated 50-80K needed; expand to legacy generations iteratively based on user demand and targeted data collection |
 | Copilot ecosystem changes break bridge integration | Medium | Low | Custom LLM client via `InlineCompletionItemProvider` is the strategic path; Copilot bridge is intentionally designed as an interim solution that can be deprecated |
 | MadCap Flare content difficult to parse for RAG | Low | Medium | Clean XHTML export provides a standardized, well-structured format; pilot the ingestion pipeline with a small document subset before full corpus processing |
@@ -290,7 +290,7 @@ These baselines do not need to be precise. Directional measurements (better/wors
 - **Phase 2 (IDE Integration):** Planned. The language server provides the foundation; LLM-powered completions and compiler validation have not yet been integrated.
 - **Phase 3 (RAG + Doc Chat):** Partially complete. The RAG ingestion pipeline (v1.2) is built with 6 source parsers covering MadCap Flare docs, standalone PDFs, Advantage articles, Knowledge Base, DWC-Course, and BBj source code. The pipeline is not yet deployed against the production corpus. The documentation chat interface has not been built, though a two-path architecture (MCP access + embedded chat) is defined.
 - **Phase 4 (Refinement):** Planned. Depends on Phases 1-3 delivering functional systems for real-world testing.
-- **MCP architecture:** Defined. Three tool schemas specified ([`search_bbj_knowledge`](/docs/strategic-architecture#mcp-server-the-concrete-integration-layer), `generate_bbj_code`, `validate_bbj_syntax`) with a generate-validate-fix loop. No implementation exists yet.
+- **MCP architecture:** Defined. Three tool schemas specified ([`search_bbj_knowledge`](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer), `generate_bbj_code`, `validate_bbj_syntax`) with a generate-validate-fix loop. No implementation exists yet.
 - **Total infrastructure investment:** Modest. Estimated $2,000-5,000 one-time (primarily the training GPU) plus $50-420/month for hosting if cloud-deployed.
 :::
 
