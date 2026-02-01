@@ -25,12 +25,12 @@
 
 ### REST Retrieval API
 
-- [ ] **API-01**: `/search` endpoint accepts query string, returns ranked chunks from hybrid search (dense + BM25 + RRF)
-- [ ] **API-02**: `/search` supports `generation` filter parameter (e.g., `?generation=dwc`)
-- [ ] **API-03**: `/search` normalizes generation input (`bbj-gui` → `bbj_gui`) to match database format
-- [ ] **API-04**: Search results include `context_header` and `deprecated` fields alongside content, title, source_url, score
-- [ ] **API-05**: `/health` endpoint checks database and Ollama connectivity
-- [ ] **API-06**: `/stats` endpoint returns corpus metrics (chunk count, source distribution, generation distribution)
+- [x] **API-01**: `/search` endpoint accepts query string, returns ranked chunks from hybrid search (dense + BM25 + RRF)
+- [x] **API-02**: `/search` supports `generation` filter parameter (e.g., `?generation=dwc`)
+- [x] **API-03**: `/search` normalizes generation input (`bbj-gui` → `bbj_gui`) to match database format
+- [x] **API-04**: Search results include `context_header` and `deprecated` fields alongside content, title, source_url, score
+- [x] **API-05**: `/health` endpoint checks database and Ollama connectivity
+- [x] **API-06**: `/stats` endpoint returns corpus metrics (chunk count, source distribution, generation distribution)
 
 ### MCP Server
 
@@ -92,12 +92,12 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 | DATA-04 | Phase 21 | Complete |
 | DATA-05 | Phase 20 | Complete |
 | DATA-06 | Phase 21 | Complete |
-| API-01 | Phase 22 | Pending |
-| API-02 | Phase 22 | Pending |
-| API-03 | Phase 22 | Pending |
-| API-04 | Phase 22 | Pending |
-| API-05 | Phase 22 | Pending |
-| API-06 | Phase 22 | Pending |
+| API-01 | Phase 22 | Complete |
+| API-02 | Phase 22 | Complete |
+| API-03 | Phase 22 | Complete |
+| API-04 | Phase 22 | Complete |
+| API-05 | Phase 22 | Complete |
+| API-06 | Phase 22 | Complete |
 | MCP-01 | Phase 23 | Pending |
 | MCP-02 | Phase 23 | Pending |
 | MCP-03 | Phase 23 | Pending |
@@ -112,4 +112,4 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-01 after phase 21 completion*
+*Last updated: 2026-02-01 after phase 22 completion*
