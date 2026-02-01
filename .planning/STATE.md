@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 12 complete (Embedding Pipeline)
+**Current focus:** v1.2 -- Phase 13 in progress (Additional Parsers)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
-Phase: 12 of 14 (Embedding Pipeline)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-01 -- Completed 12-02-PLAN.md (Search Validation)
+Phase: 13 of 14 (Additional Parsers)
+Plan: 2 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-01 -- Completed 13-02-PLAN.md (WordPress Parsers)
 
-Progress: ██████████░░░░ 10/14 (71%)
+Progress: ███████████░░░ 11/14 (79%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10 (v1.2)
+- Total plans completed: 11 (v1.2)
 - Average duration: 5min
-- Total execution time: 54min
+- Total execution time: 59min
 
 **By Phase:**
 
@@ -33,6 +33,7 @@ Progress: ██████████░░░░ 10/14 (71%)
 | 10-flare-parser | 3/3 | 23min | 8min |
 | 11-bbj-intelligence | 2/2 | 8min | 4min |
 | 12-embedding-pipeline | 2/2 | 12min | 6min |
+| 13-additional-parsers | 1/3 | 5min | 5min |
 
 *Updated after each plan completion*
 
@@ -86,6 +87,11 @@ Recent decisions affecting current work:
 - search_validation pytest marker separates DB-requiring integration tests from unit tests
 - Default pytest addopts excludes search_validation so CI runs without database
 - validate CLI delegates to pytest subprocess for full reporting
+- Reuse _html_to_markdown from web_crawl module for WordPress parsers (no reimplementation)
+- Separate WordPress chrome selectors from Flare chrome selectors (different boilerplate patterns)
+- Strip all media tags (img, video, audio, iframe, figure, svg) for text-only WordPress content
+- Advantage doc_type="article", KB doc_type="concept"
+- Sitemap XML fallback when index page HTML parsing finds zero links
 
 ### Pending Todos
 
@@ -97,7 +103,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T07:27Z
-Stopped at: Completed 12-02-PLAN.md (Search Validation)
+Last session: 2026-02-01T08:24Z
+Stopped at: Completed 13-02-PLAN.md (WordPress Parsers)
 Resume file: None
-Next action: Begin Phase 13 planning.
+Next action: Execute 13-01-PLAN.md or 13-03-PLAN.md (remaining Phase 13 plans).
