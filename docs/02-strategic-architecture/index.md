@@ -7,15 +7,17 @@ description: "A unified AI infrastructure -- one shared model and RAG pipeline p
 # Strategic Architecture
 
 :::tip[TL;DR]
-Instead of building three separate AI systems, the BBj strategy centers on unified
-infrastructure: a single fine-tuned model and shared RAG pipeline that powers IDE
-completion, documentation chat, and future capabilities from one source of truth.
-Build it once, share it everywhere, maintain it in one place.
+The BBj AI strategy centers on unified infrastructure: a single fine-tuned model,
+shared RAG pipeline, and an MCP server that exposes three tools --
+`search_bbj_knowledge`, `generate_bbj_code`, and `validate_bbj_syntax` -- to any
+AI-powered client. The generate-validate-fix loop uses the BBj compiler as ground
+truth, eliminating hallucinated syntax before code ever reaches a developer. Build
+it once, share it everywhere, maintain it in one place.
 :::
 
 The [previous chapter](/docs/bbj-challenge) established that BBj is invisible to generic LLMs and that a fine-tuned model is unavoidable. This chapter addresses the next question: **how should that model -- and the infrastructure around it -- be organized?**
 
-The answer is deceptively simple. Every AI-powered BBj tool needs the same two things: a model that understands BBj syntax across all four generations, and a retrieval layer that can surface relevant documentation and code examples. Rather than letting each tool reinvent these capabilities independently, the strategy builds them once as shared infrastructure and exposes them to any consumer application through standard APIs.
+The answer is deceptively simple. Every AI-powered BBj tool needs the same two things: a model that understands BBj syntax across all four generations, and a retrieval layer that can surface relevant documentation and code examples. Rather than letting each tool reinvent these capabilities independently, the strategy builds them once as shared infrastructure and exposes them to any consumer application through standard APIs. This chapter also defines the MCP server that makes this architecture concrete -- three tools that any AI-powered client can consume without custom integration code.
 
 This is the architectural decision that makes the entire strategy economically viable. Without it, each new BBj AI capability would require its own model training, its own document pipeline, and its own maintenance burden.
 
@@ -45,34 +47,47 @@ customers need data privacy options).
 
 ## Architecture Overview
 
-The system is organized into two layers: a **shared foundation** that encapsulates all BBj AI knowledge, and an **application layer** where consumer tools access that knowledge through standard interfaces.
+The system is organized into two layers: a **shared foundation** that encapsulates all BBj AI knowledge, and an **application layer** where consumer tools access that knowledge through an MCP server that mediates all interactions.
 
 ```mermaid
 graph TB
-    subgraph APPS ["Application Layer"]
+    subgraph CLIENTS ["MCP Clients (Application Layer)"]
         direction LR
-        IDE["<b>VSCode Extension</b><br/>Ghost text completion<br/>Popup symbols via Langium<br/>Generation-aware suggestions"]
-        CHAT["<b>Documentation Chat</b><br/>Conversational Q&A<br/>Generation-aware responses<br/>Citation-backed answers"]
-        FUTURE["<b>Future Capabilities</b><br/>CLI assistant<br/>Migration tooling<br/>Code review"]
+        IDE["<b>IDE / Editor</b><br/>VS Code, Cursor, etc.<br/>Ghost text completion"]
+        CHAT["<b>Chat Interface</b><br/>Claude, custom chat<br/>Documentation Q&A"]
+        FUTURE["<b>Future Clients</b><br/>CLI tools, CI/CD<br/>Migration assistants"]
     end
 
-    subgraph FOUNDATION ["Shared Foundation"]
+    subgraph SERVER ["BBj MCP Server"]
         direction LR
-        MODEL["<b>Fine-Tuned BBj Model</b><br/>Served via Ollama<br/>OpenAI-compatible API<br/>All 4 generations"]
-        RAG["<b>RAG Database</b><br/>Multi-generation docs<br/>Code examples<br/>API references"]
+        SEARCH["<b>search_bbj_knowledge</b><br/>RAG retrieval with<br/>generation filtering"]
+        GENERATE["<b>generate_bbj_code</b><br/>Fine-tuned model<br/>code generation"]
+        VALIDATE["<b>validate_bbj_syntax</b><br/>Compiler validation<br/>ground-truth checking"]
     end
 
-    IDE --> MODEL
-    IDE --> RAG
-    CHAT --> MODEL
-    CHAT --> RAG
-    FUTURE --> MODEL
-    FUTURE --> RAG
+    subgraph BACKENDS ["Backend Services (Shared Foundation)"]
+        direction LR
+        RAG["<b>RAG Database</b><br/>pgvector + hybrid search<br/>Generation-tagged docs"]
+        MODEL["<b>Fine-Tuned Model</b><br/>Qwen2.5-Coder via Ollama<br/>OpenAI-compatible API"]
+        COMPILER["<b>BBj Compiler</b><br/>bbjcpl -N<br/>Syntax validation"]
+    end
+
+    IDE --> SERVER
+    CHAT --> SERVER
+    FUTURE --> SERVER
+
+    SEARCH --> RAG
+    GENERATE --> MODEL
+    VALIDATE --> COMPILER
+
+    style RAG fill:#e8f4e8,stroke:#2d8a2d
+    style MODEL fill:#e8f4e8,stroke:#2d8a2d
+    style COMPILER fill:#e8f4e8,stroke:#2d8a2d
 ```
 
-Every application in the top layer connects to the same model and the same RAG database. When the model improves through additional fine-tuning, every consumer benefits immediately. When new documentation is indexed into the RAG pipeline, every consumer can surface it in its next response.
+Every application in the top layer connects through the MCP server, which exposes three tools that abstract the backend complexity. When the model improves through additional fine-tuning, every consumer benefits immediately. When new documentation is indexed into the RAG pipeline, every consumer can surface it in its next query.
 
-The Ollama server exposes an OpenAI-compatible API, which means any tool that speaks the OpenAI protocol -- whether it is a custom VSCode extension, a chat backend, or a third-party integration -- can consume the fine-tuned BBj model without custom client code.
+The MCP server provides standard tool discovery and schema-based invocation, which means any MCP-compatible host -- whether it is a VS Code extension, Claude Desktop, Cursor, or a custom chat backend -- can consume all three BBj AI capabilities without custom integration code.
 
 ## The Shared Foundation
 
