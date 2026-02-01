@@ -6,11 +6,16 @@ idempotent chunk insertion with ON CONFLICT content_hash deduplication.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import psycopg
 from pgvector.psycopg import register_vector  # type: ignore[import-untyped]
 from psycopg.types.json import Json
 
 from bbj_rag.models import Chunk
+
+if TYPE_CHECKING:
+    from bbj_rag.config import Settings
 
 # SQL for idempotent chunk insert. ON CONFLICT (content_hash) DO NOTHING
 # skips duplicates, allowing safe re-ingestion of the same content.
@@ -25,15 +30,52 @@ RETURNING id
 """
 
 
-def get_connection(database_url: str) -> psycopg.Connection[tuple[object, ...]]:
+def get_connection(
+    database_url: str | None = None,
+    *,
+    host: str = "localhost",
+    port: int = 5432,
+    user: str = "postgres",
+    password: str = "postgres",
+    dbname: str = "bbj_rag",
+) -> psycopg.Connection[tuple[object, ...]]:
     """Open a psycopg connection with pgvector types registered.
+
+    Accepts either a connection URL string (backward compatible) or
+    individual keyword arguments for host/port/user/password/dbname.
 
     The caller owns the connection lifecycle -- use as a context manager
     or call close() explicitly.
     """
-    conn: psycopg.Connection[tuple[object, ...]] = psycopg.connect(database_url)
+    if database_url is not None:
+        conn: psycopg.Connection[tuple[object, ...]] = psycopg.connect(database_url)
+    else:
+        conn = psycopg.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            dbname=dbname,
+        )
     register_vector(conn)
     return conn
+
+
+def get_connection_from_settings(
+    settings: Settings,
+) -> psycopg.Connection[tuple[object, ...]]:
+    """Open a connection using fields from a Settings instance.
+
+    Convenience wrapper that extracts DB credential fields from Settings
+    and passes them as keyword arguments to get_connection.
+    """
+    return get_connection(
+        host=settings.db_host,
+        port=settings.db_port,
+        user=settings.db_user,
+        password=settings.db_password,
+        dbname=settings.db_name,
+    )
 
 
 def _chunk_to_params(chunk: Chunk) -> tuple[object, ...]:
