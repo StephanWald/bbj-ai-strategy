@@ -107,12 +107,12 @@ Plans:
   3. WordPress/LearnPress parser extracts Knowledge Base content (basis.cloud/knowledge-base/) with lesson structure preserved
   4. Docusaurus MDX parser extracts content from DWC-Course repository with frontmatter metadata and JSX components stripped
   5. BBj source code parser processes .bbj/.txt sample files and identifies them as code examples with generation metadata
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 13-01: Implement PDF parser (pymupdf4llm) and BBj source code parser
-- [ ] 13-02: Implement WordPress parsers (Advantage + Knowledge Base) via REST API or Crawl4AI
-- [ ] 13-03: Implement Docusaurus MDX parser for DWC-Course
+- [ ] 13-01-PLAN.md -- PDF parser (pymupdf4llm) and BBj source code parser with unit tests
+- [ ] 13-02-PLAN.md -- WordPress parsers (Advantage + Knowledge Base) via httpx + BeautifulSoup web crawl
+- [ ] 13-03-PLAN.md -- Docusaurus MDX parser, pipeline integration, CLI expansion for all sources
 
 ### Phase 14: Documentation & Quality
 **Goal**: The pipeline is documented for engineers to set up and run, the Getting Started page connects strategy docs to actual code, and ingestion quality is measurable
