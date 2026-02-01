@@ -1,0 +1,13 @@
+# Docker runtime data
+.env
+pgdata/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+dist/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/

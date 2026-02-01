@@ -1,0 +1,55 @@
+# BBJ RAG -- Docker Compose orchestration
+# Services: pgvector database + Python FastAPI app
+#
+# Usage:
+#   cp .env.example .env   # edit credentials as needed
+#   docker compose up -d
+#   docker compose logs -f
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.0-pg17
+    restart: unless-stopped
+    # Minimum for HNSW index builds; increase to 512mb+ for larger corpora
+    shm_size: 256mb
+    environment:
+      POSTGRES_USER: ${BBJ_RAG_DB_USER:-bbj}
+      POSTGRES_PASSWORD: ${BBJ_RAG_DB_PASSWORD:?BBJ_RAG_DB_PASSWORD must be set}
+      POSTGRES_DB: ${BBJ_RAG_DB_NAME:-bbj_rag}
+    ports:
+      - "${DB_PORT_EXTERNAL:-10432}:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BBJ_RAG_DB_USER:-bbj} -d ${BBJ_RAG_DB_NAME:-bbj_rag}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      - BBJ_RAG_DB_HOST=db
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    ports:
+      - "${APP_PORT_EXTERNAL:-10800}:8000"
+    volumes:
+      - ${INGESTION_DATA_PATH:-./_data}:/data:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
