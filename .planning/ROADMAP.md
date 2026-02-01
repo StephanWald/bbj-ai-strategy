@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS
 **Phases:** 20-24
-**Total Plans:** 8
+**Total Plans:** 10
 
 ## Overview
 
@@ -58,7 +58,7 @@ Plans:
 **Goal**: A FastAPI server inside the Docker app container serves hybrid search over the ingested corpus with health and stats endpoints
 **Depends on**: Phase 21 (populated database with real corpus)
 **Requirements**: API-01, API-02, API-03, API-04, API-05, API-06
-**Plans**: TBD
+**Plans**: 2 plans
 
 **Success Criteria** (what must be TRUE):
 1. `curl localhost:8000/search -d '{"query": "BBjGrid"}'` returns ranked documentation chunks with content, title, source_url, and score
@@ -67,8 +67,8 @@ Plans:
 4. `/stats` returns chunk counts broken down by source and generation
 
 Plans:
-- [ ] 22-01: FastAPI app with /search endpoint + connection pooling + embedder
-- [ ] 22-02: Generation filtering + /health + /stats endpoints + response models
+- [ ] 22-01-PLAN.md -- Async search infrastructure + /search endpoint + connection pooling + embedder warm-up
+- [ ] 22-02-PLAN.md -- /stats endpoint + generation filtering normalization + /health pool-based readiness
 
 ### Phase 23: MCP Server
 
@@ -147,4 +147,4 @@ Plans:
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-01 (Phase 21 complete)_
+_Last updated: 2026-02-01 (Phase 22 planned)_
