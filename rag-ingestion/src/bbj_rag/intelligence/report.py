@@ -127,7 +127,10 @@ def _query_report_data(
                     WHEN source_url LIKE '%%basis.cloud/knowledge%%' THEN 'kb'
                     WHEN source_url LIKE 'pdf://%%' THEN 'pdf'
                     WHEN source_url LIKE 'file://%%' THEN 'bbj-source'
-                    WHEN source_url LIKE 'mdx://%%' THEN 'mdx'
+                    WHEN source_url LIKE 'dwc-course://%%' THEN 'mdx'
+                    WHEN source_url LIKE 'mdx-%%://%%' THEN 'mdx'
+                    WHEN source_url LIKE '%%documentation.basis.cloud%%'
+                        THEN 'web-crawl'
                     ELSE 'unknown'
                 END AS source,
                 COUNT(*) AS cnt
@@ -177,7 +180,15 @@ def _check_anomalies(
     warnings: list[str] = []
 
     # Empty expected sources
-    expected_sources = {"flare", "advantage", "kb", "pdf", "mdx", "bbj-source"}
+    expected_sources = {
+        "flare",
+        "advantage",
+        "kb",
+        "pdf",
+        "mdx",
+        "bbj-source",
+        "web-crawl",
+    }
     for src in sorted(expected_sources):
         if by_source.get(src, 0) == 0:
             warnings.append(f'No chunks from source "{src}" -- verify configuration')

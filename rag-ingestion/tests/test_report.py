@@ -23,14 +23,15 @@ class TestCheckAnomalies:
         by_doc_type: dict[str, int] = {"concept": 100}
         warnings = _check_anomalies(by_source, by_generation, by_doc_type, 100)
 
-        # Should warn about missing: advantage, bbj-source, kb, mdx, pdf
+        # Should warn about missing: advantage, bbj-source, kb, mdx, pdf, web-crawl
         missing = [w for w in warnings if "No chunks from source" in w]
-        assert len(missing) == 5
+        assert len(missing) == 6
         assert any('"advantage"' in w for w in missing)
         assert any('"kb"' in w for w in missing)
         assert any('"pdf"' in w for w in missing)
         assert any('"mdx"' in w for w in missing)
         assert any('"bbj-source"' in w for w in missing)
+        assert any('"web-crawl"' in w for w in missing)
 
     def test_low_counts_warns(self):
         """Sources with fewer than 10 chunks generate warnings."""
@@ -87,8 +88,9 @@ class TestCheckAnomalies:
             "pdf": 30,
             "mdx": 20,
             "bbj-source": 10,
+            "web-crawl": 30,
         }
-        by_generation: dict[str, int] = {"all": 360}
+        by_generation: dict[str, int] = {"all": 390}
         by_doc_type = {
             "api-reference": 100,
             "concept": 80,
@@ -100,7 +102,7 @@ class TestCheckAnomalies:
             "article": 30,
             "tutorial": 30,
         }
-        warnings = _check_anomalies(by_source, by_generation, by_doc_type, 360)
+        warnings = _check_anomalies(by_source, by_generation, by_doc_type, 390)
 
         unknown = [w for w in warnings if "Unknown doc_type" in w]
         assert len(unknown) == 0
@@ -125,6 +127,7 @@ class TestCheckAnomalies:
             "pdf": 30,
             "mdx": 20,
             "bbj-source": 15,
+            "web-crawl": 40,
         }
         by_generation = {"all": 200, "bbj_gui": 100, "dwc": 65}
         by_doc_type = {
@@ -135,7 +138,7 @@ class TestCheckAnomalies:
             "article": 50,
             "tutorial": 45,
         }
-        total = 365
+        total = 405
         warnings = _check_anomalies(by_source, by_generation, by_doc_type, total)
 
         assert warnings == []
