@@ -94,11 +94,11 @@ Plans:
   2. Chapter 5 sequence diagram shows MCP tool calls in the chat flow, replacing or augmenting the existing diagram
   3. Chapter 3 mentions that the fine-tuned model is consumed via MCP `generate_bbj_code` tool and cross-references Chapter 2
   4. Chapter 6 mentions that retrieval is exposed via MCP `search_bbj_knowledge` tool, cross-references Chapter 2, and status reflects v1.2 shipped pipeline
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 17-01: TBD
-- [ ] 17-02: TBD
+- [ ] 17-01-PLAN.md — Restructure Chapter 5 with two-path framing (MCP + chat), unified sequence diagram, decision callout, updated status
+- [ ] 17-02-PLAN.md — Add MCP Integration subsections to Chapters 3 and 6, update Chapter 6 status block for v1.2
 
 ### Phase 18: Implementation Roadmap
 **Goal**: Chapter 7 reflects the current state of the project -- v1.2 accomplishments incorporated, MCP server deliverables woven into phases, compiler validation recognized as hallucination mitigation
