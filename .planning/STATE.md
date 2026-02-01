@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** A running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via REST API and MCP server.
-**Current focus:** Phase 22 -- REST Retrieval API (next)
+**Current focus:** Phase 22 -- REST Retrieval API (in progress)
 
 ## Current Position
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
 Phase: 22 of 24 (REST Retrieval API)
-Plan: 0 of 2 in current phase
-Status: Phase 21 complete, Phase 22 not started
-Last activity: 2026-02-01 -- Phase 21 verified and complete
+Plan: 1 of 2 in current phase
+Status: In progress -- Plan 22-01 complete, Plan 22-02 next
+Last activity: 2026-02-01 -- Completed 22-01-PLAN.md (search endpoint + pool)
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 47%
 
 ## Performance Metrics
 
@@ -25,7 +25,7 @@ Progress: [████░░░░░░] 40%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 5 phases, 8 plans (RAG deployment -- in progress)
-- **Total: 24 phases, 53 plans (49 complete)**
+- **Total: 24 phases, 53 plans (50 complete)**
 
 ## Accumulated Context
 
@@ -50,6 +50,7 @@ Recent decisions affecting current work:
 - Sequential execution default for bbj-ingest-all (parallel deferred)
 - Fresh DB connection per source with try/finally for isolation
 - Resume state as .ingestion-state.json file in working directory
+- Annotated[T, Depends()] pattern for FastAPI DI (ruff B008 compliance)
 
 ### Pending Todos
 
@@ -64,6 +65,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Phase 21 verified and complete (code deliverables + verification)
+Stopped at: Completed 22-01-PLAN.md (search endpoint + async pool)
 Resume file: None
-Next action: `/gsd:discuss-phase 22` or `/gsd:plan-phase 22`
+Next action: `/gsd:execute-phase 22-02` (tests + error handling)
