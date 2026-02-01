@@ -40,3 +40,11 @@ class SearchResponse(BaseModel):
     query: str
     results: list[SearchResultItem]
     count: int
+
+
+class StatsResponse(BaseModel):
+    """Corpus statistics: total chunks, breakdowns by source and generation."""
+
+    total_chunks: int
+    by_source: dict[str, int]
+    by_generation: dict[str, int]
