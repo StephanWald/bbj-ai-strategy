@@ -248,7 +248,7 @@ class TestMdxParsing:
         assert docs[0].doc_type == "tutorial"
 
     def test_mdx_parser_context_header(self, tmp_path: Path):
-        """Context header includes 'DWC Course > chapter > title'."""
+        """Context header includes 'Dwc Course > chapter > title'."""
         _write_file(
             tmp_path,
             "getting-started/setup.md",
@@ -264,7 +264,29 @@ class TestMdxParsing:
         docs = list(parser.parse())
 
         assert len(docs) == 1
-        assert docs[0].context_header == "DWC Course > Getting Started > Setup Guide"
+        assert docs[0].context_header == "Dwc Course > Getting Started > Setup Guide"
+
+    def test_mdx_parser_custom_prefix(self, tmp_path: Path):
+        """Custom source_prefix controls source_url, metadata, and header."""
+        _write_file(
+            tmp_path,
+            "chapter/lesson.md",
+            textwrap.dedent("""\
+                ---
+                title: My Lesson
+                ---
+
+                Content here.
+            """),
+        )
+        parser = MdxParser(docs_dir=tmp_path, source_prefix="mdx-beginner")
+        docs = list(parser.parse())
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc.source_url == "mdx-beginner://chapter/lesson.md"
+        assert doc.metadata["source"] == "mdx_beginner"
+        assert doc.context_header == "Mdx Beginner > Chapter > My Lesson"
 
     def test_mdx_parser_skips_empty_files(self, tmp_path: Path):
         """Files that are empty after JSX stripping are skipped."""

@@ -1,11 +1,13 @@
-"""Docusaurus MDX parser for DWC-Course content.
+"""Docusaurus MDX parser for tutorial content.
 
 Extracts ``Document`` objects from ``.md`` and ``.mdx`` files in a
 Docusaurus-style docs directory.  YAML frontmatter is parsed for
 metadata and JSX/import statements are stripped, leaving clean
 Markdown content suitable for chunking and embedding.
 
-All DWC-Course content is uniformly tagged with the ``dwc`` generation.
+Supports multiple tutorial directories via the ``source_prefix``
+parameter which controls the ``source_url`` prefix, context header
+label, and metadata ``source`` value for each parser instance.
 """
 
 from __future__ import annotations
@@ -79,17 +81,35 @@ class MdxParser:
     Recursively scans ``docs_dir`` for ``.md`` and ``.mdx`` files, parses
     YAML frontmatter, strips JSX, and yields one ``Document`` per file.
 
-    All documents are tagged with generation ``["dwc"]`` and
-    doc_type ``"tutorial"`` since DWC-Course is tutorial content.
+    The ``source_prefix`` controls the ``source_url`` namespace, context
+    header label, and metadata ``source`` value.  Defaults to
+    ``"dwc-course"`` for backward compatibility with the original
+    DWC-Course tutorial ingestion.
 
     Implements the ``DocumentParser`` protocol.
 
     Args:
         docs_dir: Root directory of the Docusaurus docs folder.
+        source_prefix: URL-scheme prefix for ``source_url`` values and
+            basis for the human-readable context header label.
     """
 
-    def __init__(self, docs_dir: Path) -> None:
+    def __init__(
+        self,
+        docs_dir: Path,
+        source_prefix: str = "dwc-course",
+    ) -> None:
         self._docs_dir = docs_dir
+        self._source_prefix = source_prefix
+
+    @property
+    def _prefix_label(self) -> str:
+        """Human-readable label derived from the source prefix.
+
+        ``"dwc-course"`` becomes ``"Dwc Course"``,
+        ``"mdx-beginner"`` becomes ``"Mdx Beginner"``, etc.
+        """
+        return self._source_prefix.replace("-", " ").replace("_", " ").title()
 
     def parse(self) -> Iterator[Document]:
         """Yield one ``Document`` per valid MDX/Markdown file."""
@@ -131,21 +151,23 @@ class MdxParser:
             relative_path = path.relative_to(self._docs_dir)
 
             # Derive chapter from parent directory name.
+            label = self._prefix_label
             chapter_dir = relative_path.parent.name if relative_path.parent.name else ""
             if chapter_dir:
                 chapter_label = chapter_dir.replace("-", " ").replace("_", " ").title()
-                context_header = f"DWC Course > {chapter_label} > {title}"
+                context_header = f"{label} > {chapter_label} > {title}"
             else:
-                context_header = f"DWC Course > {title}"
+                context_header = f"{label} > {title}"
 
             # Build metadata.
-            metadata: dict[str, str] = {"source": "dwc_course"}
+            source_meta = self._source_prefix.replace("-", "_")
+            metadata: dict[str, str] = {"source": source_meta}
             sidebar_position = post.metadata.get("sidebar_position")
             if sidebar_position is not None:
                 metadata["sidebar_position"] = str(sidebar_position)
 
             yield Document(
-                source_url=f"dwc-course://{relative_path}",
+                source_url=f"{self._source_prefix}://{relative_path}",
                 title=title,
                 doc_type="tutorial",
                 content=cleaned,
