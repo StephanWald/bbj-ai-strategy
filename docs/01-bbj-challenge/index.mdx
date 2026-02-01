@@ -176,7 +176,7 @@ CLOSE (1)
 custId$ = ctrl(sysgui,102,0)
 open (1)"customers.dat"
 read (1,key=custId$,err=*next)name$,balance
-ctrl(sysgui,105,0)=name$
+print (sysgui)'text'(105,name$)
 close (1)
 ```
 
