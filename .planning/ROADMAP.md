@@ -8,7 +8,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 
 - v1.0 Documentation Site (Phases 1-5) -- shipped 2026-01-31
 - v1.1 Code Corrections & Branding (Phases 6-7) -- shipped 2026-01-31
-- **v1.2 RAG Ingestion Pipeline (Phases 8-14) -- in progress**
+- **v1.2 RAG Ingestion Pipeline (Phases 8-14) -- shipped 2026-02-01**
 
 ## Phases
 
@@ -18,7 +18,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 - [x] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
 - [x] **Phase 12: Embedding Pipeline** - Embedding model, pgvector storage, hybrid search validation (end-to-end for Flare)
 - [x] **Phase 13: Additional Parsers** - PDF, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code
-- [ ] **Phase 14: Documentation & Quality** - Getting Started page, sub-project README, ingestion quality reports
+- [x] **Phase 14: Documentation & Quality** - Getting Started page, sub-project README, ingestion quality reports
 
 ## Phase Details
 
@@ -126,8 +126,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 14-01-PLAN.md -- Getting Started sub-page under Chapter 6 with pipeline diagram, source coverage, data model snippets, and GitHub code links
-- [ ] 14-02-PLAN.md -- Quality report CLI command, post-ingest auto-report, anomaly warnings, and comprehensive rag-ingestion README
+- [x] 14-01-PLAN.md -- Getting Started sub-page under Chapter 6 with pipeline diagram, source coverage, data model snippets, and GitHub code links
+- [x] 14-02-PLAN.md -- Quality report CLI command, post-ingest auto-report, anomaly warnings, and comprehensive rag-ingestion README
 
 ## Coverage
 
@@ -172,7 +172,7 @@ Plans:
 | 11. BBj Intelligence | v1.2 | 2/2 | Complete | 2026-01-31 |
 | 12. Embedding Pipeline | v1.2 | 2/2 | Complete | 2026-02-01 |
 | 13. Additional Parsers | v1.2 | 3/3 | Complete | 2026-02-01 |
-| 14. Documentation & Quality | v1.2 | 0/2 | Not started | - |
+| 14. Documentation & Quality | v1.2 | 2/2 | Complete | 2026-02-01 |
 
 ---
 

@@ -8,8 +8,8 @@
 ### Documentation
 
 - [x] **DOC-01**: Repo README rewritten with project description, live site link, and tech stack summary
-- [ ] **DOC-02**: RAG Getting Started sub-page under Chapter 6 with source-by-source ingestion approach and design rationale
-- [ ] **DOC-03**: Getting Started page links to actual code files in `rag-ingestion/` via GitHub URLs
+- [x] **DOC-02**: RAG Getting Started sub-page under Chapter 6 with source-by-source ingestion approach and design rationale
+- [x] **DOC-03**: Getting Started page links to actual code files in `rag-ingestion/` via GitHub URLs
 
 ### Infrastructure
 
@@ -44,8 +44,8 @@
 
 ### Quality
 
-- [ ] **QUAL-01**: Post-ingestion summary report (chunk counts per source, per generation, per doc type)
-- [ ] **QUAL-02**: rag-ingestion/README.md with setup instructions, prerequisites, and usage guide
+- [x] **QUAL-01**: Post-ingestion summary report (chunk counts per source, per generation, per doc type)
+- [x] **QUAL-02**: rag-ingestion/README.md with setup instructions, prerequisites, and usage guide
 
 ## Future Requirements
 
@@ -97,15 +97,15 @@
 | EMBED-01 | Phase 12 | Complete |
 | EMBED-02 | Phase 12 | Complete |
 | EMBED-03 | Phase 12 | Complete |
-| PARSE-04 | Phase 13 | Pending |
-| PARSE-05 | Phase 13 | Pending |
-| PARSE-06 | Phase 13 | Pending |
-| PARSE-07 | Phase 13 | Pending |
-| PARSE-08 | Phase 13 | Pending |
-| DOC-02 | Phase 14 | Pending |
-| DOC-03 | Phase 14 | Pending |
-| QUAL-01 | Phase 14 | Pending |
-| QUAL-02 | Phase 14 | Pending |
+| PARSE-04 | Phase 13 | Complete |
+| PARSE-05 | Phase 13 | Complete |
+| PARSE-06 | Phase 13 | Complete |
+| PARSE-07 | Phase 13 | Complete |
+| PARSE-08 | Phase 13 | Complete |
+| DOC-02 | Phase 14 | Complete |
+| DOC-03 | Phase 14 | Complete |
+| QUAL-01 | Phase 14 | Complete |
+| QUAL-02 | Phase 14 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 24 total
@@ -114,4 +114,4 @@
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after roadmap creation (all 24 requirements mapped to Phases 8-14)*
+*Last updated: 2026-02-01 after Phase 14 completion (all 24 requirements complete)*
