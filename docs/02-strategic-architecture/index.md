@@ -153,6 +153,86 @@ sequenceDiagram
 
 This flow is identical regardless of whether the consumer is the VSCode extension completing code, the documentation chat answering a question, or a future CLI tool suggesting fixes. The shared foundation handles the BBj-specific intelligence; the consumer apps handle their domain-specific UX.
 
+## The MCP Server: Concrete Integration Layer
+
+The architecture overview above describes *what* the shared foundation provides. The [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) defines *how* applications access it. MCP is a standard protocol for connecting AI applications to external tools -- it provides standard tool discovery, schema-based invocation, and any-client compatibility. Rather than building custom REST endpoints or editor-specific plugin APIs, the BBj strategy exposes all AI capabilities through a single MCP server that any MCP-compatible host can consume.
+
+The BBj MCP server defines three tools. Each tool maps to one component of the shared foundation and serves a distinct role in the AI-assisted development workflow.
+
+### search_bbj_knowledge
+
+The knowledge search tool connects to the RAG database (pgvector with hybrid search) and returns ranked documentation and code examples filtered by BBj generation. When a developer asks about creating a window, the tool retrieves generation-appropriate API references -- DWC patterns for modern code, Visual PRO/5 mnemonics for legacy maintenance. Every result includes source citations so the consuming application can link back to official documentation.
+
+```json
+{
+  "name": "search_bbj_knowledge",
+  "description": "Search BBj documentation and code examples with generation-aware filtering. Returns ranked results from the RAG pipeline with source citations.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "query": { "type": "string", "description": "Natural language search query" },
+      "generation": { "type": "string", "enum": ["all", "character", "vpro5", "bbj-gui", "dwc"], "description": "Filter results by BBj generation. Omit for cross-generation search." },
+      "limit": { "type": "integer", "default": 5, "description": "Maximum number of results to return" }
+    },
+    "required": ["query"]
+  }
+}
+```
+
+### generate_bbj_code
+
+The code generation tool sends enriched prompts to the fine-tuned model (Qwen2.5-Coder-7B via Ollama). It accepts a natural language description, a target BBj generation, and optional surrounding code context. The tool assembles RAG-retrieved documentation into the prompt automatically, so the model always has relevant API references and examples available when generating code.
+
+```json
+{
+  "name": "generate_bbj_code",
+  "description": "Generate BBj code using the fine-tuned model with RAG-enriched context. Produces generation-appropriate syntax based on the target BBj generation.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "prompt": { "type": "string", "description": "Natural language description of the code to generate" },
+      "generation": { "type": "string", "enum": ["character", "vpro5", "bbj-gui", "dwc"], "description": "Target BBj generation for the generated code" },
+      "context": { "type": "string", "description": "Surrounding code or additional context for more accurate generation" },
+      "max_tokens": { "type": "integer", "default": 512, "description": "Maximum tokens in the generated response" }
+    },
+    "required": ["prompt", "generation"]
+  }
+}
+```
+
+### validate_bbj_syntax
+
+The syntax validation tool runs generated code through the BBj compiler (`bbjcpl -N`) for ground-truth syntax checking. This is not heuristic analysis and not LLM-based review -- it is the same compiler that would reject the code in production. The tool returns pass/fail with the compiler's exact error messages, enabling a generate-validate-fix loop where compiler errors feed back into the generation tool for correction.
+
+```json
+{
+  "name": "validate_bbj_syntax",
+  "description": "Validate BBj code syntax using the BBj compiler (bbjcpl). Returns ground-truth validation results — not heuristic, not LLM-based.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "code": { "type": "string", "description": "BBj source code to validate" },
+      "classpath": { "type": "string", "description": "Optional classpath for resolving external dependencies" }
+    },
+    "required": ["code"]
+  }
+}
+```
+
+### Organizational Precedent
+
+BASIS already ships a [webforJ MCP server](https://mcp.webforj.com/) that exposes knowledge search, project scaffolding, and theme creation tools for the webforJ framework. webforJ needs only knowledge search because Java is well-understood by LLMs -- the model already knows the language. The BBj MCP server follows the same organizational approach but adds code generation and compiler validation because LLMs do *not* understand BBj. This is extending a proven pattern, not an experiment.
+
+:::info[Decision: MCP as the Unified Integration Protocol]
+**Choice:** Expose all BBj AI capabilities (RAG search, code generation, compiler validation) through a single MCP server that any MCP-compatible client can consume.
+
+**Rationale:** MCP provides a standard protocol for connecting AI applications to external tools. Rather than building custom APIs for each consumer (IDE, chat, CLI), a single MCP server exposes three tools that any MCP-enabled host -- Claude, VS Code, Cursor, or custom applications -- can use without custom integration code. MCP shares the same lineage as the Language Server Protocol (LSP) that Langium already uses for the BBj language server, making it a natural fit for the ecosystem. The webforJ MCP server already in production validates this approach organizationally.
+
+**Alternatives considered:** REST API with OpenAPI specification (requires custom client code in each consumer; no standard tool discovery); custom VS Code extension API (locks integration to one editor; excludes Claude, Cursor, and CLI workflows); language-specific plugin system (fragments the ecosystem; each editor needs its own plugin; multiplies maintenance).
+
+**Status:** Architecture defined. Three tool schemas specified. Generate-validate-fix loop validated by bbjcpltool proof-of-concept. MCP server implementation planned.
+:::
+
 ## Three Initiatives
 
 The shared foundation supports three planned consumer applications. Each is introduced briefly here and covered in full in its own chapter.
