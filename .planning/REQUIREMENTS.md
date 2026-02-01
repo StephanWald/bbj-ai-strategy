@@ -39,11 +39,11 @@
 
 ## Quality & Consistency
 
-- [ ] **QUAL-01**: All new BBj code samples validated via `bbjcpl -N` before publishing
-- [ ] **QUAL-02**: All chapter status blocks (:::note[Where Things Stand]) updated in coordinated pass — reflect v1.2 shipped RAG pipeline and v1.3 MCP architecture
-- [ ] **QUAL-03**: Cross-reference verification — all inter-chapter links verified via Docusaurus build (no broken links)
-- [ ] **QUAL-04**: Landing page chapter descriptions and frontmatter `description` fields updated where chapter content changed
-- [ ] **QUAL-05**: Decision callout consistency — all new :::info[Decision:] callouts have Choice, Rationale, Alternatives considered, Status fields
+- [x] **QUAL-01**: All new BBj code samples validated via `bbjcpl -N` before publishing
+- [x] **QUAL-02**: All chapter status blocks (:::note[Where Things Stand]) updated in coordinated pass — reflect v1.2 shipped RAG pipeline and v1.3 MCP architecture
+- [x] **QUAL-03**: Cross-reference verification — all inter-chapter links verified via Docusaurus build (no broken links)
+- [x] **QUAL-04**: Landing page chapter descriptions and frontmatter `description` fields updated where chapter content changed
+- [x] **QUAL-05**: Decision callout consistency — all new :::info[Decision:] callouts have Choice, Rationale, Alternatives considered, Status fields
 
 ## Future Requirements (Deferred)
 
@@ -91,11 +91,11 @@
 | XREF-02 | Phase 17 | Complete |
 | XREF-03 | Phase 18 | Complete |
 | XREF-04 | Phase 18 | Complete |
-| QUAL-01 | Phase 19 | Pending |
-| QUAL-02 | Phase 19 | Pending |
-| QUAL-03 | Phase 19 | Pending |
-| QUAL-04 | Phase 19 | Pending |
-| QUAL-05 | Phase 19 | Pending |
+| QUAL-01 | Phase 19 | Complete |
+| QUAL-02 | Phase 19 | Complete |
+| QUAL-03 | Phase 19 | Complete |
+| QUAL-04 | Phase 19 | Complete |
+| QUAL-05 | Phase 19 | Complete |
 
 ---
 *Created: 2026-02-01 for milestone v1.3 MCP Architecture Integration*
