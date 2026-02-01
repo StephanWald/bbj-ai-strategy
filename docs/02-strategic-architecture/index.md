@@ -309,6 +309,8 @@ The IDE integration combines **Langium-powered language server capabilities** wi
 
 Langium provides deterministic, 100%-correct completions for symbols, types, and keywords -- the things a parser can resolve definitively. The fine-tuned model provides generative completions for multi-line code, pattern completion, and context-aware suggestions -- the things that require understanding intent.
 
+The extension acts as an MCP client, using `generate_bbj_code` for AI-powered completions and `validate_bbj_syntax` for compiler validation of generated suggestions. The Langium language server continues to provide deterministic completions for symbols and keywords; the MCP server handles the generative AI layer.
+
 The extension is generation-aware: it detects whether the developer is working in character UI, Visual PRO/5, BBj GUI, or DWC code and adjusts its suggestions accordingly. A developer editing a 1990s Visual PRO/5 module receives `PRINT (sysgui)'WINDOW'(...)` suggestions; a developer building a new DWC application receives `BBjAPI()` patterns.
 
 ### Documentation Chat (Chapter 5)
@@ -316,6 +318,8 @@ The extension is generation-aware: it detects whether the developer is working i
 A conversational AI interface embedded in the BBj documentation website, allowing developers to ask natural language questions and receive accurate, cited answers.
 
 Unlike generic documentation chat services (Algolia Ask AI, kapa.ai), which rely on base LLMs that have no BBj understanding, this system uses the shared fine-tuned model. The chat backend queries the shared RAG database for relevant documentation, assembles an enriched prompt, and streams a response with source citations.
+
+The chat backend acts as an MCP client, primarily using `search_bbj_knowledge` for retrieval-augmented responses. Because the MCP server exposes a standard tool interface, any MCP-compatible host -- Claude, Cursor, or a custom application -- can serve as a documentation chat interface with zero custom integration code.
 
 The chat system is generation-aware in the same way as the IDE extension: it detects generation hints in the user's question and prioritizes appropriate documentation. A question about "creating a window" yields different primary answers depending on whether the user mentions Visual PRO/5 or DWC context.
 
@@ -328,7 +332,7 @@ The unified architecture is designed to support capabilities beyond the initial 
 - **Code review** -- generation-aware review that flags deprecated patterns and suggests modern alternatives
 - **Training data feedback loop** -- user questions and corrections from chat and IDE usage feed back into model improvement
 
-Each of these capabilities requires the same two things -- a model that understands BBj and a retrieval layer with BBj documentation. Because those exist as shared infrastructure, adding a new consumer application is primarily a UX problem, not an AI problem.
+Each of these capabilities is just another MCP client connecting to the same server. Because the shared foundation already exposes all BBj AI capabilities through three well-defined tools, adding a new consumer application is primarily a UX problem -- designing the right interface for each workflow -- not an AI infrastructure problem.
 
 ## Benefits of This Approach
 
@@ -339,37 +343,44 @@ The unified architecture creates different value for different stakeholders.
 - **Consistent messaging** -- the same model ensures consistent guidance regardless of which tool a developer uses
 - **Predictable scaling** -- adding new AI capabilities is incremental cost, not new infrastructure
 - **Customer offering** -- self-hosted Ollama deployment enables customers to run BBj AI tools on their own infrastructure
+- **Any-client compatibility** -- the same MCP server works with Claude, VS Code, Cursor, or custom applications; no vendor lock-in
 
 **For developers building with the infrastructure:**
 - **Standard API** -- Ollama's OpenAI-compatible endpoint means any HTTP client works; no proprietary SDK needed
 - **Separation of concerns** -- consumer apps focus on UX, not AI/ML plumbing
 - **Shared improvements** -- model retraining and RAG updates benefit all consumers automatically
 - **Generation context** -- the foundation provides generation detection and appropriate document retrieval out of the box
+- **Standard tool protocol** -- MCP provides schema-based tool discovery; new clients can integrate without reading implementation code
 
 **For BBj developers using the tools:**
 - **Consistent answers** -- the same question gets the same answer whether asked in the IDE, in documentation chat, or via a CLI tool
 - **Generation awareness** -- tools understand which BBj generation is in play and adapt accordingly
 - **Privacy option** -- self-hosted deployment means sensitive code never leaves the organization's network
 - **Improving over time** -- the feedback loop from usage across all tools continuously improves model quality
+- **Choose your client** -- use the MCP server from whichever AI tool you prefer; the BBj intelligence is the same everywhere
 
 ## Current Status
 
-:::note[Where Things Stand -- January 2026]
+:::note[Where Things Stand -- February 2026]
 The unified architecture is being built incrementally -- foundation first, consumers next.
 
-- **Shipped:** The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, completion, diagnostics, formatting, and code execution. This is the first consumer application of the shared foundation.
-- **In progress:** The [fine-tuned BBj model](/docs/fine-tuning) -- the core of the shared foundation -- is being trained on Qwen2.5-Coder-7B with approximately 10,000 curated examples and showing promising results.
-- **In progress:** [Copilot BYOK integration](/docs/ide-integration#the-copilot-bridge) is in early exploration as an interim bridge for chat-based BBj assistance.
-- **Planned:** The [RAG pipeline](/docs/rag-database) (shared foundation component #2) -- source corpus identified (MadCap Flare documentation), ingestion pipeline not yet built.
-- **Planned:** [Documentation chat](/docs/documentation-chat) -- architectural requirements defined, implementation depends on the model and RAG pipeline.
+- **Shipped:** The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, completion, diagnostics, formatting, and code execution.
+- **Shipped:** [RAG ingestion pipeline](/docs/rag-database) (v1.2) -- 6 source parsers, embedding pipeline, generation-aware tagging, hybrid search.
+- **Shipped:** bbjcpltool v1 proof-of-concept -- validates the compiler-in-the-loop concept for syntax checking.
+- **In progress:** The [fine-tuned BBj model](/docs/fine-tuning) -- approximately 10,000 curated training examples on Qwen2.5-Coder-7B, with fine-tuning underway.
+- **In progress:** MCP server architecture defined (v1.3) -- three tool schemas specified, generate-validate-fix loop validated.
+- **Planned:** MCP server implementation -- concrete realization of the architecture documented in this chapter.
+- **Planned:** [Documentation chat](/docs/documentation-chat) -- depends on model and MCP server being operational.
 :::
 
 | Component | Status | Next Steps |
 |-----------|--------|------------|
-| Fine-tuned BBj model | ~10K training examples curated; Qwen2.5-Coder-7B fine-tuning in progress | Expand dataset, establish evaluation benchmarks, validate for IDE completion |
-| RAG database | Schema designed with generation-aware tagging | Build ingestion pipeline, index BBj documentation |
-| VSCode extension | v0.5.0 shipped on Marketplace; AI integration planned | Add ghost text completion via fine-tuned model |
-| Documentation chat | Architecture defined | Build chat backend after model and RAG are operational |
+| Fine-tuned BBj model | ~10K training examples curated; Qwen2.5-Coder-7B fine-tuning in progress | Expand dataset, establish evaluation benchmarks |
+| RAG database | Ingestion pipeline shipped (v1.2). 6 source parsers, embedding pipeline, generation-aware tagging. | Index full BBj documentation corpus, tune retrieval quality |
+| MCP server | Architecture defined (v1.3). Three tool schemas specified. | Implement server, integrate with RAG and model backends |
+| BBj compiler validation | Concept validated by bbjcpltool v1 proof-of-concept | Integrate as `validate_bbj_syntax` MCP tool |
+| VSCode extension | v0.5.0 shipped on Marketplace | Add MCP client integration for AI completions |
+| Documentation chat | Architecture defined | Build as MCP client after server is operational |
 | Ollama deployment | Validated for model serving | Package fine-tuned model, test customer self-hosting |
 
 The chapters that follow cover each component in implementation-level detail: [model fine-tuning](/docs/fine-tuning) (Chapter 3), [IDE integration](/docs/ide-integration) (Chapter 4), [documentation chat](/docs/documentation-chat) (Chapter 5), [RAG database design](/docs/rag-database) (Chapter 6), and the [implementation roadmap](/docs/implementation-roadmap) with timelines and resource planning (Chapter 7).
