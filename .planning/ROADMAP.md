@@ -16,7 +16,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 - [x] **Phase 9: Schema & Data Models** - pgvector DDL, Pydantic models, config system, deduplication
 - [x] **Phase 10: Flare Parser** - MadCap Flare XHTML parser (project files + condition tags + crawl fallback)
 - [x] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
-- [ ] **Phase 12: Embedding Pipeline** - Embedding model, pgvector storage, hybrid search validation (end-to-end for Flare)
+- [x] **Phase 12: Embedding Pipeline** - Embedding model, pgvector storage, hybrid search validation (end-to-end for Flare)
 - [ ] **Phase 13: Additional Parsers** - PDF, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code
 - [ ] **Phase 14: Documentation & Quality** - Getting Started page, sub-project README, ingestion quality reports
 
@@ -94,8 +94,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 12-01-PLAN.md -- Chunker, embedder, bulk storage, config/schema updates, pipeline orchestrator, and Click CLI
-- [ ] 12-02-PLAN.md -- Search functions (dense, BM25, hybrid RRF), YAML validation cases, parametrized test suite
+- [x] 12-01-PLAN.md -- Chunker, embedder, bulk storage, config/schema updates, pipeline orchestrator, and Click CLI
+- [x] 12-02-PLAN.md -- Search functions (dense, BM25, hybrid RRF), YAML validation cases, parametrized test suite
 
 ### Phase 13: Additional Parsers
 **Goal**: The remaining four source types (PDFs, WordPress articles, WordPress knowledge base, Docusaurus MDX, BBj source code) plug into the proven pipeline, completing source coverage
@@ -170,7 +170,7 @@ Plans:
 | 9. Schema & Data Models | v1.2 | 2/2 | Complete | 2026-01-31 |
 | 10. Flare Parser | v1.2 | 3/3 | Complete | 2026-01-31 |
 | 11. BBj Intelligence | v1.2 | 2/2 | Complete | 2026-01-31 |
-| 12. Embedding Pipeline | v1.2 | 0/2 | Not started | - |
+| 12. Embedding Pipeline | v1.2 | 2/2 | Complete | 2026-02-01 |
 | 13. Additional Parsers | v1.2 | 0/3 | Not started | - |
 | 14. Documentation & Quality | v1.2 | 0/2 | Not started | - |
 

@@ -38,9 +38,9 @@
 
 ### Embedding & Storage
 
-- [ ] **EMBED-01**: Embedding pipeline using researched model (Qwen3-Embedding-0.6B or current best) with batch processing
-- [ ] **EMBED-02**: pgvector storage with bulk insert via psycopg3 COPY protocol
-- [ ] **EMBED-03**: Hybrid search validation — verify both dense vector and BM25 keyword search return relevant results
+- [x] **EMBED-01**: Embedding pipeline using researched model (Qwen3-Embedding-0.6B or current best) with batch processing
+- [x] **EMBED-02**: pgvector storage with bulk insert via psycopg3 COPY protocol
+- [x] **EMBED-03**: Hybrid search validation — verify both dense vector and BM25 keyword search return relevant results
 
 ### Quality
 
@@ -94,9 +94,9 @@
 | BBJ-01 | Phase 11 | Complete |
 | BBJ-02 | Phase 11 | Complete |
 | BBJ-03 | Phase 11 | Complete |
-| EMBED-01 | Phase 12 | Pending |
-| EMBED-02 | Phase 12 | Pending |
-| EMBED-03 | Phase 12 | Pending |
+| EMBED-01 | Phase 12 | Complete |
+| EMBED-02 | Phase 12 | Complete |
+| EMBED-03 | Phase 12 | Complete |
 | PARSE-04 | Phase 13 | Pending |
 | PARSE-05 | Phase 13 | Pending |
 | PARSE-06 | Phase 13 | Pending |
