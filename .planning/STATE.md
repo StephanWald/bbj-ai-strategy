@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 13 in progress (Additional Parsers)
+**Current focus:** v1.2 -- Phase 13 complete (Additional Parsers)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
 Phase: 13 of 14 (Additional Parsers)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-01 -- Completed 13-01-PLAN.md (PDF and BBj Source Parsers)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-01 -- Completed 13-03-PLAN.md (MDX Parser & Full Integration)
 
-Progress: ████████████░░ 12/14 (86%)
+Progress: █████████████░ 13/14 (93%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12 (v1.2)
+- Total plans completed: 13 (v1.2)
 - Average duration: 5min
-- Total execution time: 65min
+- Total execution time: 69min
 
 **By Phase:**
 
@@ -33,7 +33,7 @@ Progress: ████████████░░ 12/14 (86%)
 | 10-flare-parser | 3/3 | 23min | 8min |
 | 11-bbj-intelligence | 2/2 | 8min | 4min |
 | 12-embedding-pipeline | 2/2 | 12min | 6min |
-| 13-additional-parsers | 2/3 | 11min | 6min |
+| 13-additional-parsers | 3/3 | 15min | 5min |
 
 *Updated after each plan completion*
 
@@ -97,6 +97,10 @@ Recent decisions affecting current work:
 - BBj keyword validation to skip non-BBj .txt files in source directories
 - PDF page 0 (TOC) skipped; doc_type: concept/example/tutorial based on content
 - Source URL format: pdf://filename#slug for PDF, file://relative-path for BBj source
+- Pipeline intelligence bypass: doc_type non-empty and != "web_crawl" skips _apply_intelligence
+- DWC-Course uniform tagging: all content gets generations=["dwc"] and doc_type="tutorial"
+- MDX context header: "DWC Course > {chapter} > {title}" with chapter from parent dir name
+- MDX title priority: frontmatter > first # heading > filename stem
 
 ### Pending Todos
 
@@ -108,7 +112,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T08:25Z
-Stopped at: Completed 13-01-PLAN.md (PDF and BBj Source Parsers)
+Last session: 2026-02-01T08:32Z
+Stopped at: Completed 13-03-PLAN.md (MDX Parser & Full Integration)
 Resume file: None
-Next action: Execute 13-03-PLAN.md (MDX parser, last plan in Phase 13).
+Next action: Phase 14 (Documentation) -- final phase of v1.2 milestone.
