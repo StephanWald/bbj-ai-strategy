@@ -123,11 +123,11 @@ Plans:
   2. rag-ingestion/README.md has setup prerequisites, installation steps, configuration, and usage instructions that a new engineer can follow
   3. Post-ingestion summary report shows chunk counts broken down by source, by generation, and by document type
   4. Running the full pipeline and then the quality report produces meaningful numbers (not all zeros or all "unknown")
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: Write RAG Getting Started sub-page and update Chapter 6 navigation
-- [ ] 14-02: Write rag-ingestion/README.md and implement post-ingestion summary report
+- [ ] 14-01-PLAN.md -- Getting Started sub-page under Chapter 6 with pipeline diagram, source coverage, data model snippets, and GitHub code links
+- [ ] 14-02-PLAN.md -- Quality report CLI command, post-ingest auto-report, anomaly warnings, and comprehensive rag-ingestion README
 
 ## Coverage
 
