@@ -48,7 +48,7 @@ Phase 14: Documentation & Quality
 - [x] **Phase 15: Strategic Architecture** - Chapter 2 updated with MCP server as the concrete unified architecture
 - [x] **Phase 16: Compiler Validation** - Chapter 4 updated with bbjcpl validation module and proof-of-concept
 - [x] **Phase 17: Chat & Cross-References** - Chapters 5, 3, 6 updated with MCP tool integration and cross-references
-- [ ] **Phase 18: Implementation Roadmap** - Chapter 7 updated with MCP deliverables and revised risk assessment
+- [x] **Phase 18: Implementation Roadmap** - Chapter 7 updated with MCP deliverables and revised risk assessment
 - [ ] **Phase 19: Final Consistency Pass** - Quality verification across all updated chapters
 
 ## Phase Details
@@ -111,7 +111,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 18-01-PLAN.md — Update status table, TL;DR, phase descriptions with MCP bullets, risk assessment with compiler validation, Current Status block
+- [x] 18-01-PLAN.md — Update status table, TL;DR, phase descriptions with MCP bullets, risk assessment with compiler validation, Current Status block
 
 ### Phase 19: Final Consistency Pass
 **Goal**: All updated chapters are internally consistent, cross-references resolve, BBj code validates, and the site builds clean
@@ -138,7 +138,7 @@ Plans:
 | 15. Strategic Architecture | 2/2 | ✓ Complete | 2026-02-01 |
 | 16. Compiler Validation | 2/2 | ✓ Complete | 2026-02-01 |
 | 17. Chat & Cross-References | 2/2 | ✓ Complete | 2026-02-01 |
-| 18. Implementation Roadmap | 0/1 | Not started | - |
+| 18. Implementation Roadmap | 1/1 | ✓ Complete | 2026-02-01 |
 | 19. Final Consistency Pass | 0/TBD | Not started | - |
 
 ---

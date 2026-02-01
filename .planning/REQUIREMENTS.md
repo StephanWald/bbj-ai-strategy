@@ -34,8 +34,8 @@
 
 - [x] **XREF-01**: Chapter 3 (Fine-Tuning) — brief mention that model is consumed via MCP `generate_bbj_code` tool, cross-reference to Ch2
 - [x] **XREF-02**: Chapter 6 (RAG Database) — mention retrieval exposed via MCP `search_bbj_knowledge` tool, cross-reference to Ch2, status updated for v1.2 shipped pipeline
-- [ ] **XREF-03**: Chapter 7 (Implementation Roadmap) — MCP server deliverables woven into existing phases, risk assessment updated with compiler validation as hallucination mitigation
-- [ ] **XREF-04**: Chapter 7 — status blocks and phase descriptions updated to reflect v1.2 accomplishments and v1.3 MCP additions
+- [x] **XREF-03**: Chapter 7 (Implementation Roadmap) — MCP server deliverables woven into existing phases, risk assessment updated with compiler validation as hallucination mitigation
+- [x] **XREF-04**: Chapter 7 — status blocks and phase descriptions updated to reflect v1.2 accomplishments and v1.3 MCP additions
 
 ## Quality & Consistency
 
@@ -89,8 +89,8 @@
 | CHAT-05 | Phase 17 | Complete |
 | XREF-01 | Phase 17 | Complete |
 | XREF-02 | Phase 17 | Complete |
-| XREF-03 | Phase 18 | Pending |
-| XREF-04 | Phase 18 | Pending |
+| XREF-03 | Phase 18 | Complete |
+| XREF-04 | Phase 18 | Complete |
 | QUAL-01 | Phase 19 | Pending |
 | QUAL-02 | Phase 19 | Pending |
 | QUAL-03 | Phase 19 | Pending |
