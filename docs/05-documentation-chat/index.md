@@ -1,20 +1,20 @@
 ---
 sidebar_position: 5
 title: "Documentation Chat"
-description: "Why generic chat services fail for BBj, and how a generation-aware documentation chat leveraging the shared fine-tuned model and RAG infrastructure delivers accurate, cited answers."
+description: "Two independent paths to BBj AI knowledge -- MCP access for AI clients and embedded chat for human users -- both consuming the same shared foundation through MCP tools."
 ---
 
 # Documentation Chat
 
 :::tip[TL;DR]
-Generic documentation chat services (kapa.ai, Algolia Ask AI) fail for BBj because their underlying LLMs have zero BBj training data -- the same core problem [Chapter 1](/docs/bbj-challenge) establishes for all generic AI tools. A BBj documentation chat must use the [fine-tuned model](/docs/fine-tuning) and [generation-tagged RAG pipeline](/docs/rag-database) described in earlier chapters, streaming generation-aware answers with source citations. The key insight: this is the same shared infrastructure the [IDE extension](/docs/ide-integration) uses, not a second AI system.
+BBj AI knowledge is accessible through two independent, equally important paths: any MCP-compatible client (Claude, Cursor, custom tools) can invoke `search_bbj_knowledge` and `generate_bbj_code` for instant access with zero custom code, while an embedded chat interface on the documentation site serves human users with generation-aware, cited responses. Both paths consume the same shared foundation -- the [fine-tuned model](/docs/fine-tuning) and [generation-tagged RAG pipeline](/docs/rag-database) -- because generic chat services fail for BBj (the same core problem [Chapter 1](/docs/bbj-challenge) establishes). Same infrastructure, two access methods.
 :::
 
-Developers asking BBj questions today have limited options: search the documentation manually, post on forums, or ask a generic chatbot that hallucinates answers. A documentation chat embedded in the BBj docs site would let developers ask natural language questions -- "How do I create a window?" -- and receive accurate, generation-appropriate answers with links to the source documentation.
+Developers asking BBj questions today have limited options: search the documentation manually, post on forums, or ask a generic chatbot that hallucinates answers. The BBj AI strategy addresses this through two independent paths to the same shared infrastructure, each serving a different audience.
 
-This is the second consumer application of the [shared AI infrastructure](/docs/strategic-architecture) described in Chapter 2. The model is the same. The retrieval pipeline is the same. Only the interface differs: instead of ghost text in an editor, the user gets a conversational response in a browser.
+The first path is **MCP access**: any MCP-compatible client -- Claude, Cursor, VS Code, or a custom application -- can query BBj documentation, generate BBj code, and validate syntax through the three tools defined in [Chapter 2](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer). This is the interface for AI talking to our AI infrastructure. No custom integration code required.
 
-This chapter defines the architectural requirements and design principles for that chat system. The vision is still forming -- deployment model decisions have not been finalized -- so the focus is on what the system must do and how generation-aware responses work, not on a locked-in production architecture.
+The second path is an **embedded documentation chat**: a conversational interface on the BBj documentation site where developers ask natural language questions and receive generation-aware, cited answers. This is the interface for humans browsing documentation. The vision for the chat side is still forming -- implementation details have not been finalized -- so this chapter focuses on what the system must do and how generation-aware responses work.
 
 ## Why Generic Chat Services Fail
 
@@ -39,6 +39,213 @@ This is not a RAG problem. It is a model problem. And it is the same model probl
 The failure of generic services for BBj becomes even clearer when compared to how the same services handle [webforJ](https://webforj.com/). webforJ is a Java-based web framework -- and generic LLMs understand Java well. A service like kapa.ai, pointed at webforJ documentation, would produce competent answers because the underlying LLM can parse Java code examples, understand Java class hierarchies, and reason about Java design patterns.
 
 BBj gets none of this. The LLM has no prior exposure to BBj's `!` suffix convention for objects, `#` prefix for instance fields, `methodend` block terminators, or the four-generation syntax evolution. Every BBj code snippet in a retrieved documentation chunk is opaque to the model. This asymmetry -- the same RAG architecture working for webforJ but failing for BBj -- is the clearest illustration of why a fine-tuned model is the prerequisite, not the RAG layer.
+
+## The Shared Foundation
+
+Both paths -- MCP access and documentation chat -- consume the same two backend capabilities through the [BBj MCP server](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) defined in Chapter 2.
+
+The first capability is **RAG retrieval** via the `search_bbj_knowledge` tool. This tool queries the [generation-tagged RAG database](/docs/rag-database) using hybrid search (dense vectors + BM25 keyword matching + cross-encoder reranking) and returns ranked documentation chunks with source citations. Whether the query comes from Claude Desktop or from the chat interface, the same retrieval pipeline surfaces the same generation-appropriate results.
+
+The second capability is **code generation** via the `generate_bbj_code` tool. This tool sends enriched prompts to the [fine-tuned model](/docs/fine-tuning) hosted on Ollama, producing generation-appropriate BBj code with RAG-retrieved context automatically assembled into the prompt. The chat interface uses this for richer conversational answers; MCP clients use it for direct code generation.
+
+The third tool in the MCP ecosystem, `validate_bbj_syntax`, provides [compiler-based validation](/docs/ide-integration) through the BBj compiler -- completing the generate-validate-fix loop described in [Chapter 2](/docs/strategic-architecture#generate-validate-fix). While not part of the typical chat interaction, it is available to any MCP client that needs ground-truth syntax checking.
+
+For complete tool schemas and the MCP server architecture, see [Chapter 2: Strategic Architecture](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer).
+
+## Path 1: MCP Access
+
+MCP is the interface for AI talking to our AI infrastructure. Any MCP-compatible client -- Claude, Cursor, VS Code, or a custom application -- can consume BBj knowledge with zero custom integration code.
+
+- **`search_bbj_knowledge`** retrieves generation-aware documentation and code examples from the RAG database, with source citations for provenance. ([Schema](/docs/strategic-architecture#search_bbj_knowledge))
+- **`generate_bbj_code`** produces BBj code in the target generation using the fine-tuned model with RAG-enriched context. ([Schema](/docs/strategic-architecture#generate_bbj_code))
+- **`validate_bbj_syntax`** validates generated code against the BBj compiler for ground-truth syntax checking. ([Schema](/docs/strategic-architecture#validate_bbj_syntax))
+
+Because the [MCP server exposes standard tool discovery and schema-based invocation](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer), adding a new AI consumer is a UX problem -- designing the right interface for each workflow -- not an AI infrastructure problem. The intelligence is in the shared foundation; the client just invokes it.
+
+## Path 2: Documentation Chat
+
+The documentation chat serves humans browsing the BBj documentation site. Embedded directly on the documentation site, it lets developers ask natural language questions -- "How do I create a window?" -- and receive accurate, generation-appropriate answers with links to the source documentation.
+
+The chat interface goes beyond what raw MCP access provides: it manages conversation context, detects generation hints from the dialogue, and streams formatted responses with inline citations. These capabilities are what make a chat experience natural for human users, and they are described in the sections below.
+
+### Generation-Aware Response Design
+
+Generation-aware responses are the core value proposition that no generic chat service can replicate. The same question -- asked in different contexts -- should produce different, accurate answers.
+
+#### Default Behavior: Modern First
+
+When a user asks a question without specifying a generation, the system defaults to modern BBj (DWC/GUI) patterns. This matches the most common use case: developers working on current projects.
+
+**Query:** "How do I create a window in BBj?"
+
+**Response (no generation context):**
+
+> In modern BBj, you create windows using the BBjAPI:
+>
+> ```bbj
+> sysgui! = BBjAPI().getSysGui()
+> window! = sysgui!.addWindow(100, 100, 800, 600, "My Application")
+> ```
+>
+> The parameters are: x position, y position, width, height, and title. The `addWindow` method returns a `BBjTopLevelWindow` object that you can use to add child controls.
+>
+> *Source: [BBjSysGui.addWindow documentation]*
+>
+> *Note: If you are maintaining legacy Visual PRO/5 code, the older mnemonic-based syntax (`PRINT (sysgui)'WINDOW'(...)`) is also supported. Let me know if you need help with that syntax instead.*
+
+#### Legacy Context Detection
+
+When the query contains explicit or implicit generation signals, the system adjusts both retrieval and response generation.
+
+**Query:** "I'm working on a Visual PRO/5 application. How do I create a window?"
+
+**Response (legacy generation context):**
+
+> In Visual PRO/5, you create windows by opening a SYSGUI device and sending mnemonic strings:
+>
+> ```bbj
+> sysgui = unt
+> open (sysgui)"X0"
+> print (sysgui)'window'(100,100,400,300,"My Application",$00010003$,$00000000$)
+> ```
+>
+> The parameters are: x position, y position, width, height, title, flags, and event mask. The SYSGUI channel must be opened first with `open (sysgui)"X0"`.
+>
+> *Source: [Visual PRO/5 GUI Mnemonic Reference]*
+>
+> *Consider: For new development or gradual modernization, the BBjAPI approach offers more flexibility and better browser support through DWC. I can show you how to migrate this pattern if you are interested.*
+
+#### How Generation Hints Flow
+
+The generation detection pipeline processes each query through three stages:
+
+1. **Query analysis** -- The system scans the user's message for explicit generation markers ("Visual PRO/5", "DWC", "legacy") and implicit signals (mnemonic-style syntax like `PRINT (sysgui)'WINDOW'(...)` vs. object-style syntax like `addWindow()`). Conversation history also provides context -- if the user has been asking about legacy code, subsequent questions inherit that context.
+
+2. **RAG filtering** -- The detected generation hint is passed to the [RAG database](/docs/rag-database) as a metadata filter. If the user is asking about Visual PRO/5, retrieval prioritizes documentation tagged with the `vpro5` generation label. If no generation is detected, retrieval is unfiltered (with a slight bias toward modern documentation).
+
+3. **Prompt assembly** -- The enriched prompt includes the retrieved documentation chunks, the detected generation context, and instructions for the model to respond appropriately. The model receives explicit guidance: "The user is working with Visual PRO/5. Provide answers using Visual PRO/5 syntax and conventions."
+
+This pipeline ensures that the same question produces different -- and correct -- answers depending on context. A generic chat service cannot do this because it has no concept of BBj generations and no generation-tagged document corpus to retrieve from.
+
+### Streaming and Citations
+
+Server-Sent Events (SSE) is the standard streaming pattern for LLM chat applications in 2025/2026. It provides a simple, well-supported mechanism for pushing response tokens from the server to the client as they are generated.
+
+The streaming flow:
+
+1. **Client sends query** via HTTP POST to the chat backend
+2. **Backend processes** the query through the generation detection and RAG retrieval pipeline
+3. **Backend opens SSE stream** to the client
+4. **LLM generates tokens** via Ollama's streaming API, and the backend relays each token to the client in real time
+5. **Citations are appended** at the end of the stream, referencing the documentation chunks that informed the answer
+
+This approach is compatible with Ollama's native streaming API, which follows the OpenAI-compatible `/v1/chat/completions` format with `stream: true`. The chat backend acts as an intermediary -- enriching the prompt with RAG context before forwarding to Ollama, and attaching citations to the streamed response.
+
+SSE has a key advantage over WebSockets for this use case: it works through standard HTTP infrastructure (proxies, load balancers, CDNs) without special configuration. For a self-hosted deployment behind a corporate firewall, this reduces the operational surface area.
+
+#### Citation Format
+
+Citations serve two purposes: they build user trust, and they provide a path to deeper reading. Each citation references the source documentation that the RAG pipeline retrieved for the response:
+
+- **Inline citations** reference specific claims within the response text, linking to the relevant documentation page (e.g., "The `addWindow` method accepts position and size parameters ([BBjSysGui reference](https://documentation.basis.cloud/...))").
+- **End-of-response citations** list all documentation chunks that informed the answer, providing a bibliography the user can review for additional context.
+
+The exact citation format will be determined during implementation, but the architectural requirement is fixed: every answer must trace back to its sources. This is critical for a documentation chat -- unlike a general-purpose chatbot, the documentation chat's credibility depends on provenance.
+
+### Conversation Context
+
+A documentation chat that forgets previous messages after each query is frustrating to use. Session memory -- maintaining conversation history within a session -- enables natural follow-up questions:
+
+> **User:** "How do I create a window in BBj?"
+>
+> **Assistant:** *[provides modern BBj answer]*
+>
+> **User:** "What about the Visual PRO/5 version?"
+>
+> **Assistant:** *[provides Visual PRO/5 answer, understanding "version" refers to window creation from the previous exchange]*
+
+Conversation history is included in each request to the backend, allowing the model to resolve references ("the Visual PRO/5 version") without the user restating the full question. This also enables the generation detection pipeline to accumulate context -- if a user has been asking about legacy code for three messages, the fourth message inherits that generation context even without explicit markers.
+
+Session memory is bounded: older messages are summarized or dropped after a configurable window (typically 10-20 exchanges) to keep the prompt within the model's context window. For the 7B model with a 4096-token context, this means balancing conversation history against RAG-retrieved documentation in the available token budget.
+
+#### Token Budget Management
+
+A typical chat request assembles several components into a single prompt, all competing for the context window:
+
+| Component | Typical Tokens | Purpose |
+|-----------|---------------|---------|
+| System prompt | 100-200 | Model instructions, generation guidance |
+| Conversation history | 500-1,500 | Previous exchanges for context |
+| RAG-retrieved chunks | 1,000-2,000 | Source documentation for the current query |
+| User query | 50-200 | The current question |
+| **Reserved for response** | **1,000-2,000** | **Space for the model's answer** |
+
+When conversation history grows long, the system must decide what to compress or drop. A practical strategy is to keep the most recent 3-5 exchanges verbatim and summarize older ones into a compact context block ("The user has been asking about Visual PRO/5 window management"). This preserves generation context without consuming the entire token budget.
+
+The chat is deployed as an embedded component on the documentation site -- users stay in their documentation context, and the backend runs alongside Ollama and the RAG database as a service.
+
+## Unified Architecture
+
+The following diagram shows how both paths converge on the same backend infrastructure. The visual similarity between the two paths -- both calling `search_bbj_knowledge` through the same BBj MCP Server -- is the shared foundation in action.
+
+```mermaid
+sequenceDiagram
+    participant MCPClient as MCP Client<br/>(Claude, Cursor, etc.)
+    participant User as User
+    participant ChatUI as Chat UI<br/>(Documentation Site)
+    participant Server as BBj MCP Server
+    participant RAG as RAG Database<br/>(pgvector)
+    participant Model as Fine-Tuned Model<br/>(Ollama)
+
+    Note over MCPClient,ChatUI: Two independent entry points, same backend
+
+    rect rgb(232, 232, 244)
+    Note right of MCPClient: Path 1: MCP Access
+    MCPClient->>Server: search_bbj_knowledge(query, generation)
+    Server->>RAG: Hybrid search + generation filter
+    RAG-->>Server: Ranked results + citations
+    Server-->>MCPClient: Documentation context
+    end
+
+    rect rgb(232, 244, 232)
+    Note right of User: Path 2: Documentation Chat
+    User->>ChatUI: "How do I create a window?"
+    ChatUI->>Server: search_bbj_knowledge(query, generation)
+    Server->>RAG: Hybrid search + generation filter
+    RAG-->>Server: Ranked results + citations
+    Server-->>ChatUI: Documentation context
+    ChatUI->>Server: generate_bbj_code(prompt, generation, context)
+    Server->>Model: Enriched prompt + RAG context
+    Model-->>Server: Generated response
+    Server-->>ChatUI: Streamed answer with citations
+    ChatUI-->>User: Generation-aware response
+    end
+```
+
+Both paths call the same `search_bbj_knowledge` tool -- the diagram makes this visually explicit. The chat path goes further by also calling `generate_bbj_code` to assemble richer conversational responses with code examples and explanations. The third tool, `validate_bbj_syntax`, completes the MCP ecosystem -- it is primarily relevant for the [generate-validate-fix loop](/docs/strategic-architecture#generate-validate-fix) documented in Chapter 2 and the [IDE completion pipeline](/docs/ide-integration) in Chapter 4, but any MCP client can invoke it when ground-truth syntax checking is needed.
+
+:::info[Decision: MCP Tool for RAG Access]
+**Choice:** Expose RAG retrieval through the MCP `search_bbj_knowledge` tool,
+making the BBj knowledge base accessible to any MCP-compatible client without
+custom integration code.
+
+**Rationale:** The documentation chat backend and every other AI consumer need
+the same thing: generation-aware retrieval from the BBj knowledge base. Rather
+than building a custom retrieval API for the chat system, the MCP server exposes
+`search_bbj_knowledge` as a standard tool that any client can invoke. The chat
+backend is one consumer; Claude, Cursor, and custom applications are others.
+This follows the [unified infrastructure principle](/docs/strategic-architecture)
+established in Chapter 2.
+
+**Alternatives considered:** Custom REST API for chat retrieval (requires
+maintaining a separate API alongside MCP; duplicates effort); direct database
+queries from the chat backend (couples the chat system to the database schema;
+breaks the abstraction layer; prevents other clients from benefiting).
+
+**Status:** Architecture defined. The `search_bbj_knowledge` tool schema is
+specified in [Chapter 2](/docs/strategic-architecture#search_bbj_knowledge).
+Implementation depends on the MCP server being built.
+:::
 
 ## Architectural Requirements
 
@@ -66,176 +273,16 @@ The documentation chat system must satisfy six non-negotiable requirements, deri
 **Status:** Architectural requirement defined. Implementation not yet started.
 :::
 
-## Generation-Aware Response Design
-
-Generation-aware responses are the core value proposition that no generic chat service can replicate. The same question -- asked in different contexts -- should produce different, accurate answers.
-
-### Default Behavior: Modern First
-
-When a user asks a question without specifying a generation, the system defaults to modern BBj (DWC/GUI) patterns. This matches the most common use case: developers working on current projects.
-
-**Query:** "How do I create a window in BBj?"
-
-**Response (no generation context):**
-
-> In modern BBj, you create windows using the BBjAPI:
->
-> ```bbj
-> sysgui! = BBjAPI().getSysGui()
-> window! = sysgui!.addWindow(100, 100, 800, 600, "My Application")
-> ```
->
-> The parameters are: x position, y position, width, height, and title. The `addWindow` method returns a `BBjTopLevelWindow` object that you can use to add child controls.
->
-> *Source: [BBjSysGui.addWindow documentation]*
->
-> *Note: If you are maintaining legacy Visual PRO/5 code, the older mnemonic-based syntax (`PRINT (sysgui)'WINDOW'(...)`) is also supported. Let me know if you need help with that syntax instead.*
-
-### Legacy Context Detection
-
-When the query contains explicit or implicit generation signals, the system adjusts both retrieval and response generation.
-
-**Query:** "I'm working on a Visual PRO/5 application. How do I create a window?"
-
-**Response (legacy generation context):**
-
-> In Visual PRO/5, you create windows by opening a SYSGUI device and sending mnemonic strings:
->
-> ```bbj
-> sysgui = unt
-> open (sysgui)"X0"
-> print (sysgui)'window'(100,100,400,300,"My Application",$00010003$,$00000000$)
-> ```
->
-> The parameters are: x position, y position, width, height, title, flags, and event mask. The SYSGUI channel must be opened first with `open (sysgui)"X0"`.
->
-> *Source: [Visual PRO/5 GUI Mnemonic Reference]*
->
-> *Consider: For new development or gradual modernization, the BBjAPI approach offers more flexibility and better browser support through DWC. I can show you how to migrate this pattern if you are interested.*
-
-### How Generation Hints Flow
-
-The generation detection pipeline processes each query through three stages:
-
-1. **Query analysis** -- The system scans the user's message for explicit generation markers ("Visual PRO/5", "DWC", "legacy") and implicit signals (mnemonic-style syntax like `PRINT (sysgui)'WINDOW'(...)` vs. object-style syntax like `addWindow()`). Conversation history also provides context -- if the user has been asking about legacy code, subsequent questions inherit that context.
-
-2. **RAG filtering** -- The detected generation hint is passed to the [RAG database](/docs/rag-database) as a metadata filter. If the user is asking about Visual PRO/5, retrieval prioritizes documentation tagged with the `vpro5` generation label. If no generation is detected, retrieval is unfiltered (with a slight bias toward modern documentation).
-
-3. **Prompt assembly** -- The enriched prompt includes the retrieved documentation chunks, the detected generation context, and instructions for the model to respond appropriately. The model receives explicit guidance: "The user is working with Visual PRO/5. Provide answers using Visual PRO/5 syntax and conventions."
-
-This pipeline ensures that the same question produces different -- and correct -- answers depending on context. A generic chat service cannot do this because it has no concept of BBj generations and no generation-tagged document corpus to retrieve from.
-
-## Chat Architecture
-
-The following diagram shows the complete request flow from user query to streamed response:
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant CW as Chat Widget
-    participant BE as Chat Backend
-    participant RAG as RAG Database
-    participant LLM as Ollama (bbj-coder)
-
-    U->>CW: "How do I create a window in BBj?"
-    CW->>BE: Query + session context
-    BE->>BE: Detect generation hints
-    BE->>RAG: Semantic search + generation filter
-    RAG-->>BE: Relevant doc chunks + metadata
-    BE->>BE: Assemble enriched prompt
-    BE->>LLM: Prompt + retrieved context
-    LLM-->>BE: Stream response tokens
-    BE-->>CW: SSE stream (tokens + citations)
-    CW-->>U: Generation-aware answer with sources
-```
-
-Each step serves a specific purpose:
-
-- **Query + session context:** The chat widget sends the user's message along with conversation history, enabling follow-up questions without restating context.
-- **Generation hint detection:** The backend analyzes the query (and conversation history) for generation signals before retrieving documentation.
-- **Semantic search + generation filter:** The RAG database performs [hybrid search](/docs/rag-database) -- combining semantic similarity with keyword matching -- filtered by any detected generation metadata.
-- **Enriched prompt assembly:** Retrieved documentation chunks, generation context, conversation history, and system instructions are combined into a structured prompt for the model.
-- **Streaming response:** The LLM generates tokens via Ollama's streaming API, and the backend relays them to the client via Server-Sent Events (SSE) in real time.
-- **Citations:** Source documentation references are included in the response, either inline or appended at the end of the stream.
-
-## Deployment Options
-
-The chat frontend can be deployed in several ways. The backend architecture -- RAG retrieval, Ollama inference, streaming -- remains identical regardless of how users access the chat interface.
-
-| Option | Description | Advantages | Trade-offs |
-|--------|-------------|------------|------------|
-| **Embedded widget** | Chat component rendered directly in the Docusaurus documentation site | Seamless experience -- users stay in docs context. Lowest friction for adoption. | Constrained by static site architecture. May require an iframe or client-side component to handle streaming state. |
-| **Standalone service** | Separate web application (similar to [Open WebUI](https://github.com/open-webui/open-webui)) accessible via a link from the docs | Most flexible -- full control over UI, conversation management, and features. Proven open-source templates available. | Users leave the documentation context. Separate deployment to maintain. |
-| **Hybrid** | Lightweight chat widget in the docs that connects to a standalone backend service | Best of both: in-docs experience with full backend flexibility. The widget handles display; the backend handles everything else. | Moderate implementation complexity. Requires both a frontend component and a backend service. |
-
-The hybrid approach is architecturally recommended because it cleanly separates concerns: the documentation site remains a static site (simple to deploy and maintain), while the chat backend runs as a service alongside Ollama and the RAG database. The same backend could serve multiple frontends -- the embedded widget, a standalone interface, or even a Slack/Teams integration -- without duplication.
-
-However, the deployment model is not yet decided. The backend architecture is the same in all three cases, so the frontend choice can be deferred until implementation begins.
-
-## Streaming and Citations
-
-Server-Sent Events (SSE) is the standard streaming pattern for LLM chat applications in 2025/2026. It provides a simple, well-supported mechanism for pushing response tokens from the server to the client as they are generated.
-
-The streaming flow:
-
-1. **Client sends query** via HTTP POST to the chat backend
-2. **Backend processes** the query through the generation detection and RAG retrieval pipeline
-3. **Backend opens SSE stream** to the client
-4. **LLM generates tokens** via Ollama's streaming API, and the backend relays each token to the client in real time
-5. **Citations are appended** at the end of the stream, referencing the documentation chunks that informed the answer
-
-This approach is compatible with Ollama's native streaming API, which follows the OpenAI-compatible `/v1/chat/completions` format with `stream: true`. The chat backend acts as an intermediary -- enriching the prompt with RAG context before forwarding to Ollama, and attaching citations to the streamed response.
-
-SSE has a key advantage over WebSockets for this use case: it works through standard HTTP infrastructure (proxies, load balancers, CDNs) without special configuration. For a self-hosted deployment behind a corporate firewall, this reduces the operational surface area.
-
-### Citation Format
-
-Citations serve two purposes: they build user trust, and they provide a path to deeper reading. Each citation references the source documentation that the RAG pipeline retrieved for the response:
-
-- **Inline citations** reference specific claims within the response text, linking to the relevant documentation page (e.g., "The `addWindow` method accepts position and size parameters ([BBjSysGui reference](https://documentation.basis.cloud/...))").
-- **End-of-response citations** list all documentation chunks that informed the answer, providing a bibliography the user can review for additional context.
-
-The exact citation format will be determined during implementation, but the architectural requirement is fixed: every answer must trace back to its sources. This is critical for a documentation chat -- unlike a general-purpose chatbot, the documentation chat's credibility depends on provenance.
-
-## Conversation Context
-
-A documentation chat that forgets previous messages after each query is frustrating to use. Session memory -- maintaining conversation history within a session -- enables natural follow-up questions:
-
-> **User:** "How do I create a window in BBj?"
->
-> **Assistant:** *[provides modern BBj answer]*
->
-> **User:** "What about the Visual PRO/5 version?"
->
-> **Assistant:** *[provides Visual PRO/5 answer, understanding "version" refers to window creation from the previous exchange]*
-
-Conversation history is included in each request to the backend, allowing the model to resolve references ("the Visual PRO/5 version") without the user restating the full question. This also enables the generation detection pipeline to accumulate context -- if a user has been asking about legacy code for three messages, the fourth message inherits that generation context even without explicit markers.
-
-Session memory is bounded: older messages are summarized or dropped after a configurable window (typically 10-20 exchanges) to keep the prompt within the model's context window. For the 7B model with a 4096-token context, this means balancing conversation history against RAG-retrieved documentation in the available token budget.
-
-### Token Budget Management
-
-A typical chat request assembles several components into a single prompt, all competing for the context window:
-
-| Component | Typical Tokens | Purpose |
-|-----------|---------------|---------|
-| System prompt | 100-200 | Model instructions, generation guidance |
-| Conversation history | 500-1,500 | Previous exchanges for context |
-| RAG-retrieved chunks | 1,000-2,000 | Source documentation for the current query |
-| User query | 50-200 | The current question |
-| **Reserved for response** | **1,000-2,000** | **Space for the model's answer** |
-
-When conversation history grows long, the system must decide what to compress or drop. A practical strategy is to keep the most recent 3-5 exchanges verbatim and summarize older ones into a compact context block ("The user has been asking about Visual PRO/5 window management"). This preserves generation context without consuming the entire token budget.
-
 ## Current Status
 
-:::note[Where Things Stand -- January 2026]
+:::note[Where Things Stand -- February 2026]
 - **Shipped:** Nothing. The documentation chat is a planned capability, not a shipped product.
-- **Defined:** Architectural requirements and design principles (this chapter). The generation-aware response strategy. The shared infrastructure decision (same model and RAG as the IDE extension).
-- **Planned:** Chat backend service, frontend widget or application, integration with the [RAG pipeline](/docs/rag-database) (see [Chapter 6](/docs/rag-database)). The deployment model (embedded, standalone, or hybrid) is not yet decided.
+- **Defined:** Two-path architecture -- MCP access for AI clients and embedded chat for human users -- both consuming the shared foundation through MCP tools. Generation-aware response strategy. Shared infrastructure decision.
+- **Available upstream:** [RAG ingestion pipeline](/docs/rag-database) (v1.2) shipped. [Fine-tuned model](/docs/fine-tuning) in progress (~10K training examples). MCP server architecture defined ([Chapter 2](/docs/strategic-architecture)).
+- **Planned:** Chat backend service, embedded chat component for the documentation site. Depends on MCP server being operational.
 :::
 
-The documentation chat depends on two upstream components that are also in progress: the [fine-tuned model](/docs/fine-tuning) (currently showing promising results with ~10K training data points) and the [RAG database](/docs/rag-database) (source corpus identified, pipeline not yet built). Until both are operational, the chat system cannot be implemented.
+The documentation chat depends on two upstream components that are also in progress: the [fine-tuned model](/docs/fine-tuning) (currently showing promising results with ~10K training data points) and the [RAG database](/docs/rag-database) (ingestion pipeline shipped in v1.2, awaiting deployment against the production corpus). Until both are operational and the MCP server is built, the chat system cannot be implemented.
 
 The [implementation roadmap](/docs/implementation-roadmap) in Chapter 7 places the documentation chat in Phase 3 -- after the model is validated (Phase 1) and the IDE integration is functional (Phase 2). This sequencing is deliberate: the IDE integration exercises the model and RAG pipeline first, and the documentation chat benefits from whatever improvements emerge during that process.
 
@@ -243,11 +290,11 @@ The [implementation roadmap](/docs/implementation-roadmap) in Chapter 7 places t
 
 The chapters that follow build the remaining infrastructure this chat system depends on:
 
-- **[Chapter 6: RAG Database Design](/docs/rag-database)** -- How the generation-tagged document corpus is built, chunked, embedded, and queried. This is the retrieval layer the chat backend calls.
+- **[Chapter 6: RAG Database Design](/docs/rag-database)** -- How the generation-tagged document corpus is built, chunked, embedded, and queried. This is the retrieval layer that both paths consume through `search_bbj_knowledge`.
 - **[Chapter 7: Implementation Roadmap](/docs/implementation-roadmap)** -- Timeline, phasing, and resource allocation for all components including the documentation chat.
 
 For context on the shared infrastructure that makes this approach viable:
 
-- **[Chapter 2: Strategic Architecture](/docs/strategic-architecture)** -- The unified infrastructure design that the chat system consumes.
-- **[Chapter 3: Fine-Tuning the Model](/docs/fine-tuning)** -- The model that powers both chat and IDE completion.
+- **[Chapter 2: Strategic Architecture](/docs/strategic-architecture)** -- The unified infrastructure design and MCP server that both paths consume.
+- **[Chapter 3: Fine-Tuning the Model](/docs/fine-tuning)** -- The model that powers both chat and MCP code generation.
 - **[Chapter 4: IDE Integration](/docs/ide-integration)** -- The parallel consumer of the same shared infrastructure, using it for code completion instead of conversational answers.
