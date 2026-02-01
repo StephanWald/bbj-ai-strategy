@@ -44,20 +44,30 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 
 ### Active
 
-(None — next milestone TBD)
+**Current Milestone: v1.4 RAG Deployment**
+
+**Goal:** Take the rag-ingestion sub-project from parsers-and-schema to a running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via both a REST API and an MCP server (`search_bbj_knowledge`).
+
+**Target features:**
+- Docker Compose setup (PostgreSQL+pgvector, ingestion app)
+- Configuration wired to all 6 real data sources on disk/web
+- Support for multiple MDX source directories (config currently only supports one)
+- Full ingestion pipeline execution against real corpus
+- REST retrieval API (query → embed → hybrid search → ranked chunks)
+- Thin MCP server exposing `search_bbj_knowledge` tool
+- End-to-end validation: query the running system, get relevant BBj docs back
 
 ### Out of Scope
 
 - Authentication or access control — site is fully public
 - Interactive features (chat widgets, live demos) — this is documentation, not the AI system itself
-- Production deployment of the RAG pipeline (CI/CD, hosting) — the ingestion sub-project is a starter kit, not production infrastructure
 - Mobile-optimized design beyond Docusaurus defaults — standard responsive is sufficient
 - Internationalization — English only
-- Retrieval API server — v1.2 is a batch ingestion tool, not a running service
 - Embedding fine-tuning — requires baseline retrieval quality measurement first
 - Agentic RAG features — no query routing, agent loops, or multi-step reasoning
-- MCP server source code implementation — v1.3 documents the architecture; a future milestone builds it
-- MCP SDK language decision (TypeScript vs Python) — premature for strategy documentation
+- MCP `generate_bbj_code` and `validate_bbj_syntax` tools — v1.4 only implements `search_bbj_knowledge`; other tools arrive with fine-tuned model and compiler integration
+- Cloud/production hosting — v1.4 runs locally via Docker Compose
+- CI/CD pipeline for ingestion — manual trigger is sufficient for v1.4
 
 ## Context
 
@@ -67,7 +77,8 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.3 shipped 2026-02-01. All 7 chapters updated with MCP server architecture (three tool definitions, generate-validate-fix loop), compiler validation (bbjcpl ground-truth checking, bbjcpltool v1 proof-of-concept), and consistent cross-references. RAG ingestion pipeline complete (v1.2). 3,015 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
+- **Current state:** v1.3 shipped 2026-02-01. v1.4 in progress — deploying RAG pipeline as running Docker service with retrieval API and MCP server. All 7 chapters updated with MCP server architecture (three tool definitions, generate-validate-fix loop), compiler validation (bbjcpl ground-truth checking, bbjcpltool v1 proof-of-concept), and consistent cross-references. RAG ingestion pipeline code complete (v1.2). 3,015 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
+- **Source data inventory (v1.4):** Flare project at `/Users/beff/bbjdocs/` (7,087 .htm topics), PDF at project root, 3 MDX tutorial sites (DWC, beginner, DB modernization — 98 .md files), BBj source code in SVN checkout + tutorial samples (1,363+ .bbj files), WordPress articles at basis.cloud (HTTP), documentation.basis.cloud for web crawl (HTTP).
 - **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
 - **bbjcpltool:** Working proof-of-concept at `/Users/beff/bbjcpltool/` — v1 shipped. PostToolUse hook runs `bbjcpl -N` on every `.bbj` file Claude writes/edits, plus shared BBj language reference at `~/.claude/bbj-reference.md`. Validates the compiler-in-the-loop concept described in the MCP paper.
 - **RAG source corpus:** 6 sources with working parsers: (1) MadCap Flare XHTML (7,079 topics), (2) standalone PDFs (GUI programming guide), (3) Advantage magazine articles, (4) Knowledge Base (WordPress/ECKB), (5) DWC-Course (Docusaurus MDX), (6) BBj source code samples.
@@ -119,5 +130,10 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | No MCP tool schemas duplicated across chapters | All downstream chapters cross-reference Ch2 definitions; single source of truth | ✓ Good |
 | Status block dates removed permanently | :::note[Where Things Stand] with no month/year; avoids staleness across deployments | ✓ Good |
 
+| Docker Compose for RAG deployment | Self-contained local deployment; pgvector + app in single `docker compose up` | — Pending |
+| Host Ollama (not containerized) | Avoid duplicating large Ollama container; host already runs it | — Pending |
+| REST API + thin MCP server | Clean separation: API serves retrieval, MCP wraps it for LLM clients; MCP grows as capabilities come online | — Pending |
+| Python for MCP server | MCP server consumes same retrieval logic as API; avoids cross-language boundary | — Pending |
+
 ---
-*Last updated: 2026-02-01 after v1.3 milestone shipped*
+*Last updated: 2026-02-01 after v1.4 milestone started*

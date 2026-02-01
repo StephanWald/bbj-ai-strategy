@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Stakeholders (developers, leadership, customers) can understand the BBj AI strategy, why it's necessary, and how it will be executed -- through a well-structured, publicly accessible documentation site.
-**Current focus:** Planning next milestone
+**Current focus:** v1.4 RAG Deployment
 
 ## Current Position
 
-Milestone: v1.3 MCP Architecture Integration -- SHIPPED
-Phase: Complete (19 phases total across 4 milestones)
-Plan: Not started
-Status: Ready for next milestone
-Last activity: 2026-02-01 -- v1.3 milestone archived
+Milestone: v1.4 RAG Deployment -- IN PROGRESS
+Phase: Not started (defining requirements)
+Plan: --
+Status: Defining requirements
+Last activity: 2026-02-01 -- Milestone v1.4 started
 
-Progress: [██████████] 100% (all milestones through v1.3 shipped)
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -24,6 +24,7 @@ Progress: [██████████] 100% (all milestones through v1.3 shi
 - v1.1: 2 phases, 5 plans (code corrections + branding)
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
+- v1.4: 0 phases, 0 plans (RAG deployment -- in progress)
 - **Total: 19 phases, 45 plans**
 
 ## Accumulated Context
@@ -43,6 +44,6 @@ None open.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: v1.3 milestone completed and archived
+Stopped at: Milestone v1.4 started, defining requirements
 Resume file: None
-Next action: /gsd:new-milestone when ready to start next version
+Next action: Define requirements and create roadmap
