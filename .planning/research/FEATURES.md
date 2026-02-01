@@ -1,312 +1,373 @@
-# Feature Landscape: RAG Ingestion Pipeline
+# Feature Landscape: MCP Architecture Integration into BBj AI Strategy Chapters
 
-**Domain:** Python RAG ingestion pipeline for BBj technical documentation
-**Researched:** 2026-01-31
-**Scope:** Features for a starter kit (v1.2), not production CI/CD infrastructure
+**Domain:** Documentation content elements for MCP-based AI development assistant architecture
+**Researched:** 2026-02-01
+**Scope:** Content updates to existing Docusaurus chapters (v1.3), not new standalone chapters
+**Supersedes:** Previous FEATURES.md covered the RAG ingestion pipeline (v1.2). That pipeline is built and shipped. This document covers the content elements needed to weave MCP server architecture, compiler validation, and ecosystem integration into the 7 existing chapters.
+
+---
+
+## Research Context
+
+### What v1.3 Is Doing
+
+The existing 7-chapter site describes a unified AI infrastructure abstractly: "a shared model and RAG pipeline powering IDE completion, documentation chat, and future capabilities." Chapter 2 presents this as a conceptual two-layer architecture with hand-wavy arrows between consumer apps and the foundation.
+
+What is missing is the **concrete integration mechanism**. The MCP concept paper and bbjcpltool proof-of-concept provide exactly this:
+
+- **MCP server** is the concrete realization of Chapter 2's "standard APIs" promise
+- **Three MCP tools** (search_bbj_knowledge, generate_bbj_code, validate_bbj_syntax) map directly to the RAG database, fine-tuned model, and compiler validation described in Chapters 3-6
+- **Integration patterns** (generate-validate-fix loop, documentation query, code review) are the concrete workflows that Chapters 4 and 5 currently describe abstractly
+- **bbjcpltool** is a working proof-of-concept that validates the compiler-in-the-loop concept
+
+The goal is NOT to create a new Chapter 8. The goal is to update existing chapters so the MCP server emerges as the natural integration layer connecting what is already described.
+
+### Organizational Precedent: webforJ MCP Server
+
+BASIS International already ships a webforJ MCP server (https://mcp.webforj.com/) documented at docs.webforj.com/docs/introduction/mcp. It exposes:
+- `webforj-knowledge-base` -- semantic search across webforJ docs
+- Project generation from templates
+- Theme creation
+
+This establishes an organizational pattern: BASIS uses MCP servers to give AI assistants access to framework-specific knowledge. The BBj MCP server follows the same pattern but adds two novel capabilities: fine-tuned code generation (because the base LLM does not understand BBj) and compiler validation (because BBj has a real compiler that can provide ground-truth feedback).
+
+### The Compiler-in-the-Loop Pattern: Novel and Well-Supported
+
+Research confirms that "compiler-in-the-loop" / "generate-validate-fix" is a well-established pattern in AI code generation:
+- LLMLOOP (ICSME 2025): Improves pass@10 from 76% to 90% using compiler feedback loops
+- Stanford Clover: Closed-loop verifiable code generation with formal verification
+- Martin Fowler/Thoughtworks: "LLM agents will always make mistakes, but they can also fix many of their mistakes. To know what mistakes they made, they need feedback from the environment."
+- ProCoder: Compiler-guided iterative refinement achieves 80%+ improvement over vanilla LLMs
+
+**This is the strongest differentiator in the BBj strategy.** Most niche-language AI tools rely only on RAG or fine-tuning. Adding a real compiler as ground-truth validation is novel for domain-specific MCP servers.
 
 ---
 
 ## Table Stakes
 
-Features that any competent RAG ingestion pipeline must have. Without these, the pipeline produces unusable or unreliable output.
+Content elements that every chapter update MUST include. Without these, the MCP integration feels like marketing overlay rather than substantive architecture update.
 
-### Parsing & Extraction
+### Chapter 2: Strategic Architecture (Primary Update)
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **XHTML/HTML parser for MadCap Flare output** | Primary corpus is Clean XHTML export; must extract text from semantic HTML elements (`h1`-`h6`, `p`, `li`, `table`, `code`) while stripping markup | Low | Use BeautifulSoup or lxml. Chapter 6 already specifies Clean XHTML as ingestion format. Do NOT use regex for XML/HTML parsing -- this is universally warned against. |
-| **Heading hierarchy extraction** | Section headings (`h1` > `h2` > `h3`) form the contextual header for each chunk. Without this, chunks lose their position in the document structure and embeddings are degraded. | Low | Walk the DOM tree, track heading stack. Required for contextual chunk headers (see below). |
-| **PDF text extraction** | Standalone PDFs (e.g., GUI programming guide) are a defined source type. Must extract readable text from PDF pages. | Low | pymupdf4llm is the recommended tool -- 0.12s extraction, outputs Markdown with headers. Released Jan 2026. Alternative: `unstructured` for semantic chunking. |
-| **HTML scraping for web-hosted sources** | Advantage articles and Knowledge Base are web-hosted HTML. Must fetch and parse article content from live pages. | Medium | requests + BeautifulSoup. Knowledge Base is WordPress/LearnPress -- check for REST API at `/wp-json/wp/v2/posts` first (structured JSON), fall back to HTML scraping. Advantage articles are standard WordPress pages. |
-| **MDX content extraction for DWC-Course** | DWC-Course is a Docusaurus site with MDX files. Must strip JSX/import statements and extract clean Markdown text + code blocks. | Medium | Two paths: (1) clone repo and parse .mdx files directly (preferred -- access to raw source), or (2) use `docusaurus-plugin-llms` output if available. MDX imports/React components must be stripped. |
-| **Code block preservation** | BBj code samples within documentation must be extracted intact, not split or corrupted. Code blocks are high-value for retrieval queries like "how do I create a window." | Low | Detect `<pre>`, `<code>`, fenced code blocks in Markdown. Preserve as atomic units during chunking. |
+| Content Element | Why Expected | Complexity | Notes |
+|-----------------|-------------|------------|-------|
+| **MCP server as concrete unified architecture** | Ch2 currently says "standard APIs" without specifying what those APIs are. MCP is the answer. Readers need to see the actual protocol, not just a promise. | Medium | Replace the abstract "shared foundation" diagram with one showing the MCP server as the concrete gateway. Keep the two-layer concept but make the interface explicit. |
+| **Three tool definitions with JSON schemas** | MCP tools are defined by name, description, and inputSchema. Showing the actual tool definitions proves the architecture is concrete, not aspirational. | Low | `search_bbj_knowledge` (query, generation_hint, limit), `generate_bbj_code` (prompt, generation, context), `validate_bbj_syntax` (code, flags). Use MCP-standard JSON Schema format. |
+| **Host/Client/Server architecture diagram** | MCP has a specific three-layer architecture (Host -> Client -> Server). The existing Ch2 diagram does not reflect this. Readers familiar with MCP will expect to see the standard topology. | Low | Mermaid diagram showing: IDE/Chat/CLI as Hosts, MCP Client within each, BBj MCP Server exposing 3 tools, connecting to RAG DB + Ollama + bbjcpl. |
+| **How MCP replaces ad-hoc integration** | Ch2 argues against point solutions. MCP is the answer to "how do multiple consumers share one foundation?" Need to show why MCP (protocol-level standardization) is better than each consumer building its own HTTP client against Ollama + pgvector. | Low | 2-3 paragraphs + a comparison callout. Any MCP-enabled AI client (Claude, Cursor, VS Code Copilot) can connect to the BBj server without custom code. |
+| **webforJ precedent reference** | BASIS already ships a webforJ MCP server. Mentioning this establishes organizational credibility and pattern consistency. | Low | Brief callout: "This follows the same pattern as the webforJ MCP server (mcp.webforj.com) but adds fine-tuned generation and compiler validation." |
+| **Updated "Current Status" section** | Existing status says "Architecture defined." Must be updated to reflect MCP as the chosen integration mechanism and bbjcpltool as proof-of-concept. | Low | Update the status table and the dated callout block. |
 
-### Chunking
+### Chapter 4: IDE Integration (Major Update)
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Document-type-aware chunk sizing** | Chapter 6 defines variable chunk sizes: API refs 200-400 tokens, concepts 400-600 tokens, code examples kept intact. Uniform chunking degrades retrieval quality by up to 9% vs. best approach per Firecrawl benchmarks. | Medium | Requires document type classification (see differentiators). At minimum, distinguish between short API entries and long conceptual pages. |
-| **Contextual chunk headers (CCH)** | Prepend section hierarchy path to each chunk before embedding. This is one of the highest-impact RAG techniques -- FinanceBench showed 83% vs. 19% baseline when combined with relevant segment extraction. Chapter 6 explicitly requires this. | Low | Format: `"Section > Subsection > Sub-subsection: [chunk text]"`. Built from heading hierarchy extracted during parsing. |
-| **Chunk overlap** | Chapter 6 specifies 10-15% overlap between adjacent chunks. Standard practice; prevents information loss at chunk boundaries. Industry recommendation is 50-100 tokens for 500-token chunks. | Low | Sliding window with configurable overlap percentage. |
-| **Token-aware splitting** | Chunks must respect token limits, not just character counts. Embedding models have fixed context windows (typically 512 tokens). Splitting mid-sentence degrades embedding quality. | Low | Use tiktoken or model-specific tokenizer. Split at sentence boundaries within token budget. |
-| **Code block integrity** | Never split a code block across chunks. A function split in half is useless for retrieval. Chapter 6: "Code examples should never be split mid-function." | Medium | Detect code blocks before splitting. If a code block exceeds chunk size, it becomes its own chunk (possibly oversized, but intact). |
+| Content Element | Why Expected | Complexity | Notes |
+|-----------------|-------------|------------|-------|
+| **Compiler validation module section** | Ch4 describes LLM-powered ghost text but has no mechanism for validating suggestions before presentation. The compiler validation fills the gap identified in Ch7's risk assessment ("Fine-tuned model hallucinates BBj syntax"). | High | New section: "Compiler Validation: Ground-Truth Syntax Checking." Describe how `bbjcpl -N` provides binary pass/fail on any BBj code snippet. This is the most technically novel content in the entire update. |
+| **bbjcpltool proof-of-concept documentation** | A working tool exists today that demonstrates the concept. Documentation should reference it as evidence that the pattern works, not just theory. | Medium | Describe bbjcpltool's PostToolUse hook architecture, the stderr parsing for error detection (exit code is always 0), and the automatic fix cycle. Include the key design decisions from the bbjcpltool PROJECT.md. |
+| **Generate-validate-fix loop diagram** | This is the signature workflow: LLM generates code -> compiler validates -> errors fed back -> LLM fixes. This pattern is well-established in research (LLMLOOP, Clover, ProCoder) and should be presented as a standard architecture pattern, not a BBj invention. | Low | Mermaid sequence diagram showing: User request -> MCP generate_bbj_code -> bbjcpl validate -> if errors, re-prompt with compiler output -> return validated code. |
+| **MCP tool integration for IDE completion** | Ch4 currently describes direct Ollama API calls from the InlineCompletionProvider. With MCP, the IDE can use the MCP client to call generate_bbj_code (which internally calls Ollama + validates), rather than reimplementing the pipeline. | Medium | Show how the ghost text provider can be refactored from "direct Ollama call" to "MCP tool call" -- the MCP server handles prompt enrichment, generation, and validation as a single tool invocation. |
+| **Updated architecture diagrams** | Ch4 has a VS Code architecture diagram and a language server interaction diagram. Both need updating to show the MCP client as a component and the compiler validation path. | Low | Update existing Mermaid diagrams to add MCP client node and bbjcpl validation step. |
+| **Compiler flags and configuration** | `bbjcpl` has specific flags: `-N` (syntax only), `-t` (type checking), `-W` (undeclared warnings). These are concrete, verifiable details that prove the system is real. | Low | Small table of compiler flags with when to use each. Reference the bbjcpltool design decision: default `-N` because tutorial code often lacks `use` declarations. |
 
-### Embedding
+### Chapter 5: Documentation Chat (Moderate Update)
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Embedding generation via local model** | Chapter 6 requires self-hostable embeddings (enterprise data policy). Generate dense vector embeddings for every chunk using an open-source model. | Medium | Recommended: sentence-transformers library. Model selection is a separate research question (see STACK.md). Chapter 6 suggests BGE-M3 or similar; as of Jan 2026, Qwen3-Embedding (Apache 2.0) is the top open-source option on MTEB. |
-| **Batch embedding with progress tracking** | Thousands of chunks need embedding. Must show progress (not a silent black box). A corpus of ~50K chunks at ~100ms per batch could take 15-30 minutes. | Low | tqdm progress bar or logging. Process in batches of 32-64 for GPU efficiency. |
+| Content Element | Why Expected | Complexity | Notes |
+|-----------------|-------------|------------|-------|
+| **MCP-based RAG search tool** | Ch5 describes chat backend calling the RAG database directly. With MCP, the chat backend becomes an MCP client calling `search_bbj_knowledge`. This simplifies the architecture and makes it consistent with the IDE integration. | Medium | Show how the chat backend's "Query RAG + Assemble prompt + Call LLM" pipeline maps to MCP tool calls. The `search_bbj_knowledge` tool handles generation-aware retrieval. |
+| **Documentation query pattern** | This is one of the three MCP integration patterns: user asks a question -> MCP search tool retrieves relevant docs -> response with citations. Currently described implicitly in Ch5 but should be framed as an explicit MCP pattern. | Low | Frame the existing Ch5 chat flow as a concrete MCP integration pattern. Name it explicitly. |
+| **Updated sequence diagram** | Ch5 has a chat architecture sequence diagram. It should show the MCP client/server interaction rather than direct backend-to-RAG calls. | Low | Update existing Mermaid diagram: Chat Widget -> Chat Backend (MCP Client) -> BBj MCP Server -> RAG DB / Ollama. |
 
-### Storage
+### Cross-Chapter Requirements
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **pgvector schema creation** | Chapter 6 selected pgvector. Pipeline must create the `doc_chunks` table with vector column, metadata columns, and tsvector column for BM25. | Low | SQL migration script. Depends on Chapter 6 schema design. Use `CREATE EXTENSION IF NOT EXISTS vector;` |
-| **Chunk insertion with all metadata** | Each chunk row must include: embedding vector, content text, source URL, document type, generation tags, contextual header, source type, and tsvector for full-text search. | Low | Standard INSERT via psycopg2/psycopg3 with pgvector-python for vector type registration. |
-| **Full-text search vector column** | Chapter 6 specifies hybrid retrieval (dense + BM25). The `search_vector` tsvector column must be populated at ingestion time, not deferred. | Low | `to_tsvector('english', content)` in the INSERT statement or as a generated column. |
-| **HNSW index creation** | Chapter 6 discusses HNSW indexing for approximate nearest neighbor search. Index must be created after bulk insertion for efficiency. | Low | `CREATE INDEX ... USING hnsw (embedding vector_cosine_ops)`. Build after data load, not before. |
-
-### Pipeline Orchestration
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Source-by-source CLI invocation** | Engineer must be able to run ingestion per source type: `python ingest.py --source flare`, `--source pdf`, etc. Not a monolithic "ingest everything" with no control. | Low | argparse or click CLI. Each source type is a separate command or flag. |
-| **Configuration file for paths and connection** | Database connection string, source paths, model name, chunk sizes -- all configurable. No hardcoded paths. | Low | YAML or .env file. `config.yaml` with source paths, `DATABASE_URL`, `EMBEDDING_MODEL`, chunk size params. |
-| **Logging with structured output** | Every step must log what it's doing: files parsed, chunks created, embeddings generated, rows inserted. Essential for debugging when something goes wrong. | Low | Python `logging` module. INFO for progress, DEBUG for details, WARNING for skipped files, ERROR for failures. |
-| **Error handling with continue-on-failure** | If one file fails to parse, the pipeline must log the error and continue with the next file. A single malformed XHTML file should not abort the entire batch. | Low | try/except per file with error logging. Report summary at end: "Processed 1,847 files. 3 failures. See errors.log." |
-
-### Data Integrity
-
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Content hashing for idempotent ingestion** | Re-running the pipeline must not create duplicate chunks. Hash each chunk's content (SHA-256) and use upsert or skip-if-exists logic. | Low | `hashlib.sha256(content.encode()).hexdigest()` as a column. ON CONFLICT DO UPDATE or skip. |
-| **Deterministic chunk IDs** | Each chunk needs a stable, reproducible ID derived from source path + chunk position. This enables upsert behavior and change detection across re-runs. | Low | Format: `{source_type}/{file_path}#{chunk_index}` or hash of source path + chunk index. |
-| **Source URL tracking** | Every chunk must link back to its source document URL for citation. Consumers (IDE, chat) need to show "Source: documentation.basis.cloud/BASISHelp/WebHelp/..." | Low | Store the original URL or file path as metadata on every chunk row. |
+| Content Element | Chapters Affected | Why Expected | Complexity |
+|-----------------|------------------|-------------|------------|
+| **Consistent MCP terminology** | All | MCP has specific terms: Host, Client, Server, Tool, Resource, Prompt. All chapters must use these consistently. | Low |
+| **Cross-references to MCP architecture** | Ch3, Ch6, Ch7 | Chapters that describe components (model, RAG, roadmap) need forward/backward references to Ch2's MCP architecture. | Low |
+| **Updated "Current Status" blocks** | All | Every chapter has a dated status callout. All must be updated to reflect v1.3 state (Jan/Feb 2026). | Low |
+| **All new BBj code samples compiler-validated** | Ch2, Ch4 | PROJECT.md requirement: "All new BBj code samples compiler-validated before publishing." Any new BBj code in the updates must pass `bbjcpl -N`. | Low |
 
 ---
 
 ## Differentiators
 
-Features that make this pipeline specifically suited for the BBj documentation corpus. These are not generic RAG features -- they address BBj's unique multi-generational problem.
+Content that makes this documentation uniquely valuable -- not just "we use MCP" but "here is something no other MCP documentation shows."
 
-### Generation Tagging (The Core Differentiator)
+### The Compiler as Ground Truth (Strongest Differentiator)
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Automatic generation classification** | Every chunk must be tagged with which BBj generation it applies to: `all`, `character`, `vpro5`, `bbj-gui`, `dwc`. This is the defining feature of the entire RAG strategy per Chapter 6. Without it, retrieval cannot be generation-aware. | High | This is the hardest feature. Requires heuristic rules based on API names, syntax patterns, and file paths. See classification signals below. |
-| **Multi-generation tag support** | A single chunk can apply to multiple generations (e.g., `BBjSysGui.addWindow()` applies to both `bbj-gui` and `dwc`). Schema must support array-valued generation tags. | Low | PostgreSQL array column: `generation TEXT[]`. Chapter 6 already defines this. |
-| **Generation classification signals** | The pipeline must use multiple signals to infer generation: (1) API class names (`BBjSysGui` = bbj-gui/dwc, `BBjControl` = bbj-gui/dwc), (2) syntax patterns (`PRINT (sysgui)'WINDOW'(...)` = vpro5, `PRINT @(x,y)` = character), (3) file path patterns (Flare topics often organized by product version), (4) explicit version annotations (since_version metadata). | High | Start with keyword/regex rules. A lookup table of known API classes mapped to generations is the most reliable approach. Deferred: LLM-assisted classification for ambiguous cases. |
-| **Default generation fallback** | When generation cannot be determined, default to `all` rather than guessing. Wrong generation tags are worse than broad tags -- they cause retrieval to miss relevant content. | Low | Conservative default. Log every fallback for manual review. |
+| Content Element | Value Proposition | Complexity | Notes |
+|-----------------|-------------------|------------|-------|
+| **"Why a compiler changes everything" narrative** | Most AI code assistance relies on statistical confidence. BBj has a real compiler (`bbjcpl`) that provides deterministic, binary pass/fail. This is qualitatively different from "the model is 95% accurate." Framing this clearly is the single highest-value content in the entire update. | Medium | Belongs in Ch4 as a substantial new section. The argument: fine-tuned models hallucinate less, RAG provides documentation context, but only the compiler can guarantee syntax validity. The three tools form a defense-in-depth chain: RAG (context) -> Model (generation) -> Compiler (validation). |
+| **Working proof-of-concept: bbjcpltool** | Most strategy papers describe aspirational architecture. This one has a working v1 tool that demonstrates the concept TODAY. The bbjcpltool runs `bbjcpl -N` on every `.bbj` file Claude writes/edits, parses stderr for errors, and surfaces them so Claude fixes them immediately. This is not a mockup. | High | This is the most valuable differentiator. Document: (1) how the PostToolUse hook works, (2) the stderr parsing (exit code always 0, must parse error output), (3) the automatic fix cycle where Claude reads errors and self-corrects, (4) results from real usage. This turns "we plan to do compiler validation" into "compiler validation is already working." |
+| **Defense-in-depth architecture** | The three MCP tools form a layered validation chain that is more robust than any single technique. Present this as a deliberate architecture pattern, not three independent tools. | Low | Diagram showing: Layer 1 (RAG search) provides context quality, Layer 2 (fine-tuned model) provides generation quality, Layer 3 (compiler validation) provides correctness guarantee. Each layer catches different classes of errors. |
+| **Compiler error feedback format** | `bbjcpl` error output has a specific format: `filename: error at line NN (N): <source line>`. Documenting this concretely proves the system is real and shows exactly what the LLM receives as feedback. | Low | Include actual compiler error examples in Ch4. Show a BBj snippet with a deliberate error, the compiler output, and the corrected version. |
 
-### Document Type Classification
+### MCP as the webforJ Pattern Extended
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Document type classification** | Chapter 6 defines 7 types: `api-reference`, `concept`, `example`, `migration`, `language-reference`, `best-practice`, `version-note`. Type determines chunk size and retrieval boosting. | Medium | Heuristic classification: API refs have method signatures and parameter lists. Concepts have prose paragraphs. Examples have code blocks. Migration docs reference "from X to Y" patterns. File path and heading patterns are strong signals. |
-| **Chunk size variation by type** | API refs get 200-400 tokens, concepts get 400-600 tokens, code examples stay intact. Per Chapter 6 design. | Low | Once doc type is classified, select chunk size from config map. |
+| Content Element | Value Proposition | Complexity | Notes |
+|-----------------|-------------------|------------|-------|
+| **webforJ vs BBj MCP comparison table** | webforJ MCP has knowledge search + project generation. BBj MCP has knowledge search + code generation + compiler validation. The comparison shows why BBj needs more: the base LLM does not understand the language. | Low | Small table in Ch2: webforJ MCP (knowledge search, project generation, theme creation) vs BBj MCP (knowledge search, code generation, compiler validation). webforJ only needs knowledge because Java is understood; BBj needs all three because it is not. |
+| **Organizational consistency narrative** | BASIS uses MCP for webforJ. Using MCP for BBj follows the same organizational strategy. This is not an experimental choice -- it is the established pattern. | Low | 1-2 sentences in Ch2 establishing pattern consistency. |
 
-### Source-Specific Parsers
+### Integration Patterns as Named Workflows
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **MadCap Flare TOC-aware parsing** | Use Flare's Table of Contents structure to maintain hierarchical relationships between topics. The Flare TOC provides the "Section > Subsection" hierarchy that becomes the contextual chunk header. | Medium | Parse the TOC XML file from the Flare export. Map each topic file to its position in the hierarchy. Without TOC, must infer hierarchy from heading levels within each file (less accurate but workable). |
-| **Advantage article category extraction** | Advantage articles are organized by category (Partnership, Language/Interpreter, Database Management, Development Tools, System Administration, Building Blocks). Extract category as metadata for filtering. | Low | Parse from WordPress category markup or REST API response. |
-| **DWC-Course chapter-aware chunking** | DWC-Course has 12 chapters with progressive structure (GUI-to-DWC migration through deployment). Chapter number and topic provide rich contextual headers. All content is DWC-generation. | Low | Parse MDX frontmatter for chapter metadata. All chunks from this source get `generation: ["dwc"]`. |
-| **Knowledge Base Q&A structure detection** | Knowledge Base articles likely follow Q&A/troubleshooting patterns. Detect question-answer pairs and keep them together as chunks rather than splitting Q from A. | Medium | Look for heading patterns like "Problem:", "Solution:", "Steps:", FAQ formatting. Keep Q+A as atomic chunks. |
+| Content Element | Value Proposition | Complexity | Notes |
+|-----------------|-------------------|------------|-------|
+| **Named integration patterns** | The MCP concept paper identifies three patterns: (1) Generate-Validate-Fix Loop, (2) Documentation Query, (3) Code Review/Migration. Naming them explicitly makes the architecture memorable and referenceable. | Medium | Each pattern gets a subsection in Ch2 or Ch4 with: name, when to use, which tools are called in sequence, Mermaid diagram. This is how MCP documentation is typically structured -- by use case, not just by tool. |
+| **Generate-Validate-Fix as industry-standard pattern** | This is not a BBj invention. Citing LLMLOOP, Clover, and ProCoder positions the BBj strategy within a well-established research tradition. This adds credibility. | Low | 1-2 paragraphs with citations in Ch4. "The generate-validate-fix pattern is well-established in AI code generation research (LLMLOOP, Clover, ProCoder). What makes the BBj implementation distinctive is that the validation oracle is a real compiler, not a test suite or static analyzer." |
 
-### Cross-Reference Metadata
+### Deployment Flexibility
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Supersedes/superseded_by links** | Chapter 6 defines modernization path links: `vpro5-window-create` is superseded by `bbj-addwindow`. These enable retrieval to surface modern equivalents alongside legacy answers. | High | Requires manual mapping or heuristic matching of legacy and modern APIs. Start with a manual lookup table for the most important API pairs. |
-| **Related topic links** | Extract cross-references from Flare output (internal links between topics) as `related` metadata. Enables "see also" suggestions. | Medium | Parse `<a href>` within topic content. Resolve relative paths to topic IDs. |
-
-### Ingestion Quality Reporting
-
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| **Post-ingestion summary report** | After ingestion completes, report: total chunks by source type, by generation tag, by document type. Shows coverage gaps at a glance. | Low | SQL aggregate queries + formatted console output. |
-| **Generation tag distribution report** | Show how many chunks are tagged per generation. Uneven distribution (e.g., 80% `all`, 2% `vpro5`) may indicate classification issues. | Low | `SELECT generation, count(*) FROM doc_chunks GROUP BY generation` |
-| **Orphan detection** | Flag chunks that have no generation tag or no document type. These need manual review. | Low | `SELECT * FROM doc_chunks WHERE generation IS NULL OR doc_type IS NULL` |
+| Content Element | Value Proposition | Complexity | Notes |
+|-----------------|-------------------|------------|-------|
+| **MCP transport options** | MCP supports stdio (local) and Streamable HTTP (remote) transports. This maps directly to the existing Ollama self-hosting narrative: local MCP server for privacy, remote for team sharing. | Low | Brief section in Ch2 or Ch7. Local deployment: MCP server runs alongside Ollama on developer machine. Team deployment: MCP server on shared infrastructure, developers connect via HTTP. |
+| **MCP client compatibility** | The MCP server works with any MCP-enabled host: Claude, Cursor, VS Code (via Copilot), Windsurf, etc. This broadens the audience beyond the custom VS Code extension described in Ch4. | Low | Table of known MCP hosts and their compatibility. This is a significant upgrade to Ch4's narrative, which currently implies the custom extension is the only path. With MCP, any AI coding assistant can use the BBj tools. |
 
 ---
 
 ## Anti-Features
 
-Things to deliberately NOT build in v1.2. Each is either premature optimization, scope creep, or contradicts the "starter kit" goal.
+Content to deliberately NOT include in the strategy documentation. Each would dilute the narrative, add speculative detail, or contradict the "woven into existing chapters" approach.
 
-### Production Infrastructure (Explicitly Out of Scope per PROJECT.md)
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **CI/CD automated re-ingestion** | v1.2 is a starter kit, not a production pipeline. Automated triggers add deployment complexity with no immediate value. | Manual CLI invocation: `python ingest.py --source flare`. An engineer runs it when needed. |
-| **Scheduled/incremental ingestion** | Incremental change detection (only re-ingest modified files) requires content versioning infrastructure. Over-engineering for a corpus that changes infrequently. | Full re-ingestion with idempotent upserts. At ~50K chunks, a full re-run takes minutes, not hours. |
-| **Docker/container packaging** | Containerizing adds Dockerfile maintenance and assumes a deployment target. The starter kit runs on an engineer's machine. | Virtual environment with `requirements.txt` or `pyproject.toml`. `pip install -e .` |
-| **Multi-environment config (staging/prod)** | No staging/prod distinction needed for a starter kit. One database, one config. | Single `.env` file with `DATABASE_URL`. |
-
-### Premature Optimization
+### New Standalone Chapter
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Distributed/parallel ingestion (Ray)** | The corpus is ~50K chunks. Sequential processing on a single machine completes in reasonable time. Ray adds massive dependency complexity. | Simple Python `for` loop with progress bar. Profile first; optimize only if ingestion exceeds 1 hour. |
-| **Embedding fine-tuning** | Chapter 6 explicitly defers this: "optimization should be deferred until the baseline pipeline is operational and retrieval quality can be measured." | Use a pre-trained embedding model. Measure retrieval quality first. Fine-tune later with query-document pairs from real usage. |
-| **Cross-encoder reranking at ingestion time** | Reranking is a retrieval-time concern (Stage 4 of Chapter 6's retrieval function). It has nothing to do with ingestion. | Implement reranking in the retrieval API, not the ingestion pipeline. |
-| **GraphRAG / knowledge graph construction** | Emerging pattern (TreeRAG, GraphRAG) adds LLM-powered semantic enrichment during ingestion. Massive complexity for uncertain benefit at this corpus size. | Flat vector store with metadata filtering. If graph relationships are needed later, they can be added as a layer on top. |
-| **LLM-assisted chunk summarization** | Some approaches generate per-chunk summaries using an LLM during ingestion. Adds LLM cost and latency for each of ~50K chunks with uncertain retrieval benefit. | Contextual chunk headers (deterministic, free) provide most of the same benefit. Per Snowflake FinanceBench results, CCH is more robust than per-chunk LLM summaries. |
-| **Semantic deduplication (embedding clustering)** | MinHash/LSH or embedding-based near-duplicate detection is designed for corpora with heavy redundancy. BBj docs are authored content, not web-scraped duplicates. | Hash-based exact deduplication only. If semantic duplicates emerge, address manually. |
-| **Agentic ingestion (multi-step reasoning)** | Agentic RAG patterns (query expansion, HyDE, critic loops) are retrieval-time features. They do not belong in ingestion. | Build a simple, deterministic pipeline. Agent-based retrieval is a future enhancement. |
+| **Chapter 8: MCP Server Architecture** | PROJECT.md explicitly decides against this: "MCP is the integration layer connecting Ch3-6, not a separate initiative." A standalone chapter would duplicate content from Ch2 and fragment the narrative. MCP is not a new initiative -- it is the concrete mechanism for the existing unified architecture. | Weave MCP content into existing chapters. Ch2 gets the architecture. Ch4 gets compiler validation. Ch5 gets MCP-based chat. Ch3, Ch6, Ch7 get cross-references. |
 
-### Scope Creep
+### Implementation Details
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Retrieval API server** | The ingestion pipeline writes to pgvector. Building a FastAPI retrieval server is a separate project (the consumers -- IDE extension and chat). | Document the SQL queries for retrieval (Chapter 6 already provides them). Provide a `query_example.py` script for testing, not a server. |
-| **Web UI for ingestion management** | A dashboard for monitoring ingestion is production infrastructure. The starter kit is a CLI tool. | Console logging + summary report printed to stdout. |
-| **Automated web crawling with link discovery** | Recursively crawling documentation.basis.cloud could pull in thousands of pages including navigation chrome, duplicate content, and irrelevant pages. | Curated URL lists per source type. For MadCap Flare, use the Clean XHTML export (file system, not crawl). For Advantage/KB, maintain a list of known article URLs. |
-| **Multi-language embedding support** | BBj docs are English only. No need for multilingual embedding models. | Choose an English-optimized model. If multilingual is free (e.g., BGE-M3 handles English well), fine, but don't select a model specifically for multilingual capability. |
-| **OCR for scanned content** | The BBj corpus is authored digital text (XHTML, HTML, MDX, PDF). No scanned documents. | Skip OCR entirely. If a specific PDF turns out to be image-based, flag it for manual review. |
-| **BBj source code ingestion** | Chapter 6's source corpus table lists "BBj source code" as a supporting corpus, but PROJECT.md's active requirements list only 5 sources. Source code parsing (AST extraction, function boundary detection) is a distinct problem. | Defer to a future milestone. The 5 defined sources are sufficient for the initial RAG database. |
+| **MCP server source code** | This is a strategy documentation site, not a codebase. Including full server implementation would cross the line from "strategy" to "tutorial." The site already marks implementation as out-of-scope. | Show tool definitions (JSON schemas) and integration patterns (sequence diagrams). These are strategic, not implementation. Reference the bbjcpltool as proof-of-concept but do not include its bash source. |
+| **MCP SDK installation/setup guide** | The site audience is "strategy communication" not "developer quickstart." Installation instructions belong in the MCP server's own README when it is built. | Reference the MCP specification and SDK docs for implementation details. The strategy site explains WHY and WHAT, not HOW to install. |
+| **JSON-RPC protocol details** | MCP uses JSON-RPC 2.0 internally, but strategy readers do not need to understand the wire protocol. Including it would be overengineering the documentation. | Mention "JSON-RPC 2.0" once as a fact, then move on. Link to the MCP specification for protocol details. |
+| **Security/auth implementation** | MCP has security considerations (consent, data privacy, tool safety). These are important for implementation but premature for strategy documentation where the server does not yet exist. | Acknowledge security as a deployment consideration in Ch7. Do not design auth flows. |
+
+### Speculative Features
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| **MCP Resources and Prompts** | MCP servers can expose Resources (read-only data) and Prompts (templates) in addition to Tools. The BBj concept paper only defines tools. Adding speculative Resources/Prompts would be padding. | Document only what is defined: three tools. Mention Resources and Prompts as future expansion possibilities in a single sentence. |
+| **Multi-agent orchestration** | MCP enables multi-agent patterns where one agent calls tools that trigger other agents. This is a 2026 trend but not part of the BBj strategy. | Do not mention. The BBj MCP server is a single-server, tool-based architecture. Multi-agent is scope creep for strategy documentation. |
+| **MCP server registry/discovery** | The MCP ecosystem is developing registry standards. Irrelevant for a single-purpose BBj server. | Do not mention. |
+| **Agentic RAG via MCP** | Agentic RAG (query routing, multi-step reasoning, agent loops) is explicitly out of scope per PROJECT.md. MCP enables it but the BBj strategy does not use it. | Do not mention. The RAG search tool is a single-step retrieval, not an agentic loop. |
+
+### Premature Technical Decisions
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| **MCP SDK language choice** | The MCP server has not been built yet. Choosing Python vs TypeScript vs Java is a decision for the implementation milestone, not the strategy documentation. | Present the architecture in language-agnostic terms. Show tool definitions as JSON Schema (language-neutral). Note that MCP has official SDKs in TypeScript, Python, Java, Go, Kotlin, and C#. |
+| **Specific MCP transport decision** | Stdio vs Streamable HTTP is a deployment decision. The strategy should describe both options and their tradeoffs, not lock in one. | Present both options with when-to-use guidance. |
+| **Embedding model for RAG search tool** | Ch6 and the RAG pipeline already selected Qwen3-Embedding-0.6B. The MCP search tool uses whatever the RAG pipeline provides. Do not re-decide. | Reference Ch6's existing embedding decision. The MCP tool is a consumer of the RAG pipeline, not a replacement. |
 
 ---
 
 ## Feature Dependencies
 
-### Dependencies on Chapter 6 Design
-
-| Feature | Chapter 6 Dependency | Status |
-|---------|---------------------|--------|
-| pgvector schema creation | Schema conceptually defined (doc structure examples in Chapter 6) but not formalized as DDL | Needs: concrete CREATE TABLE DDL |
-| Generation labels | 5-label taxonomy defined: `all`, `character`, `vpro5`, `bbj-gui`, `dwc` | Ready |
-| Document types | 7 types defined: `api-reference`, `concept`, `example`, `migration`, `language-reference`, `best-practice`, `version-note` | Ready |
-| Chunk sizes by type | Defined in Chapter 6 table (API: 200-400, concept: 400-600, code: variable, migration: 400-600, language: 300-500) | Ready |
-| Contextual chunk headers | Described in Chapter 6, format established | Ready |
-| Chunk overlap | 10-15% specified | Ready |
-| Hybrid search columns | Need both vector column (embedding) and tsvector column (search_vector) | Ready (design), needs DDL |
-| Supersedes/superseded_by | Described in Chapter 6 document examples | Needs: lookup table of known API pairs |
-| Generation scoring logic | TypeScript pseudocode in Chapter 6 | Needs: Python translation for validation |
-
-### Internal Feature Dependencies
+### Dependency Chain
 
 ```
-Parsing (per source type)
-  --> Heading hierarchy extraction
-    --> Contextual chunk headers (CCH)
-      --> Embedding generation
-        --> pgvector storage
-
-Document type classification
-  --> Chunk size selection
-    --> Token-aware splitting
-      --> Embedding generation
-
-Generation classification signals
-  --> Generation tagging
-    --> Multi-generation tag support
-      --> pgvector storage (generation TEXT[] column)
-
-Configuration file
-  --> All other features (paths, DB connection, model name)
-
-Content hashing
-  --> Idempotent ingestion (upsert logic)
+Chapter 2 update (MCP architecture definition)
+  --> Chapter 4 update (compiler validation + MCP IDE integration)
+  --> Chapter 5 update (MCP-based chat)
+  --> Chapters 3, 6, 7 cross-reference updates
 ```
+
+Ch2 must be updated first because it defines the MCP architecture that Ch4 and Ch5 reference. Ch4 is the largest update (compiler validation is substantial new content). Ch5 is a moderate update (reframing existing content through MCP lens). Ch3, Ch6, Ch7 are lightweight cross-reference updates.
+
+### Per-Chapter Content Dependencies
+
+| Chapter Update | Depends On | Status |
+|----------------|-----------|--------|
+| Ch2: MCP architecture | MCP concept paper (available), webforJ MCP precedent (shipped) | Ready |
+| Ch4: Compiler validation | bbjcpltool proof-of-concept (v1 shipped), bbjcpl compiler (available) | Ready |
+| Ch4: MCP IDE integration | Ch2 MCP architecture definition (write first) | Blocked by Ch2 |
+| Ch5: MCP-based chat | Ch2 MCP architecture definition (write first) | Blocked by Ch2 |
+| Ch3: Fine-tuning cross-refs | Ch2 + Ch4 updates (reference targets must exist) | Blocked by Ch2/Ch4 |
+| Ch6: RAG cross-refs | Ch2 update (reference target must exist) | Blocked by Ch2 |
+| Ch7: Roadmap cross-refs | All other updates (must reflect final state) | Last |
+| BBj code sample validation | bbjcpl compiler access (available at /Users/beff/bbx/bin/bbjcpl) | Ready |
 
 ### External Dependencies
 
 | Dependency | What It Blocks | Status |
 |-----------|---------------|--------|
-| PostgreSQL with pgvector extension | All storage features | Engineer must provision locally (Docker or native install) |
-| MadCap Flare Clean XHTML export | Flare source parsing | Requires access to Flare project OR fallback to crawl |
-| Embedding model download | Embedding generation | First run downloads model (~1-4 GB depending on model) |
-| Python 3.10+ | pymupdf4llm requirement | Standard for 2026 |
-| GPU (optional) | Embedding speed | CPU works but slower. GPU recommended for full corpus (50K chunks). |
+| MCP concept paper content | Ch2 tool definitions, integration patterns | Available (described in PROJECT.md context) |
+| bbjcpltool PROJECT.md | Ch4 proof-of-concept documentation | Available at /Users/beff/bbjcpltool/.planning/PROJECT.md |
+| bbjcpl compiler | BBj code sample validation before publishing | Available at /Users/beff/bbx/bin/bbjcpl |
+| webforJ MCP documentation | Ch2 organizational precedent reference | Available at docs.webforj.com/docs/introduction/mcp |
+| MCP specification | Terminology, tool schema format | Available at modelcontextprotocol.io |
 
 ---
 
-## Implementation Priority for v1.2
+## Per-Chapter Recommendations
 
-### Phase 1: Schema + Core Parsing (Build First)
+### Chapter 1: The BBj Challenge -- No Update Needed
 
-These must work before anything else can be validated.
+Chapter 1 defines the problem (BBj is invisible to LLMs) and the contrast with webforJ. It does not describe solutions. No MCP content belongs here. The only possible touch would be mentioning the webforJ MCP server in the webforJ contrast section, but this risks scope creep.
 
-| Feature | Complexity | Rationale |
-|---------|-----------|-----------|
-| Configuration file | Low | Everything else reads from config |
-| pgvector schema creation (DDL) | Low | Must exist before any data can be stored |
-| XHTML parser for Flare docs | Low | Primary corpus; validates the entire pipeline |
-| Heading hierarchy extraction | Low | Required for CCH |
-| Contextual chunk headers | Low | Highest-impact retrieval quality feature |
-| Token-aware splitting with overlap | Low | Core chunking logic |
-| Code block integrity | Medium | BBj code samples are high-value content |
-| Logging + error handling | Low | Must be present from day one |
+**Recommendation:** Leave Chapter 1 unchanged.
 
-### Phase 2: Generation + Type Classification
+### Chapter 2: Strategic Architecture -- Major Rewrite of Architecture Section
 
-The BBj-specific intelligence layer.
+**Current state:** Abstract two-layer diagram (shared foundation + application layer) with generic "standard APIs."
 
-| Feature | Complexity | Rationale |
-|---------|-----------|-----------|
-| Generation classification signals | High | The defining differentiator; determines pipeline's value |
-| Document type classification | Medium | Drives chunk sizing |
-| Chunk size variation by type | Low | Depends on doc type classification |
-| Default generation fallback | Low | Safety net for ambiguous content |
+**Target state:** MCP server as the concrete integration mechanism with tool definitions, host/client/server topology, and named integration patterns.
 
-### Phase 3: Embedding + Storage
+**Specific content to add:**
+1. MCP server introduction (1-2 paragraphs explaining what MCP is and why it fits)
+2. Updated architecture diagram showing MCP topology (Host -> Client -> BBj MCP Server -> RAG/Ollama/bbjcpl)
+3. Three tool definitions with JSON schemas in MCP-standard format
+4. Three named integration patterns (Generate-Validate-Fix, Documentation Query, Code Review/Migration)
+5. webforJ MCP precedent callout
+6. Deployment options (local stdio vs remote HTTP)
+7. Updated "Current Status" reflecting bbjcpltool proof-of-concept
 
-Actually producing the vector database.
+**What to preserve:** The "Case Against Point Solutions" argument, the "Benefits of This Approach" section (stakeholder-segmented benefits), the "Three Initiatives" overview. These are all still valid -- MCP makes them more concrete, not different.
 
-| Feature | Complexity | Rationale |
-|---------|-----------|-----------|
-| Embedding generation (batch) | Medium | Requires model selection and GPU/CPU decision |
-| Chunk insertion with metadata | Low | Standard SQL |
-| Full-text search vector column | Low | Populated at insertion time |
-| Content hashing + idempotent upsert | Low | Data integrity |
-| HNSW index creation | Low | Post-bulk-insert optimization |
-| Deterministic chunk IDs | Low | Enables re-runs |
-| Source URL tracking | Low | Required for citations |
+**Estimated content change:** ~60% of chapter rewritten/updated.
 
-### Phase 4: Additional Sources
+### Chapter 3: Fine-Tuning -- Minor Cross-Reference Updates
 
-Extend beyond Flare to the other 4 source types.
+**Current state:** Complete chapter on Qwen2.5-Coder, QLoRA, Unsloth, Ollama deployment.
 
-| Feature | Complexity | Rationale |
-|---------|-----------|-----------|
-| PDF text extraction | Low | pymupdf4llm handles this cleanly |
-| HTML scraping for Advantage articles | Medium | WordPress HTML parsing |
-| Knowledge Base scraping | Medium | WordPress/LearnPress; try REST API first |
-| MDX extraction for DWC-Course | Medium | Clone repo, strip JSX, extract content |
-| Source-by-source CLI invocation | Low | Ties it all together |
+**Target state:** Same content with cross-references to MCP architecture.
 
-### Phase 5: Quality + Reporting
+**Specific content to add:**
+1. Brief mention in intro that the fine-tuned model is consumed via MCP's `generate_bbj_code` tool
+2. Cross-reference to Ch2's MCP architecture from the Ollama deployment section
+3. Updated "Current Status" block
 
-Validate and verify the output.
+**What to preserve:** Everything. The fine-tuning content is complete and independent of the integration mechanism.
 
-| Feature | Complexity | Rationale |
-|---------|-----------|-----------|
-| Post-ingestion summary report | Low | Essential feedback loop |
-| Generation tag distribution report | Low | Validates classification quality |
-| Orphan detection | Low | Catches gaps |
-| Query example script | Low | Proves the pipeline produces usable data |
+**Estimated content change:** ~5% (cross-references and status update only).
+
+### Chapter 4: IDE Integration -- Major Addition of Compiler Validation
+
+**Current state:** Two-layer completion (Langium + LLM), ghost text via InlineCompletionProvider, Copilot BYOK bridge, Continue.dev and Langium AI alternatives.
+
+**Target state:** Three-layer architecture (Langium + LLM + Compiler), with the compiler validation as a substantial new section, and MCP as the integration mechanism.
+
+**Specific content to add:**
+1. **New section: "Compiler Validation: Ground-Truth Syntax Checking"** -- the bbjcpltool concept, `bbjcpl` flags, error format, generate-validate-fix loop, research citations (LLMLOOP, Clover)
+2. **bbjcpltool proof-of-concept subsection** -- how it works today, key design decisions (stderr parsing, exit code 0, default -N flag), results
+3. **MCP integration for IDE** -- how the InlineCompletionProvider can use MCP tools instead of direct Ollama calls
+4. Updated architecture diagrams showing compiler validation path
+5. Updated "Current Status" reflecting bbjcpltool v1
+6. **Any MCP-enabled host** -- note that with MCP, the BBj tools work not just in VS Code but in any MCP client (Claude, Cursor, etc.)
+
+**What to preserve:** The Langium foundation section, two-completion-mechanism comparison, generation-aware completion, enriched prompt example, LSP 3.18 section, Copilot Bridge section. All still valid.
+
+**Estimated content change:** ~40% new content added, ~10% existing content updated.
+
+### Chapter 5: Documentation Chat -- Moderate MCP Reframing
+
+**Current state:** Chat architecture with direct backend-to-RAG-to-Ollama pipeline, generation-aware responses, streaming/citations, deployment options.
+
+**Target state:** Same architecture but framed through MCP: chat backend as MCP client, `search_bbj_knowledge` tool for retrieval.
+
+**Specific content to add:**
+1. MCP-based architecture framing (chat backend as MCP client)
+2. Updated sequence diagram showing MCP tool calls
+3. `search_bbj_knowledge` tool definition with generation_hint parameter
+4. Reference to Ch2's "Documentation Query" integration pattern
+5. Updated "Current Status" block
+
+**What to preserve:** The "Why Generic Chat Services Fail" argument, generation-aware response design (default modern, legacy detection), streaming/citations, deployment options, conversation context/token budget. All still valid and valuable.
+
+**Estimated content change:** ~20% updated (architecture sections and diagrams), ~5% new content.
+
+### Chapter 6: RAG Database Design -- Minor Cross-Reference Updates
+
+**Current state:** Complete technical blueprint for ingestion, chunking, embedding, hybrid search.
+
+**Target state:** Same content with cross-references to MCP search tool.
+
+**Specific content to add:**
+1. Brief mention that the retrieval function is exposed via MCP's `search_bbj_knowledge` tool
+2. Cross-reference to Ch2's MCP architecture
+3. Note that the generation_hint parameter in the MCP tool maps to the generationHint parameter in the existing retrieval function
+4. Updated "Current Status" block reflecting v1.2 RAG pipeline completion
+
+**What to preserve:** Everything. The RAG design is complete and the MCP tool is a consumer, not a replacement.
+
+**Estimated content change:** ~5% (cross-references and status update only).
+
+### Chapter 7: Implementation Roadmap -- Moderate Updates
+
+**Current state:** Four-phase roadmap (Model Validation -> IDE Integration -> RAG + Doc Chat -> Refinement) with costs, risks, metrics.
+
+**Target state:** Same phases but with MCP integration woven into Phase 2 (IDE) and Phase 3 (Chat), plus updated risk assessment acknowledging compiler validation as a mitigation.
+
+**Specific content to add:**
+1. Phase 2 deliverables updated: add "MCP server implementation" and "compiler validation module"
+2. Phase 3 deliverables updated: reference MCP-based chat backend
+3. Risk assessment update: the "Fine-tuned model hallucinates BBj syntax" risk now has a stronger mitigation (compiler validation, not just Langium parser validation)
+4. Updated "Current Status" block
+5. Brief mention of MCP transport decision as a Phase 2 consideration
+
+**What to preserve:** Phase structure, cost analysis, business metrics, NIST risk framework reference. All still valid.
+
+**Estimated content change:** ~15% updated.
+
+---
+
+## Complexity Summary
+
+| Chapter | Update Scope | New Content | Updated Content | Complexity |
+|---------|-------------|-------------|-----------------|------------|
+| Ch1 | None | 0% | 0% | None |
+| Ch2 | Major | ~30% | ~30% | High |
+| Ch3 | Minor | ~2% | ~3% | Low |
+| Ch4 | Major | ~40% | ~10% | High |
+| Ch5 | Moderate | ~5% | ~20% | Medium |
+| Ch6 | Minor | ~2% | ~3% | Low |
+| Ch7 | Moderate | ~5% | ~10% | Medium |
+
+**Total effort distribution:** Ch2 and Ch4 account for ~70% of the work. Ch5 and Ch7 account for ~20%. Ch3 and Ch6 are lightweight cross-reference updates.
 
 ---
 
 ## Key Observations
 
-1. **Generation tagging is the make-or-break feature.** Without it, this is a generic RAG pipeline. With it, it solves BBj's core problem: generation-aware retrieval. Budget the most research and iteration time for the classification heuristics.
+1. **The compiler validation is the story.** MCP is the mechanism, but compiler validation is the narrative differentiator. Every other niche-language AI tool does RAG + fine-tuning. The BBj strategy adds ground-truth compiler validation. This should be the headline in Ch4 and the most detailed new content.
 
-2. **Contextual chunk headers are the highest-ROI generic feature.** They are simple to implement (string concatenation of heading hierarchy) but have outsized impact on retrieval quality. FinanceBench benchmark: 83% vs. 19% baseline. Do this before any other optimization.
+2. **bbjcpltool is the proof.** Strategy papers are full of aspirational architecture. The bbjcpltool proves the compiler-in-the-loop concept works TODAY, in a real development environment, with real BBj code. Documenting this concretely (not just referencing it) transforms the strategy from "we plan to" to "we have demonstrated."
 
-3. **The Flare parser is the critical path.** MadCap Flare docs are the primary corpus. If the Flare parser works well, the pipeline delivers value even before the other 4 sources are connected. Prioritize Flare over the others.
+3. **MCP is the glue, not the feature.** The MCP server is architecturally important but narratively subordinate. Readers care about "can AI write valid BBj code?" not "what protocol do the tools use?" MCP should be presented as the enabling infrastructure, not the headline.
 
-4. **Document type classification drives everything downstream.** Chunk size, retrieval boosting, and generation inference all depend on knowing whether a chunk is an API reference, concept, or example. Get this right and the rest follows.
+4. **Chapter 2 defines vocabulary for all other chapters.** If Ch2 establishes "the BBj MCP server exposes three tools" with specific names and schemas, then Ch4 and Ch5 can reference those tools by name. Ch2 must be written first and provides the terminology contract for all subsequent updates.
 
-5. **Idempotent ingestion is non-negotiable for a starter kit.** Engineers will run the pipeline multiple times during development. If re-runs create duplicates, the database becomes unusable fast. Content hashing + upsert must be there from day one.
+5. **The webforJ precedent is underutilized.** BASIS already has a working MCP server in production. The BBj MCP server is the natural next step, following the same organizational pattern. This should be mentioned but not belabored -- one callout in Ch2 is sufficient.
 
-6. **The five source types have very different parsing needs but identical output format.** Each source requires a custom parser, but all parsers produce the same intermediate representation (chunks with metadata). The architecture should enforce a common `ChunkDocument` interface that all parsers output.
+6. **Do not over-specify the MCP server implementation.** The strategy site documents WHAT and WHY, not HOW. Tool definitions (JSON schemas) are strategic. Server source code is not. The line is: "these are the three tools and their contracts" (strategic) vs "here is the Python code to implement them" (implementation).
 
-7. **Anti-features are load-bearing.** The strongest temptation will be to build a retrieval API server, add agentic features, or set up CI/CD. These are all valuable but belong in future milestones. The v1.2 deliverable is a script that fills a database, not an application.
+7. **Anti-features are load-bearing.** The strongest temptation will be to create a standalone MCP chapter, add multi-agent patterns, or design the server in detail. These all dilute the core narrative: MCP makes the existing strategy concrete. Resist scope creep.
 
 ---
 
 ## Sources
 
-### HIGH Confidence (Context7/Official Documentation)
-- Chapter 6: RAG Database Design (project source, `/docs/06-rag-database/index.md`) -- schema, chunking strategy, generation taxonomy, retrieval architecture
-- MadCap Flare Clean XHTML documentation: [MadCap Software Blog](https://www.madcapsoftware.com/blog/new-feature-highlight-clean-xhtml-output-madcap-flare-2017/)
-- pgvector-python official: [github.com/pgvector/pgvector-python](https://github.com/pgvector/pgvector-python)
-- pymupdf4llm: [PyPI](https://pypi.org/project/pymupdf4llm/), [PyMuPDF RAG docs](https://pymupdf.readthedocs.io/en/latest/rag.html)
-- LlamaIndex ingestion pipeline: [docs.llamaindex.ai](https://docs.llamaindex.ai/en/stable/module_guides/loading/ingestion_pipeline/)
+### HIGH Confidence (Official Documentation / Direct Verification)
 
-### MEDIUM Confidence (WebSearch verified with multiple sources)
-- Contextual chunk headers technique: [NirDiamant/RAG_Techniques](https://github.com/NirDiamant/RAG_Techniques/blob/main/all_rag_techniques/contextual_chunk_headers.ipynb), [Snowflake FinanceBench](https://www.snowflake.com/en/engineering-blog/impact-retrieval-chunking-finance-rag/)
-- Chunking best practices (300-500 tokens, 10-20% overlap): [Firecrawl](https://www.firecrawl.dev/blog/best-chunking-strategies-rag-2025), [Weaviate](https://weaviate.io/blog/chunking-strategies-for-rag), [Databricks](https://docs.databricks.com/aws/en/generative-ai/tutorials/ai-cookbook/quality-data-pipeline-rag)
-- Embedding model landscape (Qwen3-Embedding, BGE-M3): [BentoML guide](https://www.bentoml.com/blog/a-guide-to-open-source-embedding-models), [VentureBeat MTEB](https://venturebeat.com/ai/new-embedding-model-leaderboard-shakeup-google-takes-1-while-alibabas-open-source-alternative-closes-gap/), [MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard)
-- Metadata filtering in RAG: [Unstructured](https://unstructured.io/insights/how-to-use-metadata-in-rag-for-better-contextual-results), [Haystack](https://haystack.deepset.ai/blog/extracting-metadata-filter)
-- Deduplication / idempotent ingestion: [Databricks](https://docs.databricks.com/aws/en/generative-ai/tutorials/ai-cookbook/quality-data-pipeline-rag), [IBM RAG Cookbook](https://www.ibm.com/architectures/papers/rag-cookbook/data-ingestion)
-- LangChain vs. LlamaIndex 2026: [rahulkolekar.com](https://rahulkolekar.com/langchain-vs-llamaindex-2026-which-is-best-for-production-rag/)
+- MCP Specification (2025-11-25): [modelcontextprotocol.io/specification](https://modelcontextprotocol.io/specification/2025-11-25) -- Tool definition schema, host/client/server architecture
+- MCP Tools Specification: [modelcontextprotocol.io/specification/2025-06-18/server/tools](https://modelcontextprotocol.io/specification/2025-06-18/server/tools) -- Tool schema requirements, JSON Schema format
+- bbjcpltool PROJECT.md: `/Users/beff/bbjcpltool/.planning/PROJECT.md` -- Working proof-of-concept details, compiler flags, error parsing
+- webforJ MCP Server: [mcp.webforj.com](https://mcp.webforj.com/) -- BASIS organizational precedent
+- webforJ MCP Documentation: [docs.webforj.com/docs/introduction/mcp](https://docs.webforj.com/docs/introduction/mcp) -- Documentation pattern reference
+- Existing chapters: All 7 chapters read in full, content boundaries verified
 
-### LOW Confidence (Single sources, needs validation)
-- WordPress REST API availability for basis.cloud/knowledge-base/ -- assumed based on WordPress standard, not verified
-- Advantage article count (~6 visible on index page, may have more behind pagination)
-- MadCap Flare TOC file format -- described conceptually, not verified against actual export
+### MEDIUM Confidence (WebSearch Verified with Multiple Sources)
+
+- MCP adoption statistics: 97M monthly SDK downloads, adopted by OpenAI/Google/Microsoft -- [Pento year-in-review](https://www.pento.ai/blog/a-year-of-mcp-2025-review), [RedMonk analysis](https://redmonk.com/kholterhoff/2025/12/22/10-things-developers-want-from-their-agentic-ides-in-2025/), [CData enterprise guide](https://www.cdata.com/blog/2026-year-enterprise-ready-mcp-adoption)
+- LLMLOOP (ICSME 2025): Compiler feedback loops improve pass@10 from 76% to 90% -- [Paper](https://valerio-terragni.github.io/assets/pdf/ravi-icsme-2025.pdf)
+- Stanford Clover: Closed-loop verifiable code generation -- [SAIL Blog](https://ai.stanford.edu/blog/clover/)
+- ProCoder: Compiler-guided iterative refinement, 80%+ improvement -- [arxiv](https://arxiv.org/html/2403.16792v2)
+- Martin Fowler/Thoughtworks on compiler feedback: [martinfowler.com](https://martinfowler.com/articles/pushing-ai-autonomy.html)
+- MCP best practices (focused services, tool naming): [modelcontextprotocol.info](https://modelcontextprotocol.info/docs/best-practices/)
+- MCP tool schema patterns: [merge.dev](https://www.merge.dev/blog/mcp-tool-schema), [apxml.com](https://apxml.com/courses/getting-started-model-context-protocol/chapter-3-implementing-tools-and-logic/tool-definition-schema)
+
+### LOW Confidence (Single Sources, Needs Validation)
+
+- Gartner prediction: 75% of API gateway vendors will have MCP features by 2026 -- cited in CData blog, not verified against original Gartner report
+- MCP Registry standardization progress -- community discussions, no official timeline

@@ -1,484 +1,509 @@
-# Technology Stack: RAG Ingestion Pipeline
+# Technology Stack: MCP Architecture Documentation (v1.3 Milestone)
 
-**Project:** BBj AI Strategy -- RAG Ingestion Sub-Project (`rag-ingestion/`)
-**Researched:** 2026-01-31
-**Scope:** Python stack for parsing 5 source types, chunking, embedding, and storing in pgvector
-**Overall confidence:** HIGH (all recommendations verified via current web sources)
-
----
-
-## Recommended Stack
-
-### Runtime & Package Management
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Python | 3.12+ | Runtime | Current stable. Required by pymupdf4llm (>=3.10). 3.12 has best performance of the 3.x line. |
-| uv | latest | Package/project manager | Fastest Python package manager (10-100x pip). Handles venv, lockfile, and dependency resolution. Preferred over pip+venv for new projects in 2026. |
-
-**Project structure recommendation:** Use `pyproject.toml` with uv for dependency management. No `setup.py` or `requirements.txt`.
-
-```toml
-[project]
-name = "rag-ingestion"
-version = "0.1.0"
-requires-python = ">=3.12"
-```
+**Project:** BBj AI Strategy -- Docusaurus Documentation Update
+**Researched:** 2026-02-01
+**Scope:** Technologies and patterns for documenting MCP server architecture, compiler validation loops, and ecosystem integration across existing 7 chapters
+**Overall confidence:** HIGH (MCP SDK versions verified via npm/GitHub; Docusaurus config verified from project source; Mermaid patterns verified against official docs)
 
 ---
 
-### Source Type 1: MadCap Flare Clean XHTML
+## Context: What This Stack Is For
 
-**Primary path:** Parse Clean XHTML export from Flare project (engineers have access).
-**Fallback path:** Crawl live site at documentation.basis.cloud.
+This is NOT a stack for building an MCP server. This is a stack for **documenting** an MCP server architecture -- updating existing Docusaurus chapters with accurate MCP TypeScript patterns, architecture diagrams, and compiler validation concepts. The audience is technical readers of the BBj AI Strategy site who need to understand how the pieces (RAG search + fine-tuned model + compiler validation) connect via MCP.
 
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| lxml | 5.x (latest) | XHTML/XML parsing | 11x faster than BeautifulSoup for XML. Native XPath support is essential for navigating Flare's namespace-heavy XHTML (`xmlns:MadCap`). Flare Clean XHTML is valid XML, so lxml's strict parser works perfectly. |
-| beautifulsoup4 | 4.x (latest) | Fallback/convenience parsing | Use only if lxml's strict XML mode rejects malformed pages from the live site crawl. NOT needed for Clean XHTML export path. |
-
-**Why lxml over BeautifulSoup:** Flare Clean XHTML is well-formed XML by definition (MadCap strips all proprietary tags in Clean XHTML mode). lxml's `etree.parse()` handles this natively with XPath for structured extraction. BeautifulSoup adds overhead and is designed for forgiving HTML parsing, which is unnecessary here.
-
-**What Clean XHTML gives you:** All `mc:` tags, `data-mc-` attributes, MadCap-specific styles, keywords, concepts, and conditions are stripped. You get pure semantic XHTML with standard HTML elements -- headings, paragraphs, lists, tables, code blocks. This is the ideal input for a chunking pipeline.
-
-**Implementation approach:**
-```python
-from lxml import etree
-
-def parse_flare_xhtml(filepath: str) -> list[dict]:
-    tree = etree.parse(filepath)
-    root = tree.getroot()
-    # Extract title from <title> or first <h1>
-    # Walk <body> children, extracting text with structure preservation
-    # Tag each chunk with source metadata (file path, heading hierarchy)
-```
-
-**Confidence:** HIGH -- Flare Clean XHTML output is well-documented by MadCap. The FlareToSphinx project on GitHub confirms BeautifulSoup/lxml approach works. Clean XHTML specifically removes all the proprietary namespace detritus that makes raw Flare files difficult to parse.
+The existing site runs Docusaurus 3.9.2 with Mermaid enabled (`@docusaurus/theme-mermaid`), BBj syntax highlighting (`prism: { additionalLanguages: ['bbj'] }`), and GitHub Pages deployment. All recommendations below must integrate with this existing setup.
 
 ---
 
-### Source Type 2: PDF Extraction
-
-**Target:** GuideToGuiProgrammingInBBj.pdf and any other standalone PDFs linked from documentation.
-
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| pymupdf4llm | latest (Jan 2026 release) | PDF to Markdown extraction | Purpose-built for RAG pipelines. Outputs GitHub-compatible Markdown with headers, tables, code blocks, and lists properly formatted. Handles reading order, font-size-based header detection, and table recognition. Outperforms pdfplumber and pypdf for RAG use cases. |
-| PyMuPDF | 1.26.x | Underlying PDF engine | Installed automatically as pymupdf4llm dependency. Provides the actual PDF parsing via MuPDF C library. |
-
-**Why pymupdf4llm over alternatives:**
-- **vs. pdfplumber (MIT):** pdfplumber is slower (built on pdfminer.six) and outputs raw text without structural formatting. pymupdf4llm preserves document structure as Markdown, which is what the chunker needs.
-- **vs. pypdf (BSD):** pypdf is pure Python and handles basic text extraction, but has no layout analysis or table detection. For a programming guide PDF with code samples and tables, this matters.
-- **vs. marker-pdf:** Heavier dependency chain (requires PyTorch for ML-based layout detection). Overkill for well-structured technical PDFs.
-
-**License note:** pymupdf4llm inherits PyMuPDF's AGPL-3.0 license. This is acceptable here because:
-1. The ingestion pipeline is an internal developer tool, not a distributed product or SaaS.
-2. The pipeline code itself can be open-sourced alongside the docs repo.
-3. If licensing becomes a concern later, drop to `pdfplumber` (MIT) with a custom Markdown formatter -- a moderate effort refactor, not a rewrite.
-
-**Implementation approach:**
-```python
-import pymupdf4llm
-
-def extract_pdf(filepath: str) -> list[dict]:
-    pages = pymupdf4llm.to_markdown(filepath, page_chunks=True)
-    # Each page is a dict with 'text' (markdown) and metadata
-    # Post-process: strip page headers/footers, merge split paragraphs
-    return pages
-```
-
-**Confidence:** HIGH -- pymupdf4llm is actively maintained (last release Jan 10, 2026), widely used in RAG pipelines, and the Artifex team (MuPDF maintainers) develops it directly.
-
----
-
-### Source Type 3: WordPress Sites (Knowledge Base + Advantage Magazine)
-
-**Targets:**
-- `basis.cloud/knowledge-base/` -- WordPress + LearnPress LMS
-- `basis.cloud/advantage-index/` -- Magazine article archive
-
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| crawl4ai | 0.8.x (latest) | Site crawling + Markdown extraction | Purpose-built for LLM/RAG pipelines. Outputs clean Markdown from HTML pages automatically. Deep crawl with link-following, URL filtering, and content pruning (strips nav, footer, sidebar). Handles JavaScript-rendered content via Playwright. |
-| httpx | 0.28.x | HTTP client (fallback) | If crawl4ai is too heavy for simple WordPress pages, httpx + lxml is a lighter alternative. Only use as fallback. |
-
-**Why crawl4ai over alternatives:**
-- **vs. Scrapy:** Scrapy is a full crawl framework designed for large-scale scraping. Overkill for two small WordPress sites. Crawl4ai is simpler to set up and outputs clean Markdown directly -- exactly what the chunking pipeline needs.
-- **vs. BeautifulSoup + requests:** Would work for static pages, but requires manual boilerplate stripping (nav, sidebar, footer, cookie banners). Crawl4ai's `PruningContentFilter` handles this automatically.
-- **vs. WordPress REST API:** The WordPress REST API (`/wp-json/wp/v2/posts`) could provide structured content without crawling. Worth trying first for the Knowledge Base -- if the API is enabled and returns full content, it is cleaner than scraping. Fall back to crawl4ai if the API is disabled or returns excerpts only.
-
-**Implementation approach:**
-```python
-from crawl4ai import AsyncWebCrawler, CrawlerRunConfig
-
-async def crawl_wordpress_site(base_url: str, url_pattern: str) -> list[dict]:
-    config = CrawlerRunConfig(
-        # Use fit_markdown for cleaned content (strips boilerplate)
-        # Filter URLs to stay within the target section
-    )
-    async with AsyncWebCrawler() as crawler:
-        results = await crawler.arun_many(urls, config=config)
-    return [{"url": r.url, "markdown": r.markdown.fit_markdown} for r in results]
-```
-
-**WordPress REST API alternative (try first):**
-```python
-import httpx
-
-async def fetch_wp_posts(base_url: str) -> list[dict]:
-    async with httpx.AsyncClient() as client:
-        # Paginate through /wp-json/wp/v2/posts?per_page=100&page=N
-        # Extract title, content (HTML), date, categories
-        # Convert HTML content to markdown with a simple converter
-        pass
-```
-
-**Confidence:** MEDIUM-HIGH -- crawl4ai is actively maintained and well-suited for this use case. The WordPress REST API approach is cleaner if available but needs to be tested against the live sites. Neither site has been verified for API availability.
-
----
-
-### Source Type 4: Docusaurus MDX + BBj Code Samples
-
-**Target:** github.com/BasisHub/DWC-Course (Docusaurus site with MDX content and BBj sample files)
-
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| python-frontmatter | 1.1.0 | YAML frontmatter extraction | Parses `---` delimited YAML metadata from MDX files. Separates metadata (title, sidebar_position, description) from body content. Small, stable, widely used. |
-| markdown-it-py | 3.x | Markdown parsing | Parses Markdown body into tokens/AST. Extracts headings, paragraphs, code blocks as structured elements. Handles standard Markdown; JSX components get treated as raw HTML blocks (which is fine -- we want the text content, not the React components). |
-| lxml | 5.x | JSX tag stripping | Reuse from Source Type 1. Strip `<Tabs>`, `<TabItem>`, and other JSX/MDX components to extract inner text content. Simple regex or lxml HTML parser handles this. |
-
-**Why NOT a full MDX parser:** MDX is a JavaScript ecosystem format. The only complete MDX parsers (remark + remark-mdx) are in Node.js. For a Python pipeline processing a small set of known MDX files, a pragmatic approach works:
-1. Extract frontmatter with `python-frontmatter`
-2. Strip JSX component tags with regex (they are well-formed: `<ComponentName>...</ComponentName>`)
-3. Parse remaining Markdown with `markdown-it-py`
-4. For BBj code blocks (` ```bbj ` or ` ```basic `), extract as separate code chunks with language metadata
-
-**BBj sample files (.bbj/.txt):** These are plain text files. Read directly, tag with source file metadata. The CodeChunker from chonkie (or a simple custom splitter) can chunk by function/subroutine boundaries if the files are large.
-
-**Implementation approach:**
-```python
-import frontmatter
-import re
-
-def parse_mdx(filepath: str) -> dict:
-    post = frontmatter.load(filepath)
-    metadata = post.metadata  # title, sidebar_position, etc.
-    body = post.content
-    # Strip JSX components, keeping inner text
-    body = re.sub(r'<[A-Z][a-zA-Z]*[^>]*>', '', body)  # opening tags
-    body = re.sub(r'</[A-Z][a-zA-Z]*>', '', body)       # closing tags
-    return {"metadata": metadata, "markdown": body}
-```
-
-**Confidence:** HIGH -- This is a well-understood pattern. The DWC-Course repo uses standard Docusaurus MDX with minimal custom components. python-frontmatter is stable at 1.1.0 and handles the YAML extraction reliably.
-
----
-
-### Source Type 5: BBj Code Samples (standalone)
-
-**Target:** `.bbj`, `.txt`, and inline code blocks from all other sources.
-
-No additional libraries needed. BBj code files are plain text.
-
-**Approach:**
-- Read files directly with Python's built-in `pathlib` / file I/O
-- Tag with `generation` metadata based on file naming or content analysis:
-  - `character` -- files with `PRINT`, `INPUT`, `READ` without GUI mnemonics
-  - `vpro5` -- files with Visual PRO/5 mnemonic syntax (`PRINT(sysgui)'WINDOW'(...)`)
-  - `bbj-gui` -- files with BBj Swing API (`BBjWindow`, `BBjButton`)
-  - `dwc` -- files with DWC API (`BBjHtmlView`, web components)
-  - `all` -- general BBj syntax applicable across generations
-- Chunk by function/subroutine boundaries or by logical sections (comment-delimited blocks)
-
-**Confidence:** HIGH -- BBj files are simple text. The generation tagging logic is domain-specific but straightforward based on keyword detection.
-
----
-
-### Chunking
-
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| chonkie | 1.5.x | Text chunking | Lightweight, modular, purpose-built for RAG. 9 chunking strategies including RecursiveChunker (best for docs), SemanticChunker (for dense prose), and CodeChunker (AST-aware for code). Has native pgvector integration via `chonkie[pgvector]` extra. 10x lighter than LangChain's text splitters. |
-
-**Why chonkie over alternatives:**
-- **vs. LangChain text splitters:** LangChain's `RecursiveCharacterTextSplitter` and `MarkdownTextSplitter` work but pull in the entire LangChain dependency tree (hundreds of packages). Chonkie does one thing well with minimal dependencies.
-- **vs. LlamaIndex node parsers:** Same problem -- massive framework dependency for a single function.
-- **vs. custom splitting:** For Markdown content, custom splitting on `##` headers works initially but fails on edge cases (nested headers, code blocks containing `#`, tables). Chonkie's RecursiveChunker handles these correctly.
-- **vs. semantic chunking:** Semantic chunking (embedding every sentence, clustering by similarity) is computationally expensive and unnecessary for well-structured documentation. Use RecursiveChunker with Markdown-aware rules as the default. Reserve SemanticChunker for prose-heavy Advantage magazine articles where structure is less predictable.
-
-**Chunking strategy by source type:**
-
-| Source | Chunker | Rationale |
-|--------|---------|-----------|
-| Flare XHTML | RecursiveChunker | Structured documentation with clear heading hierarchy |
-| PDFs | RecursiveChunker | pymupdf4llm outputs structured Markdown |
-| WordPress articles | RecursiveChunker or SemanticChunker | Knowledge Base is structured; magazine articles may benefit from semantic chunking |
-| Docusaurus MDX | RecursiveChunker | Structured docs with heading hierarchy |
-| BBj code | CodeChunker | AST-aware chunking preserves function/class boundaries |
-
-**Chunk size recommendation:** 512-1024 tokens with 64-128 token overlap. For a small corpus (<50K chunks), larger chunks preserve more context. Start at 768 tokens / 96 overlap and tune based on retrieval quality.
-
-**Generation tagging:** Each chunk must carry a `generation` tag (`all`, `character`, `vpro5`, `bbj-gui`, `dwc`) in its metadata. This enables generation-filtered retrieval at query time -- the core differentiator of the BBj RAG system.
-
-**Installation:**
-```bash
-uv add "chonkie[semantic,code,pgvector]"
-```
-
-**Confidence:** HIGH -- chonkie 1.5.2 released Jan 5, 2026. Actively maintained, purpose-built for RAG, supports pgvector natively.
-
----
-
-### Embedding Model
-
-**Recommendation: Qwen3-Embedding-0.6B** (Apache 2.0, self-hostable)
-
-| Model | Parameters | Dimensions | MTEB Multi. | Context | Languages | VRAM (FP16) | License |
-|-------|-----------|------------|-------------|---------|-----------|-------------|---------|
-| **Qwen3-Embedding-0.6B** | 600M | 1024 (flexible 32-1024) | Competitive with 7B models | 32K tokens | 100+ natural + programming | ~4 GB | Apache 2.0 |
-| Qwen3-Embedding-4B | 4B | 2560 | Near SOTA | 32K tokens | 100+ | ~10 GB | Apache 2.0 |
-| Qwen3-Embedding-8B | 8B | 4096 | #1 MTEB Multilingual (70.58) | 32K tokens | 100+ | ~18 GB | Apache 2.0 |
-| Nomic Embed Text v2 (MoE) | ~300M active | 768 (flexible 256-768) | Competitive at size class | 8K tokens | 100+ | ~2 GB | Apache 2.0 |
-| EmbeddingGemma-300M | 308M | 768 (flexible 128-768) | #1 under 500M params | 8K tokens | 100+ | <1 GB | Gemma license |
-| BGE-M3 | 567M | 1024 | 63.0 | 8K tokens | 100+ | ~3 GB | MIT |
-
-**Why Qwen3-Embedding-0.6B:**
-
-1. **Code + text:** The Qwen3 embedding series explicitly supports 100+ programming languages. The 8B model scores 80.68 on MTEB-Code. Even the 0.6B model inherits the code-aware training. This matters for a corpus with BBj code samples alongside documentation prose.
-
-2. **Size/quality sweet spot:** At 600M parameters and ~4GB VRAM (FP16), it runs on any modern GPU including consumer cards. It performs competitively with models 10x its size on real-world retrieval tasks and sits just behind Gemini-Embedding (proprietary) on MTEB among models in its size range.
-
-3. **Instruction-aware:** Supports custom task instructions that improve retrieval by 1-5%. For a domain-specific corpus like BBj documentation, instruction prefixes like "Retrieve documentation about BBj programming" can meaningfully improve results.
-
-4. **Flexible dimensions:** Matryoshka Representation Learning (MRL) allows truncating output from 1024 down to 32 dimensions. Start at 768 dimensions for quality, compress to 512 or 384 later if storage or speed becomes a concern. This flexibility avoids lock-in.
-
-5. **32K context:** Handles entire documentation pages without truncation. Nomic v2 and BGE-M3 max at 8K tokens, which may truncate long pages.
-
-6. **Apache 2.0:** No licensing restrictions. Fully self-hostable. No API calls needed.
-
-**Why NOT the alternatives:**
-
-| Model | Why Not |
-|-------|---------|
-| Qwen3-Embedding-8B | ~18GB VRAM is too heavy for a small corpus. The 0.6B model provides sufficient quality. Scale up only if retrieval quality testing shows gaps. |
-| Qwen3-Embedding-4B | Good middle ground, but 0.6B is likely sufficient for <50K chunks of structured documentation. Start small, scale up if needed. |
-| Nomic Embed Text v2 | Strong general model but 8K context limit may truncate long Flare pages. No explicit code training emphasis. |
-| Nomic Embed Code (7B) | Code-specific but 7B parameters is heavy, and this corpus is majority prose with code samples, not a code-only corpus. |
-| EmbeddingGemma-300M | Excellent efficiency but the Gemma license is more restrictive than Apache 2.0. Also newer (Sep 2025) with less community production experience. |
-| BGE-M3 | Solid and battle-tested but older generation (2024). Lower MTEB scores than Qwen3 at comparable size. 8K context limit. |
-| all-MiniLM-L6-v2 | Too small (384 dims, 56.3 MTEB). Fine for prototyping, not for production embedding quality. |
-
-**Inference library:**
-
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| sentence-transformers | >=2.7.0 | Embedding inference | Standard library for running embedding models. Direct support for Qwen3 models. Simple API: `model.encode(texts)`. |
-| transformers | >=4.51.0 | Model loading backend | Required by sentence-transformers for Qwen3 model compatibility. |
-| torch | 2.x (latest) | ML runtime | Required by sentence-transformers/transformers. Install with CUDA support if GPU available. |
-
-**Usage:**
-```python
-from sentence_transformers import SentenceTransformer
-
-model = SentenceTransformer("Qwen/Qwen3-Embedding-0.6B")
-
-# With instruction for better retrieval (optional but recommended)
-texts = ["search_document: How to create a BBj window using DWC API"]
-embeddings = model.encode(texts)
-# embeddings.shape: (1, 1024)
-```
-
-**Confidence:** HIGH -- Qwen3-Embedding-0.6B is verified on HuggingFace with MTEB benchmarks. sentence-transformers compatibility confirmed (requires >=2.7.0). Apache 2.0 license confirmed. VRAM requirements verified.
-
----
-
-### Vector Storage (pgvector Integration)
-
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| pgvector (Python) | 0.4.2 | pgvector type support | Official Python library for pgvector. Registers vector types with psycopg/asyncpg/SQLAlchemy. MIT license. Last updated Jan 22, 2026. |
-| psycopg | 3.x (latest) | PostgreSQL driver | Modern async-capable PostgreSQL driver. psycopg3 (package name: `psycopg`) is the actively developed version. Supports binary COPY protocol for fast bulk inserts -- critical for loading embeddings. |
-| SQLAlchemy | 2.x (latest) | ORM (optional) | Use only if the schema needs migrations or if other parts of the system use SQLAlchemy. For a simple ingestion pipeline, raw psycopg3 is simpler and faster. |
-
-**Why psycopg3 over psycopg2:**
-- psycopg3 is the actively maintained version (psycopg2 is legacy)
-- Native async support (`psycopg.AsyncConnection`)
-- Binary COPY protocol for fast bulk vector inserts
-- Better type system integration with pgvector
-
-**Why NOT SQLAlchemy (for now):** The ingestion pipeline does one thing: bulk-insert chunks with embeddings. Raw psycopg3 with parameterized queries and COPY is simpler and 2-5x faster for bulk operations than ORM-mediated inserts. If the project later needs a query API or migrations, SQLAlchemy can be added without changing the schema.
-
-**Schema approach:**
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE chunks (
-    id SERIAL PRIMARY KEY,
-    source_type TEXT NOT NULL,       -- 'flare', 'pdf', 'wordpress', 'mdx', 'code'
-    source_path TEXT NOT NULL,       -- file path or URL
-    generation TEXT NOT NULL,        -- 'all', 'character', 'vpro5', 'bbj-gui', 'dwc'
-    title TEXT,                      -- section/page title
-    heading_path TEXT[],             -- breadcrumb of headings
-    chunk_index INTEGER NOT NULL,    -- position within source document
-    content TEXT NOT NULL,           -- raw text content
-    token_count INTEGER NOT NULL,
-    embedding vector(1024) NOT NULL, -- Qwen3-Embedding-0.6B default dimension
-    created_at TIMESTAMPTZ DEFAULT NOW()
+## MCP Protocol & SDK Reference
+
+### Current Protocol Version
+
+| Attribute | Value | Confidence | Source |
+|-----------|-------|------------|--------|
+| Current spec version | **2025-11-25** | HIGH | [Official spec](https://modelcontextprotocol.io/specification/2025-11-25) |
+| Previous spec version | 2025-06-18 | HIGH | Official blog |
+| Next spec expected | ~Q2 2026 (6-month cadence) | MEDIUM | Release pattern inference |
+| Governance | Linux Foundation (Agentic AI Foundation) | HIGH | [Official announcement](https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/) |
+
+**Key 2025-11-25 additions relevant to documentation:**
+- Async Tasks primitive (experimental) -- enables "call-now, fetch-later" for long-running tool calls. Relevant for `validate_bbj_syntax` if compilation is slow.
+- Modernized OAuth authorization with Client ID Metadata Documents (CIMD). Relevant for enterprise deployment narrative.
+- Protocol Extensions Framework -- formalized extension naming and discovery.
+- Streamable HTTP transport replaces deprecated HTTP+SSE as the recommended remote transport.
+
+### TypeScript SDK
+
+| Attribute | Value | Confidence | Source |
+|-----------|-------|------------|--------|
+| Package | `@modelcontextprotocol/sdk` | HIGH | [npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) |
+| Current version | **1.25.2** (as of ~2026-01-21) | HIGH | npm registry |
+| Spec compliance | 2025-11-25 | HIGH | [Releases](https://github.com/modelcontextprotocol/typescript-sdk/releases) |
+| Zod dependency | `zod` v3.25+ (SDK imports from `zod/v4` internally) | HIGH | GitHub README |
+| v2 timeline | Q1 2026 (anticipated) | MEDIUM | npm README |
+| Dependents | 21,227+ npm packages | HIGH | npm registry |
+
+**Why this version matters for documentation:** The code examples shown in strategy docs should use v1.x `registerTool()` patterns with Zod schemas, as this is what any reader implementing the BBj MCP Server would use in production. The v2 migration is imminent but v1.x will receive 6+ months of support after v2 ships.
+
+### SDK Middleware Packages
+
+| Package | Purpose | When to Mention |
+|---------|---------|-----------------|
+| `@modelcontextprotocol/node` | Node.js http adapter | For stdio-based local server docs |
+| `@modelcontextprotocol/express` | Express adapter with DNS rebinding protection | For Streamable HTTP remote server docs |
+| `@modelcontextprotocol/hono` | Hono web framework adapter | Alternative to Express |
+
+### Tool Registration Pattern (For Code Examples in Docs)
+
+The canonical TypeScript pattern for defining an MCP tool, which documentation should show when describing the BBj MCP Server tools:
+
+```typescript
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+
+const server = new McpServer({
+  name: "bbj-mcp-server",
+  version: "1.0.0",
+});
+
+// Tool: search_bbj_knowledge (RAG search)
+server.registerTool(
+  "search_bbj_knowledge",
+  {
+    title: "Search BBj Knowledge Base",
+    description: "Search the BBj documentation and code examples using RAG",
+    inputSchema: {
+      query: z.string().describe("Natural language search query"),
+      generation: z.enum(["all", "character", "vpro5", "bbj-gui", "dwc"])
+        .optional()
+        .describe("Filter by BBj generation"),
+      limit: z.number().default(5).describe("Number of results to return"),
+    },
+  },
+  async ({ query, generation, limit }) => {
+    // RAG pipeline: embed query -> pgvector similarity search -> return chunks
+    const results = await ragSearch(query, { generation, limit });
+    return {
+      content: [{ type: "text", text: JSON.stringify(results) }],
+    };
+  }
 );
 
--- HNSW index for cosine similarity search
-CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops)
-    WITH (m = 16, ef_construction = 64);
+// Tool: generate_bbj_code (fine-tuned model)
+server.registerTool(
+  "generate_bbj_code",
+  {
+    title: "Generate BBj Code",
+    description: "Generate BBj code using the fine-tuned model with RAG context",
+    inputSchema: {
+      prompt: z.string().describe("Code generation request"),
+      generation: z.enum(["character", "vpro5", "bbj-gui", "dwc"])
+        .describe("Target BBj generation"),
+      context: z.string().optional()
+        .describe("Additional code context"),
+    },
+  },
+  async ({ prompt, generation, context }) => {
+    // Query RAG for relevant examples, then call fine-tuned model via Ollama
+    const ragContext = await ragSearch(prompt, { generation });
+    const code = await ollamaGenerate(prompt, generation, ragContext, context);
+    return {
+      content: [{ type: "text", text: code }],
+    };
+  }
+);
 
--- Filter indexes for generation-scoped retrieval
-CREATE INDEX ON chunks (generation);
-CREATE INDEX ON chunks (source_type);
+// Tool: validate_bbj_syntax (compiler validation)
+server.registerTool(
+  "validate_bbj_syntax",
+  {
+    title: "Validate BBj Syntax",
+    description: "Validate BBj code using the bbjcpl compiler",
+    inputSchema: {
+      code: z.string().describe("BBj source code to validate"),
+      filename: z.string().optional()
+        .describe("Virtual filename for error reporting"),
+    },
+  },
+  async ({ code, filename }) => {
+    // Write to temp file, run bbjcpl -N, parse output
+    const result = await runBbjCompiler(code, filename);
+    return {
+      content: [{
+        type: "text",
+        text: result.valid
+          ? "Syntax valid"
+          : `Errors:\n${result.errors.join("\n")}`,
+      }],
+    };
+  }
+);
 ```
 
-**Usage:**
-```python
-import psycopg
-from pgvector.psycopg import register_vector
-
-conn = psycopg.connect("postgresql://...")
-register_vector(conn)
-
-# Bulk insert with COPY
-with conn.cursor() as cur:
-    with cur.copy("COPY chunks (source_type, source_path, generation, title, "
-                  "heading_path, chunk_index, content, token_count, embedding) "
-                  "FROM STDIN WITH (FORMAT BINARY)") as copy:
-        copy.set_types(["text", "text", "text", "text",
-                       "text[]", "int4", "text", "int4", "vector"])
-        for chunk in chunks:
-            copy.write_row(chunk.as_tuple())
-```
-
-**Confidence:** HIGH -- pgvector-python 0.4.2 verified on PyPI (Jan 22, 2026). psycopg3 binary COPY with vector types is documented in the official repo examples.
+**Confidence:** HIGH -- Pattern verified against [official SDK server docs](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md). The `registerTool()` method with Zod schemas is the current canonical approach. Recent PR #816 expanded it to accept `ZodType<object>` for unions and intersections.
 
 ---
 
-### Configuration & CLI
+## MCP Architecture Concepts (For Documentation Content)
 
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| pydantic | 2.x | Configuration validation | Type-safe config with environment variable support. Define source paths, DB connection, model name, chunk sizes as a validated config object. |
-| pydantic-settings | 2.x | Environment variable loading | Loads config from `.env` files and environment variables. Standard pattern for DB credentials and model paths. |
-| typer | 0.x (latest) | CLI interface | Simple CLI framework built on Click. Define commands like `ingest flare`, `ingest pdf`, `ingest all`. Minimal boilerplate. |
-| rich | 13.x | Terminal output | Progress bars, tables, colored output for the ingestion CLI. Shows progress during long embedding runs. |
+### Core Architecture Model
 
-**Why NOT LangChain or LlamaIndex:**
-These are framework-level dependencies that would dominate the project. They provide document loaders, text splitters, vector store integrations, and embedding wrappers -- but each of those is a thin wrapper around the libraries we are already using directly. Adding LangChain means:
-- 100+ transitive dependencies
-- Framework lock-in for simple operations
-- Abstraction layers that obscure what is happening
-- Version compatibility issues across the framework
+The MCP architecture that documentation should present:
 
-For a focused ingestion pipeline with 5 known source types and a single vector store, direct library usage is simpler, faster, and more maintainable.
+| Concept | What It Is | How It Maps to BBj MCP Server |
+|---------|-----------|-------------------------------|
+| **Host** | AI application (Claude Desktop, VS Code, etc.) | The IDE or chat client where a developer interacts |
+| **Client** | Component inside host that connects to servers | One MCP client per server connection, managed by host |
+| **Server** | Program exposing tools/resources/prompts | The BBj MCP Server with 3 tools |
+| **Transport** | Communication layer (stdio or Streamable HTTP) | stdio for local dev, Streamable HTTP for shared deployment |
+| **Tools** | Executable functions the LLM can invoke | `search_bbj_knowledge`, `generate_bbj_code`, `validate_bbj_syntax` |
+| **Resources** | Read-only data sources | Could expose BBj API docs as resources (future) |
+| **Prompts** | Reusable interaction templates | Could expose generation-aware prompt templates (future) |
 
----
+### JSON-RPC Protocol Flow
 
-## Complete Dependency List
+For documentation sequence diagrams, the protocol flow is:
+1. `initialize` request/response (capability negotiation, protocol version)
+2. `notifications/initialized` (client ready)
+3. `tools/list` request/response (tool discovery)
+4. `tools/call` request/response (tool execution)
+5. Optional: `notifications/tools/list_changed` (dynamic tool updates)
 
-### Core dependencies (pyproject.toml)
+All messages use JSON-RPC 2.0. No `id` field on notifications.
 
-```toml
-[project]
-dependencies = [
-    # Parsing
-    "lxml>=5.0",
-    "pymupdf4llm>=0.2",
-    "crawl4ai>=0.8",
-    "python-frontmatter>=1.1",
-    "markdown-it-py>=3.0",
-
-    # Chunking
-    "chonkie[semantic,code,pgvector]>=1.5",
-
-    # Embedding
-    "sentence-transformers>=2.7",
-    "transformers>=4.51",
-    "torch>=2.0",
-
-    # Database
-    "pgvector>=0.4",
-    "psycopg[binary]>=3.0",
-
-    # Config & CLI
-    "pydantic>=2.0",
-    "pydantic-settings>=2.0",
-    "typer>=0.9",
-    "rich>=13.0",
-
-    # HTTP (for WordPress REST API fallback)
-    "httpx>=0.28",
-]
-```
-
-### Development dependencies
-
-```toml
-[dependency-groups]
-dev = [
-    "pytest>=8.0",
-    "pytest-asyncio>=0.24",
-    "ruff>=0.9",
-    "mypy>=1.14",
-]
-```
-
-### Installation
-
-```bash
-# Create project and install all dependencies
-uv init rag-ingestion
-cd rag-ingestion
-uv add lxml pymupdf4llm "crawl4ai" python-frontmatter markdown-it-py
-uv add "chonkie[semantic,code,pgvector]"
-uv add sentence-transformers transformers torch
-uv add pgvector "psycopg[binary]"
-uv add pydantic pydantic-settings typer rich httpx
-uv add --group dev pytest pytest-asyncio ruff mypy
-
-# Post-install for crawl4ai (sets up Playwright browser)
-uv run crawl4ai-setup
-```
+**Confidence:** HIGH -- Verified against [official architecture docs](https://modelcontextprotocol.io/docs/learn/architecture).
 
 ---
 
-## What NOT To Use (And Why)
+## Compiler-in-the-Loop Validation Pattern
 
-### Do NOT use: LangChain or LlamaIndex
+### What bbjcpl Provides
 
-These are RAG application frameworks, not ingestion libraries. They add 100+ transitive dependencies to wrap the same libraries recommended above. For a batch ingestion pipeline that runs offline, the abstraction layers add complexity without value. The pipeline does not need chains, agents, memory, or runtime orchestration -- it needs parsers, a chunker, an embedder, and a database writer.
+`bbjcpl` is the BBj compiler (command-line). `bbjcpl -N <file>.bbj` performs syntax-only compilation (no output binary) and reports errors to stderr. This is the validation mechanism for the `validate_bbj_syntax` MCP tool.
 
-### Do NOT use: OpenAI / Cohere / Voyage embedding APIs
+### PostToolUse Hook Pattern (Claude Code)
 
-Project requirement is self-hostable with no external API calls. Even if API-based models score higher on benchmarks, they add latency, cost, and a hard dependency on external services. Qwen3-Embedding-0.6B runs locally and matches or exceeds older API models.
+The existing proof-of-concept (`bbjcpltool`) uses Claude Code's PostToolUse hooks to run compiler validation after code generation. This is a distinct integration point from the MCP server itself:
 
-### Do NOT use: ChromaDB, Qdrant, Pinecone, Weaviate
+| Integration Point | Mechanism | When It Runs |
+|-------------------|-----------|-------------|
+| MCP Server tool | `validate_bbj_syntax` tool via `tools/call` | When the LLM explicitly decides to validate |
+| Claude Code hook | PostToolUse hook on Write/Edit tools | Automatically after any file write to `.bbj` files |
 
-pgvector is already selected as the vector store (Chapter 6 decision). For <50K chunks, pgvector provides identical performance to dedicated vector databases with simpler infrastructure (just PostgreSQL). Adding a second vector database is unnecessary complexity.
+PostToolUse hooks in Claude Code match tool patterns like `mcp__<server>__<tool>` and can run shell commands or LLM-based evaluation. A BBj validation hook would:
 
-### Do NOT use: Unstructured.io
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "type": "command",
+        "command": "if [[ \"$TOOL_INPUT\" == *\".bbj\"* ]]; then bbjcpl -N \"$TOOL_INPUT\"; fi",
+        "timeout": 10000
+      }
+    ]
+  }
+}
+```
 
-Unstructured is a popular document parsing library, but it is a heavy dependency (~1GB+ with all extras) that wraps the same underlying libraries (pymupdf, pdfminer, lxml). For 5 known source types with known structures, direct parsing is more predictable and debuggable.
+**Known limitation:** PostToolUse hooks do not fire when the underlying Bash command fails (non-zero exit). This means if a Write tool fails, the compiler validation hook is skipped.
 
-### Do NOT use: Hugging Face TEI (Text Embeddings Inference) for initial development
+### Validation Loop Diagram Pattern
 
-TEI is a production inference server. For the initial ingestion pipeline (batch processing <50K chunks), sentence-transformers running locally is simpler. TEI adds Docker/container complexity. Consider TEI only when moving to production with concurrent embedding requests.
+For documenting the compiler-in-the-loop concept, the recommended Mermaid pattern:
 
-### Do NOT use: ONNX / llama.cpp for embedding inference (initially)
+```mermaid
+flowchart TD
+    A["Developer Request"] --> B["LLM generates BBj code"]
+    B --> C["bbjcpl -N validates syntax"]
+    C --> D{"Compilation<br/>successful?"}
+    D -->|Yes| E["Return validated code"]
+    D -->|No| F["Extract error messages"]
+    F --> G["LLM receives errors +<br/>original code"]
+    G --> B
 
-ONNX Runtime and llama.cpp (via llama-cpp-python) can provide faster inference for embedding models. But sentence-transformers with PyTorch is the simplest starting point and is what the model cards document. Optimize inference runtime only if embedding speed becomes a bottleneck (unlikely for <50K chunks).
+    style D fill:#f9f,stroke:#333
+    style E fill:#9f9,stroke:#333
+```
 
-### Do NOT use: asyncpg (initially)
+For the full MCP flow including RAG, use a sequence diagram:
 
-asyncpg is a fast async PostgreSQL driver, but psycopg3 already supports async and has better pgvector type integration (via the pgvector-python library's `register_vector`). Use psycopg3 for both sync and async operations. Add asyncpg only if you need the absolute maximum async throughput, which is unlikely for batch ingestion.
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant Host as MCP Host<br/>(IDE / Claude)
+    participant Server as BBj MCP Server
+    participant RAG as RAG Pipeline<br/>(pgvector)
+    participant Model as Fine-Tuned Model<br/>(Ollama)
+    participant Compiler as bbjcpl
 
-### Do NOT use: markdown-analyzer-lib for MDX
+    Dev->>Host: "Create a DWC grid component"
+    Host->>Server: tools/call: search_bbj_knowledge
+    Server->>RAG: Embed query + similarity search
+    RAG-->>Server: Relevant docs + examples
+    Server-->>Host: RAG results
 
-This package exists on PyPI and claims MDX support, but it has limited documentation and community adoption. The python-frontmatter + markdown-it-py + regex combination is more transparent, well-documented, and handles the known DWC-Course MDX patterns reliably.
+    Host->>Server: tools/call: generate_bbj_code
+    Server->>Model: Prompt + RAG context + generation hint
+    Model-->>Server: Generated BBj code
+    Server-->>Host: Code response
+
+    Host->>Server: tools/call: validate_bbj_syntax
+    Server->>Compiler: bbjcpl -N temp.bbj
+    Compiler-->>Server: Validation result
+    Server-->>Host: Valid / errors
+
+    alt Errors found
+        Host->>Server: tools/call: generate_bbj_code (with errors)
+        Server->>Model: Prompt + errors + previous attempt
+        Model-->>Server: Corrected code
+        Server-->>Host: Corrected code
+    end
+
+    Host-->>Dev: Validated BBj code
+```
+
+**Confidence:** MEDIUM-HIGH -- The validation loop pattern is well-established in AI code generation (see "Intent-Validation-Refinement" and "Red-Green-Blue" TDD patterns in literature). The specific `bbjcpl -N` integration is project-specific and confirmed from project context. PostToolUse hook patterns verified against [Claude Code hooks documentation](https://code.claude.com/docs/en/hooks).
+
+---
+
+## Docusaurus Presentation Stack
+
+### Already Configured (DO NOT change)
+
+These are confirmed present in the project's `docusaurus.config.ts`:
+
+| Feature | Configuration | Status |
+|---------|--------------|--------|
+| Mermaid diagrams | `markdown: { mermaid: true }`, `@docusaurus/theme-mermaid` | Active |
+| Mermaid themes | `light: 'neutral', dark: 'dark'` | Configured |
+| BBj syntax highlighting | `prism: { additionalLanguages: ['bbj'] }` | Active |
+| Custom CSS | `./src/css/custom.css` | Active |
+| Local search | `@easyops-cn/docusaurus-search-local` | Active |
+| Docusaurus future flags | `v4: true, experimental_faster: true` | Active |
+
+### Diagram Types for MCP Architecture Documentation
+
+Use the **already-installed** Mermaid theme. No new plugins needed. Recommended diagram types by content:
+
+| Content | Mermaid Type | Why |
+|---------|-------------|-----|
+| MCP host/client/server topology | `graph TB` (flowchart) | Matches existing architecture diagrams in Chapter 2 |
+| MCP tool call sequence | `sequenceDiagram` | Shows temporal flow of JSON-RPC messages; matches existing Ch. 2 sequence diagram |
+| Compiler validation loop | `flowchart TD` | Decision nodes for pass/fail; loop back on error |
+| Three-tool overview | `graph LR` | Left-to-right flow: query -> RAG -> model -> compiler |
+| Data flow through pipeline | `flowchart LR` | Shows data transformation at each stage |
+
+**architecture-beta diagrams:** Mermaid's `architecture-beta` diagram type is supported in Docusaurus v3.6+ (the project runs 3.9.2). However, it requires custom icon registration via `clientModules` for non-default icons. **Recommendation: Do NOT use architecture-beta.** Standard `graph TB/LR` flowcharts with subgraphs achieve the same visual hierarchy with less configuration and better dark mode support. The existing chapters all use `graph` and `sequenceDiagram` -- maintain visual consistency.
+
+### Code Example Presentation
+
+For documenting MCP tool definitions and TypeScript patterns, use the existing Prism setup:
+
+| Language | Prism Token | Available? |
+|----------|------------|------------|
+| TypeScript | `typescript` / `ts` | Yes (built-in) |
+| JSON | `json` | Yes (built-in) |
+| BBj | `bbj` | Yes (custom, configured) |
+| Bash | `bash` | Yes (built-in) |
+| SQL | `sql` | Yes (built-in) |
+| Python | `python` | Yes (built-in) |
+
+**Code tabs pattern:** For showing the same concept in multiple contexts (e.g., MCP tool definition vs. JSON-RPC wire format), use Docusaurus Tabs:
+
+```mdx
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+  <TabItem value="typescript" label="TypeScript (SDK)" default>
+
+\`\`\`typescript
+server.registerTool("validate_bbj_syntax", {
+  inputSchema: {
+    code: z.string(),
+    filename: z.string().optional(),
+  },
+}, async ({ code, filename }) => { /* ... */ });
+\`\`\`
+
+  </TabItem>
+  <TabItem value="json" label="JSON-RPC Wire Format">
+
+\`\`\`json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "validate_bbj_syntax",
+    "arguments": {
+      "code": "PRINT \"Hello World\"",
+      "filename": "hello.bbj"
+    }
+  }
+}
+\`\`\`
+
+  </TabItem>
+</Tabs>
+```
+
+**Confidence:** HIGH -- Tabs are a built-in Docusaurus feature. The existing project does not currently use Tabs but they require no additional installation.
+
+### JSON Schema Rendering
+
+**Option considered:** `docusaurus-json-schema-plugin` (v1.15.0, Docusaurus 3 compatible, AGPL-3.0 license).
+
+**Recommendation: Do NOT install.** The BBj AI Strategy docs are explaining architecture concepts, not serving as API reference documentation. Showing MCP tool schemas as TypeScript code blocks with Zod definitions is clearer for the target audience (technical decision-makers and implementers) than an interactive JSON Schema viewer. The overhead of adding a plugin (AGPL license, additional dependency, configuration) is not justified for rendering 3 tool schemas that can be shown as simple code blocks.
+
+If the project later evolves into serving as actual MCP server developer documentation (not just strategy docs), reconsider the JSON schema plugin at that point.
+
+### Docusaurus Content Patterns Already Established
+
+The existing 7 chapters use consistent patterns that new MCP content should follow:
+
+| Pattern | Usage | Example |
+|---------|-------|---------|
+| `:::tip[TL;DR]` | Chapter opening summary | Every chapter |
+| `:::info[Decision: ...]` | Architecture decisions with choice/rationale/alternatives/status | Chapters 2, 4 |
+| `:::note[Where Things Stand]` | Status sections with dates | Chapters 2, 3, 4 |
+| Mermaid `graph TB` | Architecture overviews | Chapter 2 strategic architecture |
+| Mermaid `sequenceDiagram` | Flow diagrams | Chapter 2 RAG flow |
+| TypeScript code blocks | Implementation patterns | Chapter 4 InlineCompletionProvider |
+| BBj code blocks | BBj code examples | Chapter 4 generation detection |
+| Status tables | Component status tracking | Chapters 2, 7 |
+
+**New MCP content should reuse ALL of these patterns.** Do not introduce new admonition styles or diagram types.
+
+---
+
+## What This Stack Does NOT Include (And Why)
+
+### No New npm Dependencies for Documentation
+
+The Docusaurus site does not need new npm packages for v1.3. The MCP architecture content is presented using:
+- Mermaid diagrams (already configured)
+- TypeScript/JSON code blocks (already configured)
+- BBj code blocks (already configured)
+- Tabs component (built-in, no install needed)
+- Admonitions (built-in)
+
+### No OpenAPI/Swagger Plugin
+
+MCP uses JSON-RPC 2.0, not REST APIs. OpenAPI documentation tools (`docusaurus-openapi-docs`) do not apply. The protocol is documented via sequence diagrams and code examples, not API reference pages.
+
+### No Interactive Playground
+
+Building a live MCP tool tester or compiler validation playground would be a separate project. The v1.3 milestone is about updating strategy documentation content, not building interactive tooling.
+
+### No Structurizr Plugin
+
+`docusaurus-plugin-structurizr` generates C4 architecture diagrams from Structurizr DSL. The existing docs use Mermaid exclusively, and adding a second diagramming system creates visual inconsistency. Stick with Mermaid.
+
+---
+
+## Recommended Documentation Code Examples
+
+### MCP Server Initialization (For Chapter 2 / Architecture)
+
+Show the complete server setup pattern so readers understand the three-tool architecture:
+
+```typescript
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
+const server = new McpServer({
+  name: "bbj-mcp-server",
+  version: "1.0.0",
+  capabilities: {
+    tools: { listChanged: true },
+  },
+});
+
+// Register tools: search_bbj_knowledge, generate_bbj_code, validate_bbj_syntax
+// (tool definitions as shown above)
+
+// Start with stdio transport for local development
+const transport = new StdioServerTransport();
+await server.connect(transport);
+```
+
+### Compiler Validation Example (For Chapter 4 / IDE Integration)
+
+Show how bbjcpl integrates:
+
+```typescript
+import { execFile } from "node:child_process";
+import { writeFile, unlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  exitCode: number;
+}
+
+async function runBbjCompiler(
+  code: string,
+  filename = "temp.bbj"
+): Promise<ValidationResult> {
+  const tmpPath = join(tmpdir(), filename);
+  await writeFile(tmpPath, code, "utf-8");
+
+  return new Promise((resolve) => {
+    execFile("bbjcpl", ["-N", tmpPath], (error, stdout, stderr) => {
+      unlink(tmpPath).catch(() => {});
+      if (error) {
+        const errors = stderr
+          .split("\n")
+          .filter((line) => line.trim().length > 0);
+        resolve({ valid: false, errors, exitCode: error.code ?? 1 });
+      } else {
+        resolve({ valid: true, errors: [], exitCode: 0 });
+      }
+    });
+  });
+}
+```
+
+### MCP Client Configuration Example (For IDE Chapter)
+
+Show how a developer would configure the BBj MCP Server in Claude Desktop or VS Code:
+
+```json
+{
+  "mcpServers": {
+    "bbj": {
+      "command": "node",
+      "args": ["./dist/bbj-mcp-server.js"],
+      "env": {
+        "OLLAMA_HOST": "http://localhost:11434",
+        "PGVECTOR_URL": "postgresql://localhost:5432/bbj_rag",
+        "BBJCPL_PATH": "/usr/local/bin/bbjcpl"
+      }
+    }
+  }
+}
+```
+
+**Confidence:** HIGH -- Client configuration format verified against [official MCP docs](https://modelcontextprotocol.io/docs/learn/architecture). The `command` + `args` pattern is the standard stdio transport configuration.
+
+---
+
+## Version Matrix (All Verified 2026-02-01)
+
+| Technology | Version | Role in Documentation | Verified Source |
+|------------|---------|----------------------|-----------------|
+| MCP Spec | 2025-11-25 | Protocol version cited in docs | [Official spec](https://modelcontextprotocol.io/specification/2025-11-25) |
+| `@modelcontextprotocol/sdk` | 1.25.2 | TypeScript code examples | [npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) |
+| Zod | v3.25+ (SDK peer dep) | Schema definitions in code examples | SDK README |
+| Docusaurus | 3.9.2 | Site framework (existing) | Project `docusaurus.config.ts` |
+| `@docusaurus/theme-mermaid` | (matches Docusaurus) | Diagram rendering (existing) | Project config |
+| Mermaid | (bundled with theme) | Architecture diagrams | Project config |
+| Prism | (bundled with Docusaurus) | Code syntax highlighting (incl. BBj) | Project config |
 
 ---
 
@@ -486,76 +511,57 @@ This package exists on PyPI and claims MDX support, but it has limited documenta
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| XHTML parsing | lxml | BeautifulSoup + lxml backend | Extra abstraction layer. Flare XHTML is well-formed XML; lxml handles it natively. |
-| PDF extraction | pymupdf4llm | pdfplumber (MIT) | Slower, no structure-preserving Markdown output. Consider only if AGPL is a blocker. |
-| PDF extraction | pymupdf4llm | marker-pdf | Requires PyTorch for layout detection. Heavy for well-structured technical PDFs. |
-| Web crawling | crawl4ai | Scrapy | Overkill framework for 2 small WordPress sites. |
-| Web crawling | crawl4ai | requests + BeautifulSoup | Works but requires manual boilerplate stripping. |
-| MDX parsing | frontmatter + regex | remark/remark-mdx (Node.js) | Would require subprocess calls to Node.js. Overkill for known simple MDX. |
-| Chunking | chonkie | LangChain text splitters | Massive dependency for a single function. |
-| Chunking | chonkie | Custom splitting | Fragile on edge cases (code blocks, tables). |
-| Embedding | Qwen3-Embedding-0.6B | Nomic Embed Text v2 | 8K context limit; less explicit code training. |
-| Embedding | Qwen3-Embedding-0.6B | BGE-M3 | Older generation; lower MTEB scores; 8K context. |
-| Embedding | Qwen3-Embedding-0.6B | EmbeddingGemma-300M | More restrictive Gemma license; newer with less production validation. |
-| Embedding runtime | sentence-transformers | HF TEI server | Production inference server; overkill for batch pipeline. |
-| DB driver | psycopg3 | psycopg2 | Legacy; no async; slower COPY protocol. |
-| DB driver | psycopg3 | asyncpg | Less integrated pgvector type support. |
-| Package manager | uv | pip + venv | Slower resolution; no lockfile by default; uv is the 2026 standard. |
-| Framework | Direct libraries | LangChain | 100+ deps; framework lock-in; abstractions hide behavior. |
-| Framework | Direct libraries | LlamaIndex | Same problems as LangChain at smaller scale. |
+| Architecture diagrams | Mermaid `graph`/`sequenceDiagram` | Mermaid `architecture-beta` | Requires custom icon registration; existing docs use `graph` consistently; visual consistency > novelty |
+| Architecture diagrams | Mermaid (existing) | Structurizr plugin | Second diagramming system creates inconsistency; Mermaid subgraphs achieve adequate C4-like hierarchy |
+| JSON Schema display | TypeScript code blocks with Zod | `docusaurus-json-schema-plugin` | AGPL license; overkill for 3 tool schemas in strategy docs; audience reads TypeScript not JSON Schema trees |
+| API documentation | Sequence diagrams + code tabs | `docusaurus-openapi-docs` | MCP uses JSON-RPC, not REST; OpenAPI tooling does not apply |
+| Code tabs | `@theme/Tabs` (built-in) | `docusaurus-plugin-code-tabs` | Built-in Tabs suffice; no need for plugin |
+| MCP SDK examples | v1.x `registerTool()` | v2 patterns (anticipated Q1 2026) | v2 not yet released; v1.x has 6+ months support; examples should use what readers can install today |
 
 ---
 
-## Version Matrix (All Verified 2026-01-31)
+## Implications for Roadmap
 
-| Package | Version | Last Updated | Source |
-|---------|---------|-------------|--------|
-| lxml | 5.x | Active | PyPI |
-| pymupdf4llm | latest | 2026-01-10 | PyPI |
-| PyMuPDF | 1.26.7 | Active | PyPI |
-| crawl4ai | 0.8.x | Active | PyPI / GitHub |
-| python-frontmatter | 1.1.0 | Stable | PyPI |
-| markdown-it-py | 3.x | Active | PyPI |
-| chonkie | 1.5.2 | 2026-01-05 | PyPI |
-| sentence-transformers | >=2.7.0 | Active | PyPI |
-| transformers | >=4.51.0 | Active | PyPI |
-| pgvector (Python) | 0.4.2 | 2026-01-22 | PyPI |
-| psycopg | 3.x | Active | PyPI |
-| pydantic | 2.x | Active | PyPI |
-| typer | 0.x | Active | PyPI |
-| Qwen3-Embedding-0.6B | -- | 2025-06 | HuggingFace |
+### Phase Structure Recommendation
 
----
+Based on the stack analysis, the v1.3 milestone content updates should proceed in this order:
 
-## Embedding Model Scaling Path
+1. **Chapter 2 (Strategic Architecture) first** -- Update the architecture diagram to show MCP as the integration layer between shared foundation and application layer. This is the conceptual anchor that all other chapter updates reference. Add MCP host/client/server concepts and the three-tool overview.
 
-Start with Qwen3-Embedding-0.6B. If retrieval quality testing shows gaps:
+2. **Chapter 4 (IDE Integration) second** -- Add compiler validation loop (bbjcpl PostToolUse hooks), MCP tool integration with Langium context, and the generate-validate-iterate pattern. This chapter already has TypeScript code examples and Mermaid diagrams, so MCP patterns fit naturally.
 
-1. **First:** Try instruction tuning. Add task-specific instructions to the encoding call. This is free and can improve results 1-5%.
-2. **Second:** Increase dimensions. Start at 768, go to 1024. Re-embed the corpus (batch job, hours not days for <50K chunks).
-3. **Third:** Scale to Qwen3-Embedding-4B (~10GB VRAM). Same API, same code, just swap the model name. Re-embed required.
-4. **Last resort:** Qwen3-Embedding-8B (~18GB VRAM). Requires a production GPU (A100/L40S/4090).
+3. **Remaining chapters** -- Update Chapter 3 (Fine-Tuning) to reference the `generate_bbj_code` tool, Chapter 5 (Documentation Chat) to show MCP as the interface layer, Chapter 6 (RAG Database) to reference the `search_bbj_knowledge` tool, and Chapter 7 (Roadmap) to add MCP server milestones.
 
-The key insight: re-embedding <50K chunks takes hours, not days. The schema supports any dimension via pgvector's vector type. Model upgrades are a config change + batch re-run, not an architecture change.
+### No New Dependencies Required
+
+The entire v1.3 content update can be accomplished with the existing Docusaurus configuration. No `npm install` needed. This simplifies deployment and eliminates dependency-related risk.
+
+### MCP SDK Version Sensitivity
+
+The v2 SDK release is expected Q1 2026. If it ships during v1.3 development:
+- Keep v1.x code examples (they remain valid for 6+ months)
+- Add a note: "These examples use MCP SDK v1.x. See migration guide for v2."
+- Do NOT rush to update all examples to v2 patterns until v2 is stable
 
 ---
 
 ## Sources
 
-- [Qwen3 Embedding Blog Post](https://qwenlm.github.io/blog/qwen3-embedding/) -- Official benchmarks and architecture details
-- [Qwen3-Embedding-0.6B on HuggingFace](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) -- Model card, usage examples, version requirements
-- [pgvector-python GitHub](https://github.com/pgvector/pgvector-python) -- Version 0.4.2, driver support, usage examples
-- [chonkie GitHub](https://github.com/chonkie-inc/chonkie) -- Chunking strategies, pgvector integration, version 1.5.2
-- [pymupdf4llm PyPI](https://pypi.org/project/pymupdf4llm/) -- Latest release, RAG-focused PDF extraction
-- [crawl4ai Documentation](https://docs.crawl4ai.com/) -- Deep crawling, markdown generation, content filtering
-- [MadCap Flare Clean XHTML](https://www.madcapsoftware.com/blog/new-feature-highlight-clean-xhtml-output-madcap-flare-2017/) -- Clean XHTML output format specification
-- [FlareToSphinx GitHub](https://github.com/boltzmann-brain/FlareToSphinx) -- Prior art for Python-based Flare parsing
-- [BentoML Open Source Embedding Models Guide](https://www.bentoml.com/blog/a-guide-to-open-source-embedding-models) -- 2026 embedding model landscape
-- [Nomic Embed Text v2 Blog](https://www.nomic.ai/blog/posts/nomic-embed-text-v2) -- MoE architecture, benchmarks
-- [EmbeddingGemma on Google Developers Blog](https://developers.googleblog.com/introducing-embeddinggemma/) -- 300M model benchmarks
-- [Nomic Embed Code Blog](https://www.nomic.ai/blog/posts/introducing-state-of-the-art-nomic-embed-code) -- Code-specific embedding model
-- [PyMuPDF AGPL Discussion](https://github.com/pymupdf/PyMuPDF/discussions/971) -- License implications
+- [MCP TypeScript SDK - GitHub](https://github.com/modelcontextprotocol/typescript-sdk) -- Official repository, README, and release notes
+- [MCP TypeScript SDK - npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) -- Current version 1.25.2, publish dates, dependency count
+- [MCP SDK Server Documentation](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md) -- Tool registration patterns, transport setup
+- [MCP Architecture Overview](https://modelcontextprotocol.io/docs/learn/architecture) -- Host/client/server model, transport layers, protocol primitives
+- [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) -- Current spec with Tasks, OAuth, Extensions
+- [MCP One-Year Anniversary Blog](https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/) -- Spec release context, Linux Foundation governance
+- [MCP 2025-11-25 Spec Update Analysis (WorkOS)](https://workos.com/blog/mcp-2025-11-25-spec-update) -- Tasks, OAuth, enterprise features breakdown
+- [Claude Code Hooks Reference](https://code.claude.com/docs/en/hooks) -- PostToolUse hook patterns, MCP tool matching
+- [Docusaurus Diagrams Documentation](https://docusaurus.io/docs/markdown-features/diagrams) -- Mermaid integration, theme configuration
+- [Mermaid Architecture Diagrams](https://mermaid.ai/open-source/syntax/architecture.html) -- architecture-beta syntax and limitations
+- [Custom Mermaid Icons in Docusaurus](https://www.simonpainter.com/mermaid-icons/) -- Iconify integration for architecture-beta (evaluated but not recommended)
+- [docusaurus-json-schema-plugin](https://github.com/jy95/docusaurus-json-schema-plugin) -- Evaluated for JSON Schema rendering; v1.15.0, AGPL-3.0
+- [MCP Best Practices Guide](https://modelcontextprotocol.info/docs/best-practices/) -- Single responsibility, scalable deployment patterns
+- [registerTool PR #816](https://github.com/modelcontextprotocol/typescript-sdk/pull/816) -- Expanded Zod schema support for unions/intersections
 
 ---
 
-*Research conducted 2026-01-31 via WebSearch for current versions, benchmarks, and ecosystem state. All version numbers and dates verified against PyPI, HuggingFace, and GitHub.*
+*Research conducted 2026-02-01 via WebSearch for current SDK versions, WebFetch for official documentation, and project source code analysis. MCP SDK version verified against npm registry. Docusaurus configuration verified from project `docusaurus.config.ts`. All diagram recommendations tested against existing chapter patterns.*
