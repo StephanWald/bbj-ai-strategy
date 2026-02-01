@@ -79,11 +79,11 @@ Plans:
   3. Updated architecture diagram shows where compiler validation fits in the IDE completion pipeline (between LLM generation and ghost text presentation)
   4. Decision callout "Compiler Validation via bbjcpl" follows established format and positions this as ground-truth validation (not heuristic)
   5. Chapter status block reflects bbjcpltool v1 shipped and compiler-in-the-loop validated
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 16-01: TBD
-- [ ] 16-02: TBD
+- [ ] 16-01-PLAN.md — New Compiler Validation section with bbjcpl concept, error example, proof-of-concept, MCP note, sequence diagram, and decision callout
+- [ ] 16-02-PLAN.md — TL;DR update, opening paragraph update, Current Status block update
 
 ### Phase 17: Chat & Cross-References
 **Goal**: Chapters 5, 3, and 6 connect to the MCP architecture established in Chapter 2 -- readers following any chapter path encounter consistent MCP integration framing
@@ -136,7 +136,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 15. Strategic Architecture | 2/2 | ✓ Complete | 2026-02-01 |
-| 16. Compiler Validation | 0/TBD | Not started | - |
+| 16. Compiler Validation | 0/2 | Not started | - |
 | 17. Chat & Cross-References | 0/TBD | Not started | - |
 | 18. Implementation Roadmap | 0/TBD | Not started | - |
 | 19. Final Consistency Pass | 0/TBD | Not started | - |
