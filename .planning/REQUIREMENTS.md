@@ -24,11 +24,11 @@
 - [x] **PARSE-01**: MadCap Flare XHTML parser — parses raw project files from Flare Content/ directory, extracts text from MadCap namespace tags, uses TOC files for hierarchy
 - [x] **PARSE-02**: MadCap Flare condition tag extractor — reads Primary.flcts and per-topic MadCap:conditions attributes for generation/deprecation signals
 - [x] **PARSE-03**: MadCap Flare web crawl parser (fallback for documentation.basis.cloud when project files unavailable)
-- [ ] **PARSE-04**: PDF parser for standalone documents (e.g., GuideToGuiProgrammingInBBj.pdf)
-- [ ] **PARSE-05**: WordPress/HTML parser for Advantage magazine articles (basis.cloud/advantage-index/)
-- [ ] **PARSE-06**: WordPress/LearnPress parser for Knowledge Base (basis.cloud/knowledge-base/)
-- [ ] **PARSE-07**: Docusaurus MDX parser for DWC-Course content (github.com/BasisHub/DWC-Course)
-- [ ] **PARSE-08**: BBj source code parser for sample files in DWC-Course and standalone examples
+- [x] **PARSE-04**: PDF parser for standalone documents (e.g., GuideToGuiProgrammingInBBj.pdf)
+- [x] **PARSE-05**: WordPress/HTML parser for Advantage magazine articles (basis.cloud/advantage-index/)
+- [x] **PARSE-06**: WordPress/LearnPress parser for Knowledge Base (basis.cloud/knowledge-base/)
+- [x] **PARSE-07**: Docusaurus MDX parser for DWC-Course content (github.com/BasisHub/DWC-Course)
+- [x] **PARSE-08**: BBj source code parser for sample files in DWC-Course and standalone examples
 
 ### BBj Intelligence
 

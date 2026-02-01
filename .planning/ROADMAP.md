@@ -17,7 +17,7 @@ This milestone bridges the gap between Chapter 6's strategic RAG design and actu
 - [x] **Phase 10: Flare Parser** - MadCap Flare XHTML parser (project files + condition tags + crawl fallback)
 - [x] **Phase 11: BBj Intelligence** - Generation tagger, document type classifier, contextual chunk headers
 - [x] **Phase 12: Embedding Pipeline** - Embedding model, pgvector storage, hybrid search validation (end-to-end for Flare)
-- [ ] **Phase 13: Additional Parsers** - PDF, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code
+- [x] **Phase 13: Additional Parsers** - PDF, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code
 - [ ] **Phase 14: Documentation & Quality** - Getting Started page, sub-project README, ingestion quality reports
 
 ## Phase Details
@@ -110,9 +110,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 13-01-PLAN.md -- PDF parser (pymupdf4llm) and BBj source code parser with unit tests
-- [ ] 13-02-PLAN.md -- WordPress parsers (Advantage + Knowledge Base) via httpx + BeautifulSoup web crawl
-- [ ] 13-03-PLAN.md -- Docusaurus MDX parser, pipeline integration, CLI expansion for all sources
+- [x] 13-01-PLAN.md -- PDF parser (pymupdf4llm) and BBj source code parser with unit tests
+- [x] 13-02-PLAN.md -- WordPress parsers (Advantage + Knowledge Base) via httpx + BeautifulSoup web crawl
+- [x] 13-03-PLAN.md -- Docusaurus MDX parser, pipeline integration, CLI expansion for all sources
 
 ### Phase 14: Documentation & Quality
 **Goal**: The pipeline is documented for engineers to set up and run, the Getting Started page connects strategy docs to actual code, and ingestion quality is measurable
@@ -171,7 +171,7 @@ Plans:
 | 10. Flare Parser | v1.2 | 3/3 | Complete | 2026-01-31 |
 | 11. BBj Intelligence | v1.2 | 2/2 | Complete | 2026-01-31 |
 | 12. Embedding Pipeline | v1.2 | 2/2 | Complete | 2026-02-01 |
-| 13. Additional Parsers | v1.2 | 0/3 | Not started | - |
+| 13. Additional Parsers | v1.2 | 3/3 | Complete | 2026-02-01 |
 | 14. Documentation & Quality | v1.2 | 0/2 | Not started | - |
 
 ---
