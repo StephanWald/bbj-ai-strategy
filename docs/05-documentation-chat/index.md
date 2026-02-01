@@ -275,7 +275,7 @@ The documentation chat system must satisfy six non-negotiable requirements, deri
 
 ## Current Status
 
-:::note[Where Things Stand -- February 2026]
+:::note[Where Things Stand]
 - **Shipped:** Nothing. The documentation chat is a planned capability, not a shipped product.
 - **Defined:** Two-path architecture -- MCP access for AI clients and embedded chat for human users -- both consuming the shared foundation through MCP tools. Generation-aware response strategy. Shared infrastructure decision.
 - **Available upstream:** [RAG ingestion pipeline](/docs/rag-database) (v1.2) shipped. [Fine-tuned model](/docs/fine-tuning) in progress (~10K training examples). MCP server architecture defined ([Chapter 2](/docs/strategic-architecture)).

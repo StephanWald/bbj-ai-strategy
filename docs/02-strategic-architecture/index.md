@@ -361,7 +361,7 @@ The unified architecture creates different value for different stakeholders.
 
 ## Current Status
 
-:::note[Where Things Stand -- February 2026]
+:::note[Where Things Stand]
 The unified architecture is being built incrementally -- foundation first, consumers next.
 
 - **Shipped:** The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, completion, diagnostics, formatting, and code execution.

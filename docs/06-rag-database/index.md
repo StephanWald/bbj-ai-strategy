@@ -505,7 +505,7 @@ For the complete MCP server architecture and the other two tools (`generate_bbj_
 
 ## Current Status
 
-:::note[Where Things Stand -- February 2026]
+:::note[Where Things Stand]
 - **Shipped:** RAG ingestion pipeline (v1.2) -- 6 source parsers, embedding pipeline, generation-aware tagging, hybrid search. Built and tested, awaiting deployment against production corpus.
 - **Defined:** Source corpus identified -- MadCap Flare documentation (primary), BBj source code, API references, and knowledge base articles. Generation metadata schema established (shared with [training data](/docs/fine-tuning)).
 - **Planned:** Retrieval exposed via MCP `search_bbj_knowledge` tool ([Chapter 2](/docs/strategic-architecture#search_bbj_knowledge)) for consumption by documentation chat and any MCP client.

@@ -497,7 +497,7 @@ Langium AI is an initiative to watch rather than a current dependency. If the ve
 
 ## Current Status
 
-:::note[Where Things Stand -- February 2026]
+:::note[Where Things Stand]
 **Shipped:** The bbj-language-server (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, code completion, diagnostics, formatting, BBj Properties viewing, and code execution. It is actively maintained with 450+ commits and 13 contributors.
 
 **Shipped:** bbjcpltool v1 proof-of-concept — validates the compiler-in-the-loop concept for BBj syntax checking. Demonstrates that LLMs can interpret `bbjcpl` error messages and self-correct without human intervention.

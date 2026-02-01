@@ -408,7 +408,7 @@ For the complete MCP server architecture, tool schemas, and integration patterns
 
 ## Current Status
 
-:::note[Where Things Stand -- January 2026]
+:::note[Where Things Stand]
 **Training data:** Approximately 10,000 training examples have been curated using the generation labeling system described above. Results are promising and ongoing expansion continues with targeted additions for underrepresented patterns and generations.
 
 **Base model:** Qwen2.5-Coder-7B-Base selected and actively being fine-tuned. Experiments are producing promising results. The model is available on [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-Coder-7B) and loads successfully in Unsloth.

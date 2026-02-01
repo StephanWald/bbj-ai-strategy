@@ -285,7 +285,7 @@ These baselines do not need to be precise. Directional measurements (better/wors
 
 ## Current Status
 
-:::note[Where Things Stand -- February 2026]
+:::note[Where Things Stand]
 - **Phase 1 (Model Validation):** Partially complete. The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0) is shipped and published on the VS Code Marketplace. Fine-tuning is in progress with ~10K training data points (estimated 50-80K needed for full generational coverage) using Qwen2.5-Coder-7B as the base model. Evaluation benchmarks are being developed.
 - **Phase 2 (IDE Integration):** Planned. The language server provides the foundation; LLM-powered completions and compiler validation have not yet been integrated.
 - **Phase 3 (RAG + Doc Chat):** Partially complete. The RAG ingestion pipeline (v1.2) is built with 6 source parsers covering MadCap Flare docs, standalone PDFs, Advantage articles, Knowledge Base, DWC-Course, and BBj source code. The pipeline is not yet deployed against the production corpus. The documentation chat interface has not been built, though a two-path architecture (MCP access + embedded chat) is defined.
