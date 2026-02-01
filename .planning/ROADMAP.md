@@ -63,11 +63,11 @@ Phase 14: Documentation & Quality
   3. Three MCP tool definitions (`search_bbj_knowledge`, `generate_bbj_code`, `validate_bbj_syntax`) are shown with complete JSON schemas that a developer could implement against
   4. Generate-validate-fix loop sequence diagram shows the compiler feedback cycle as a concrete, repeatable pattern
   5. Decision callout "MCP as the Unified Integration Protocol" follows the established format (Choice, Rationale, Alternatives considered, Status) and frames MCP as evolution, not replacement
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 15-01: TBD
-- [ ] 15-02: TBD
+- [ ] 15-01-PLAN.md — TL;DR, architecture diagram, MCP Server section with tool schemas and decision callout
+- [ ] 15-02-PLAN.md — Integration patterns, deployment options, status updates for Three Initiatives/Benefits/Current Status
 
 ### Phase 16: Compiler Validation
 **Goal**: Readers of Chapter 4 understand that BBj's compiler provides ground-truth syntax validation -- and that this is a working, proven pattern (not theoretical)
@@ -135,7 +135,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Strategic Architecture | 0/TBD | Not started | - |
+| 15. Strategic Architecture | 0/2 | Not started | - |
 | 16. Compiler Validation | 0/TBD | Not started | - |
 | 17. Chat & Cross-References | 0/TBD | Not started | - |
 | 18. Implementation Roadmap | 0/TBD | Not started | - |
