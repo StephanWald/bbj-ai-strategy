@@ -119,19 +119,31 @@ def run_pipeline(
     for doc in parser.parse():
         stats["docs_parsed"] += 1
 
-        # Apply intelligence enrichment.
-        generations, deprecated, doc_type, _header = _apply_intelligence(
-            doc.source_url, doc.content, doc.metadata
-        )
+        # Non-Flare parsers pre-populate doc_type, generations, etc.
+        # Only apply Flare intelligence when doc_type is empty (Flare parser)
+        # or "web_crawl" (web crawl parser).  Pre-populated values from new
+        # parsers (e.g. "example", "concept", "article", "tutorial") are used
+        # as-is.
+        if doc.doc_type and doc.doc_type != "web_crawl":
+            logger.debug(
+                "Skipping intelligence for pre-populated doc: %s (doc_type=%s)",
+                doc.source_url,
+                doc.doc_type,
+            )
+        else:
+            # Apply intelligence enrichment.
+            generations, deprecated, doc_type, _header = _apply_intelligence(
+                doc.source_url, doc.content, doc.metadata
+            )
 
-        # Update document fields with intelligence results.
-        doc = doc.model_copy(
-            update={
-                "generations": generations,
-                "deprecated": deprecated,
-                "doc_type": doc_type,
-            }
-        )
+            # Update document fields with intelligence results.
+            doc = doc.model_copy(
+                update={
+                    "generations": generations,
+                    "deprecated": deprecated,
+                    "doc_type": doc_type,
+                }
+            )
 
         # Chunk the document.
         doc_chunks = chunk_document(doc, max_tokens, overlap_tokens)

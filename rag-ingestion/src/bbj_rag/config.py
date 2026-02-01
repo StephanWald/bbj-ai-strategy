@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     chunk_overlap: int = Field(default=50)
     flare_source_path: str = Field(default="")
     crawl_source_urls: list[str] = Field(default_factory=list)
+    pdf_source_path: str = Field(default="")
+    mdx_source_path: str = Field(default="")
+    bbj_source_dirs: list[str] = Field(default_factory=list)
+    advantage_index_url: str = Field(default="https://basis.cloud/advantage-index/")
+    kb_index_url: str = Field(default="https://basis.cloud/knowledge-base/")
 
     # Suppress mypy error for pydantic-settings classmethod override
     _toml_source: ClassVar[type] = TomlConfigSettingsSource

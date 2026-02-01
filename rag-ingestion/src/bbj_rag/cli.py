@@ -33,7 +33,7 @@ def cli(verbose: bool) -> None:
 @cli.command()
 @click.option(
     "--source",
-    type=click.Choice(["flare"]),
+    type=click.Choice(["flare", "pdf", "advantage", "kb", "mdx", "bbj-source"]),
     required=True,
     help="Documentation source",
 )
@@ -119,7 +119,7 @@ def ingest(source: str, resume: bool, batch_size: int) -> None:
 @cli.command()
 @click.option(
     "--source",
-    type=click.Choice(["flare"]),
+    type=click.Choice(["flare", "pdf", "advantage", "kb", "mdx", "bbj-source"]),
     required=True,
     help="Documentation source",
 )
@@ -175,9 +175,8 @@ def validate(val_verbose: bool) -> None:
 def _create_parser(source: str, settings: Settings) -> DocumentParser:
     """Create a DocumentParser for the given source.
 
-    Currently only supports 'flare'. The FlareParser needs a content_dir
-    (Content/ inside the Flare project) and a project_dir (the Flare
-    project root).
+    Supports: flare, pdf, advantage, kb, mdx, bbj-source.
+    Each branch uses lazy imports to avoid loading unused dependencies.
     """
     if source == "flare":
         from bbj_rag.parsers.flare import FlareParser
@@ -198,6 +197,60 @@ def _create_parser(source: str, settings: Settings) -> DocumentParser:
             )
 
         return FlareParser(content_dir=content_dir, project_dir=project_dir)
+
+    if source == "pdf":
+        from bbj_rag.parsers.pdf import PdfParser
+
+        pdf_path = settings.pdf_source_path
+        if not pdf_path:
+            _fatal(
+                "Error: pdf_source_path not configured.\n"
+                "Set BBJ_RAG_PDF_SOURCE_PATH or add to config.toml."
+            )
+
+        pdf_file = Path(pdf_path)
+        if not pdf_file.is_file():
+            _fatal(f"Error: PDF file not found: {pdf_file}")
+
+        return PdfParser(pdf_path=pdf_file)
+
+    if source == "advantage":
+        from bbj_rag.parsers.wordpress import AdvantageParser
+
+        return AdvantageParser(index_url=settings.advantage_index_url)
+
+    if source == "kb":
+        from bbj_rag.parsers.wordpress import KnowledgeBaseParser
+
+        return KnowledgeBaseParser(index_url=settings.kb_index_url)
+
+    if source == "mdx":
+        from bbj_rag.parsers.mdx import MdxParser
+
+        mdx_path = settings.mdx_source_path
+        if not mdx_path:
+            _fatal(
+                "Error: mdx_source_path not configured.\n"
+                "Set BBJ_RAG_MDX_SOURCE_PATH or add to config.toml."
+            )
+
+        docs_dir = Path(mdx_path)
+        if not docs_dir.is_dir():
+            _fatal(f"Error: MDX docs directory not found: {docs_dir}")
+
+        return MdxParser(docs_dir=docs_dir)
+
+    if source == "bbj-source":
+        from bbj_rag.parsers.bbj_source import BbjSourceParser
+
+        if not settings.bbj_source_dirs:
+            _fatal(
+                "Error: bbj_source_dirs not configured.\n"
+                "Set BBJ_RAG_BBJ_SOURCE_DIRS or add to config.toml."
+            )
+
+        dirs = [Path(d) for d in settings.bbj_source_dirs]
+        return BbjSourceParser(source_dirs=dirs)
 
     _fatal(f"Unknown source: {source}")
 
