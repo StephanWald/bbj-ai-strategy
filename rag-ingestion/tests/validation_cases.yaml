@@ -1,0 +1,77 @@
+# Search validation cases for BBj RAG pipeline.
+# Engineers: add new cases here -- no code changes needed.
+# Each case has a query and expectations about the top-5 results.
+#
+# Expectation keys:
+#   url_contains      - at least one result URL contains this substring
+#   title_contains    - at least one result title contains this substring
+#   content_contains  - at least one result content contains this substring
+#   doc_type          - at least one result has this exact doc_type
+#   generations_contains - at least one result's generations array contains this
+
+dense_search:
+  - query: "How to add a button to a BBjWindow"
+    expect_in_top_5:
+      - url_contains: "Window"
+
+  - query: "BBj string manipulation functions"
+    expect_in_top_5:
+      - content_contains: "string"
+
+  - query: "Creating a child window in BBj"
+    expect_in_top_5:
+      - url_contains: "Window"
+
+  - query: "BBj event handling and callbacks"
+    expect_in_top_5:
+      - content_contains: "callback"
+
+  - query: "DWC web component attributes"
+    expect_in_top_5:
+      - generations_contains: "dwc"
+
+bm25_search:
+  - query: "BBjWindow addButton"
+    expect_in_top_5:
+      - content_contains: "addButton"
+
+  - query: "PROCESS_EVENTS"
+    expect_in_top_5:
+      - content_contains: "PROCESS_EVENTS"
+
+  - query: "setCallback"
+    expect_in_top_5:
+      - content_contains: "setCallback"
+
+  - query: "BBjGridExWidget"
+    expect_in_top_5:
+      - content_contains: "Grid"
+
+filtered_search:
+  - query: "GUI window creation"
+    filter_generation: "bbj_gui"
+    expect_in_top_5:
+      - generations_contains: "bbj_gui"
+
+  - query: "web component styling"
+    filter_generation: "dwc"
+    expect_in_top_5:
+      - generations_contains: "dwc"
+
+  - query: "print statement syntax"
+    filter_generation: "all"
+    expect_in_top_5:
+      - generations_contains: "all"
+
+hybrid_search:
+  - query: "BBjWindow addButton method"
+    expect_in_top_5:
+      - url_contains: "Window"
+
+  - query: "how to handle mouse click events in BBj"
+    expect_in_top_5:
+      - content_contains: "click"
+
+  - query: "BBj file operations and I/O"
+    expect_in_top_5:
+      - content_contains: "file"

@@ -55,7 +55,8 @@ disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["-ra", "-q"]
+addopts = ["-ra", "-q", "-m", "not search_validation"]
+markers = ["search_validation: requires database with embedded chunks"]
 
 [project.scripts]
 bbj-rag = "bbj_rag.cli:cli"

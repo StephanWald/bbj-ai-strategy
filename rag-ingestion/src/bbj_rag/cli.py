@@ -143,9 +143,33 @@ def parse(source: str) -> None:
 
 
 @cli.command()
-def validate() -> None:
-    """Run search validation assertions."""
-    click.echo("Search validation not yet implemented. See Plan 12-02.")
+@click.option(
+    "--verbose",
+    "-v",
+    "val_verbose",
+    is_flag=True,
+    help="Show detailed results",
+)
+def validate(val_verbose: bool) -> None:
+    """Run search validation assertions against embedded data."""
+    import subprocess
+
+    args = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests/test_search_validation.py",
+        "-v",
+        "-m",
+        "search_validation",
+    ]
+    if val_verbose:
+        args.append("-s")
+    result = subprocess.run(
+        args,
+        cwd=str(Path(__file__).resolve().parents[2]),
+    )
+    sys.exit(result.returncode)
 
 
 def _create_parser(source: str, settings: Settings) -> DocumentParser:
