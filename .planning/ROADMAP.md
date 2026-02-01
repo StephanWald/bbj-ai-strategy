@@ -45,7 +45,7 @@ Phase 14: Documentation & Quality
 
 **Milestone Goal:** Weave MCP server architecture, compiler validation, and ecosystem integration into existing chapters -- making the concrete "how it all connects" visible to all three audiences.
 
-- [ ] **Phase 15: Strategic Architecture** - Chapter 2 updated with MCP server as the concrete unified architecture
+- [x] **Phase 15: Strategic Architecture** - Chapter 2 updated with MCP server as the concrete unified architecture
 - [ ] **Phase 16: Compiler Validation** - Chapter 4 updated with bbjcpl validation module and proof-of-concept
 - [ ] **Phase 17: Chat & Cross-References** - Chapters 5, 3, 6 updated with MCP tool integration and cross-references
 - [ ] **Phase 18: Implementation Roadmap** - Chapter 7 updated with MCP deliverables and revised risk assessment
@@ -66,8 +66,8 @@ Phase 14: Documentation & Quality
 **Plans:** 2 plans
 
 Plans:
-- [ ] 15-01-PLAN.md — TL;DR, architecture diagram, MCP Server section with tool schemas and decision callout
-- [ ] 15-02-PLAN.md — Integration patterns, deployment options, status updates for Three Initiatives/Benefits/Current Status
+- [x] 15-01-PLAN.md — TL;DR, architecture diagram, MCP Server section with tool schemas and decision callout
+- [x] 15-02-PLAN.md — Integration patterns, deployment options, status updates for Three Initiatives/Benefits/Current Status
 
 ### Phase 16: Compiler Validation
 **Goal**: Readers of Chapter 4 understand that BBj's compiler provides ground-truth syntax validation -- and that this is a working, proven pattern (not theoretical)
@@ -135,7 +135,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 15. Strategic Architecture | 0/2 | Not started | - |
+| 15. Strategic Architecture | 2/2 | ✓ Complete | 2026-02-01 |
 | 16. Compiler Validation | 0/TBD | Not started | - |
 | 17. Chat & Cross-References | 0/TBD | Not started | - |
 | 18. Implementation Roadmap | 0/TBD | Not started | - |

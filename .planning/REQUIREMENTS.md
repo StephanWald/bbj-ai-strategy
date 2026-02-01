@@ -2,16 +2,16 @@
 
 ## Strategic Architecture (Chapter 2)
 
-- [ ] **ARCH-01**: Chapter 2 TL;DR block updated to mention MCP server, three tools, and generate-validate-fix loop
-- [ ] **ARCH-02**: MCP server introduced as concrete realization of existing unified architecture (not a replacement — evolution of the two-layer model)
-- [ ] **ARCH-03**: Updated architecture diagram showing MCP topology (Host → Client → BBj MCP Server → RAG/Ollama/bbjcpl)
-- [ ] **ARCH-04**: Three MCP tool definitions with JSON schemas: `search_bbj_knowledge`, `generate_bbj_code`, `validate_bbj_syntax`
-- [ ] **ARCH-05**: Generate-validate-fix loop pattern described with sequence diagram
-- [ ] **ARCH-06**: Deployment options documented (local stdio for privacy, remote Streamable HTTP for team sharing)
-- [ ] **ARCH-07**: webforJ MCP server referenced as organizational precedent (one callout, not belabored)
-- [ ] **ARCH-08**: Named integration patterns: Generate-Validate-Fix, Documentation Query, Code Review/Migration
-- [ ] **ARCH-09**: Decision callout: "Decision: MCP as the Unified Integration Protocol" using existing :::info format
-- [ ] **ARCH-10**: Current Status block updated to reflect v1.2 RAG pipeline shipped and v1.3 MCP architecture
+- [x] **ARCH-01**: Chapter 2 TL;DR block updated to mention MCP server, three tools, and generate-validate-fix loop
+- [x] **ARCH-02**: MCP server introduced as concrete realization of existing unified architecture (not a replacement — evolution of the two-layer model)
+- [x] **ARCH-03**: Updated architecture diagram showing MCP topology (Host → Client → BBj MCP Server → RAG/Ollama/bbjcpl)
+- [x] **ARCH-04**: Three MCP tool definitions with JSON schemas: `search_bbj_knowledge`, `generate_bbj_code`, `validate_bbj_syntax`
+- [x] **ARCH-05**: Generate-validate-fix loop pattern described with sequence diagram
+- [x] **ARCH-06**: Deployment options documented (local stdio for privacy, remote Streamable HTTP for team sharing)
+- [x] **ARCH-07**: webforJ MCP server referenced as organizational precedent (one callout, not belabored)
+- [x] **ARCH-08**: Named integration patterns: Generate-Validate-Fix, Documentation Query, Code Review/Migration
+- [x] **ARCH-09**: Decision callout: "Decision: MCP as the Unified Integration Protocol" using existing :::info format
+- [x] **ARCH-10**: Current Status block updated to reflect v1.2 RAG pipeline shipped and v1.3 MCP architecture
 
 ## IDE Integration & Compiler Validation (Chapter 4)
 
@@ -66,16 +66,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ARCH-01 | Phase 15 | Pending |
-| ARCH-02 | Phase 15 | Pending |
-| ARCH-03 | Phase 15 | Pending |
-| ARCH-04 | Phase 15 | Pending |
-| ARCH-05 | Phase 15 | Pending |
-| ARCH-06 | Phase 15 | Pending |
-| ARCH-07 | Phase 15 | Pending |
-| ARCH-08 | Phase 15 | Pending |
-| ARCH-09 | Phase 15 | Pending |
-| ARCH-10 | Phase 15 | Pending |
+| ARCH-01 | Phase 15 | Complete |
+| ARCH-02 | Phase 15 | Complete |
+| ARCH-03 | Phase 15 | Complete |
+| ARCH-04 | Phase 15 | Complete |
+| ARCH-05 | Phase 15 | Complete |
+| ARCH-06 | Phase 15 | Complete |
+| ARCH-07 | Phase 15 | Complete |
+| ARCH-08 | Phase 15 | Complete |
+| ARCH-09 | Phase 15 | Complete |
+| ARCH-10 | Phase 15 | Complete |
 | IDE-01 | Phase 16 | Pending |
 | IDE-02 | Phase 16 | Pending |
 | IDE-03 | Phase 16 | Pending |
