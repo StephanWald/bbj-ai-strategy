@@ -47,3 +47,12 @@ CREATE INDEX IF NOT EXISTS idx_chunks_search_vector_gin
 -- GIN index for array containment queries on the generations column.
 CREATE INDEX IF NOT EXISTS idx_chunks_generations_gin
     ON chunks USING GIN (generations);
+
+-- Reciprocal Rank Fusion scoring function for hybrid search.
+-- Combines dense vector and BM25 keyword rankings using RRF formula.
+-- rrf_k=50 is the standard constant that prevents division by zero
+-- and controls the influence of high-ranked results.
+CREATE OR REPLACE FUNCTION rrf_score(rank int, rrf_k int DEFAULT 50)
+RETURNS numeric AS $$
+    SELECT COALESCE(1.0 / ($1 + $2), 0.0);
+$$ LANGUAGE sql IMMUTABLE;
