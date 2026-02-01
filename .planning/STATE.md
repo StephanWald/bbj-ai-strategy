@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 14 in progress (Documentation & Quality)
+**Current focus:** v1.2 -- Complete (all 14 phases done)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
 Phase: 14 of 14 (Documentation & Quality)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-01 -- Completed 14-01-PLAN.md (Getting Started Sub-Page)
+Plan: 2 of 2 in current phase
+Status: Milestone complete
+Last activity: 2026-02-01 -- Completed 14-02-PLAN.md (Quality Report & README)
 
-Progress: █████████████░ 14/15 (93%)
+Progress: ███████████████ 15/15 (100%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14 (v1.2)
+- Total plans completed: 15 (v1.2)
 - Average duration: 5min
-- Total execution time: 71min
+- Total execution time: 76min
 
 **By Phase:**
 
@@ -34,7 +34,7 @@ Progress: █████████████░ 14/15 (93%)
 | 11-bbj-intelligence | 2/2 | 8min | 4min |
 | 12-embedding-pipeline | 2/2 | 12min | 6min |
 | 13-additional-parsers | 3/3 | 15min | 5min |
-| 14-documentation-quality | 1/2 | 2min | 2min |
+| 14-documentation-quality | 2/2 | 7min | 4min |
 
 *Updated after each plan completion*
 
@@ -105,6 +105,11 @@ Recent decisions affecting current work:
 - Design-first Getting Started page structure: why-this-approach before practical details
 - GitHub reference link definitions for maintainable parser URLs in Getting Started page
 - Branch-based GitHub URLs (blob/main/) since project has no release tags
+- DB-query-based quality report (not in-memory) -- database is source of truth for what was actually stored
+- Three independent breakdowns (source, generation, doc_type) rather than cross-tabulations
+- Generous LIKE patterns (%basis.cloud/advantage%) for WordPress source URL matching
+- _check_anomalies as pure function for testability -- no DB access, just dict analysis
+- click.echo (not print) for all report output -- consistent with CLI patterns
 
 ### Pending Todos
 
@@ -116,7 +121,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T09:06Z
-Stopped at: Completed 14-01-PLAN.md (Getting Started Sub-Page)
+Last session: 2026-02-01T09:12Z
+Stopped at: Completed 14-02-PLAN.md (Quality Report & README)
 Resume file: None
-Next action: Phase 14 plan 02 (README & Quality Report) -- final plan of v1.2 milestone.
+Next action: v1.2 milestone complete. All 14 phases (15 plans) executed.
