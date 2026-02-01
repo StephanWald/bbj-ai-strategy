@@ -1,5 +1,33 @@
 # Project Milestones: BBj AI Strategy Documentation Site
 
+## v1.3 MCP Architecture Integration (Shipped: 2026-02-01)
+
+**Delivered:** MCP server architecture, compiler validation, and ecosystem integration woven into all 7 existing documentation chapters -- making the concrete "how it all connects" visible to developers, leadership, and customers.
+
+**Phases completed:** 15-19 (10 plans total)
+
+**Key accomplishments:**
+
+- MCP server architecture with three tool definitions (`search_bbj_knowledge`, `generate_bbj_code`, `validate_bbj_syntax`) and complete JSON schemas established in Chapter 2 as the concrete unified integration layer
+- Compiler validation section in Chapter 4 documenting bbjcpl ground-truth syntax checking, bbjcpltool v1 proof-of-concept, and the generate-validate-fix loop
+- Chapter 5 restructured with two-path framing (MCP access + embedded chat) and unified sequence diagram showing both entry points converging on shared backend
+- MCP cross-references added to Chapters 3, 6, and 7 with consistent terminology, tool name wiring, and accurate project status
+- Implementation roadmap (Chapter 7) updated with MCP deliverables in all four phases and two-tier hallucination mitigation (Langium + bbjcpl) in risk assessment
+- Final consistency pass: 17 BBj code blocks validated via bbjcpl -N, 17 decision callouts audited to four-field format, 7 status blocks reconciled, zero-warning build
+
+**Stats:**
+
+- 44 files changed
+- 3,015 lines docs content (8 files) + 5,004 lines Python source + 4,906 lines tests
+- 5 phases, 10 plans, 46 commits
+- 1 day (2026-02-01)
+
+**Git range:** `docs(15)` → `docs(19): complete final-consistency-pass phase`
+
+**What's next:** TBD -- potential directions include MCP server implementation, search/SEO optimization, or production RAG deployment.
+
+---
+
 ## v1.2 RAG Ingestion Pipeline (Shipped: 2026-02-01)
 
 **Delivered:** A Python-based RAG ingestion pipeline processing 6 BBj documentation sources (MadCap Flare, PDFs, WordPress/Advantage, WordPress/KB, Docusaurus MDX, BBj source code) into a generation-aware pgvector database with hybrid search and quality reporting.

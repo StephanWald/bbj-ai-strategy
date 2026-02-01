@@ -36,13 +36,15 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - ✓ Source coverage: MadCap Flare docs, standalone PDFs, Advantage articles, Knowledge Base, DWC-Course (6 parsers) — v1.2
 - ✓ Current embedding model recommendation: Qwen3-Embedding-0.6B via Ollama (researched Jan 2026) — v1.2
 
+- ✓ Chapter 2 updated with MCP server as the concrete unified architecture — three tool definitions, generate-validate-fix loop, deployment options — v1.3
+- ✓ Chapter 4 updated with compiler validation module and bbjcpltool proof-of-concept — ground-truth syntax checking as AI feedback loop — v1.3
+- ✓ Chapter 5 updated with MCP-based RAG search tool definition and two-path architecture (MCP access + embedded chat) — v1.3
+- ✓ Chapters 3, 6, 7 updated with cross-references to MCP orchestration and revised status — v1.3
+- ✓ All new BBj code samples compiler-validated before publishing (17 blocks via bbjcpl -N) — v1.3
+
 ### Active
 
-- [ ] Chapter 2 updated with MCP server as the concrete unified architecture — tool definitions, generate-validate-fix loop, deployment options
-- [ ] Chapter 4 updated with compiler validation module and bbjcpltool proof-of-concept — ground-truth syntax checking as AI feedback loop
-- [ ] Chapter 5 updated with MCP-based RAG search tool definition and documentation query pattern
-- [ ] Chapters 3, 6, 7 updated with cross-references to MCP orchestration and any revised recommendations
-- [ ] All new BBj code samples compiler-validated before publishing
+(None — next milestone TBD)
 
 ### Out of Scope
 
@@ -54,6 +56,8 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - Retrieval API server — v1.2 is a batch ingestion tool, not a running service
 - Embedding fine-tuning — requires baseline retrieval quality measurement first
 - Agentic RAG features — no query routing, agent loops, or multi-step reasoning
+- MCP server source code implementation — v1.3 documents the architecture; a future milestone builds it
+- MCP SDK language decision (TypeScript vs Python) — premature for strategy documentation
 
 ## Context
 
@@ -63,7 +67,7 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.2 shipped 2026-02-01. RAG ingestion pipeline complete with 6 source parsers, generation-aware intelligence, embedding pipeline, and hybrid search. v1.3 in progress: weaving MCP server architecture, compiler validation, and ecosystem integration into existing chapters. 2,441 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
+- **Current state:** v1.3 shipped 2026-02-01. All 7 chapters updated with MCP server architecture (three tool definitions, generate-validate-fix loop), compiler validation (bbjcpl ground-truth checking, bbjcpltool v1 proof-of-concept), and consistent cross-references. RAG ingestion pipeline complete (v1.2). 3,015 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
 - **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
 - **bbjcpltool:** Working proof-of-concept at `/Users/beff/bbjcpltool/` — v1 shipped. PostToolUse hook runs `bbjcpl -N` on every `.bbj` file Claude writes/edits, plus shared BBj language reference at `~/.claude/bbj-reference.md`. Validates the compiler-in-the-loop concept described in the MCP paper.
 - **RAG source corpus:** 6 sources with working parsers: (1) MadCap Flare XHTML (7,079 topics), (2) standalone PDFs (GUI programming guide), (3) Advantage magazine articles, (4) Knowledge Base (WordPress/ECKB), (5) DWC-Course (Docusaurus MDX), (6) BBj source code samples.
@@ -107,7 +111,13 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | Pipeline intelligence bypass for non-Flare parsers | Non-Flare parsers pre-populate doc_type/generations; avoids Flare-specific logic | ✓ Good |
 | 400-token chunks with 50-token overlap | Heading-aware splitting preserves semantic coherence at section boundaries | ✓ Good |
 
-| MCP architecture woven into existing chapters (not standalone Ch8) | MCP is the integration layer connecting Ch3-6, not a separate initiative; fits as the concrete realization of Ch2's unified architecture promise | — Pending |
+| MCP architecture woven into existing chapters (not standalone Ch8) | MCP is the integration layer connecting Ch3-6, not a separate initiative; fits as the concrete realization of Ch2's unified architecture promise | ✓ Good |
+| MCP topology diagram replaces original two-layer architecture diagram | MCP Server sits between clients and backends; original conceptual flow preserved in "How They Work Together" sequence diagram | ✓ Good |
+| JSON Schema format for MCP tool definitions | Language-neutral, matches MCP spec native format; avoids premature TypeScript/Python commitment | ✓ Good |
+| Compiler validation as quality gate, not "third layer" | Preserves existing Two-Layer Completion Architecture decision; bbjcpl validates LLM output | ✓ Good |
+| Chat and MCP as two independent, equally important paths | Not a stepping stone; both paths consume same BBj MCP Server backend | ✓ Good |
+| No MCP tool schemas duplicated across chapters | All downstream chapters cross-reference Ch2 definitions; single source of truth | ✓ Good |
+| Status block dates removed permanently | :::note[Where Things Stand] with no month/year; avoids staleness across deployments | ✓ Good |
 
 ---
-*Last updated: 2026-02-01 after v1.3 milestone started*
+*Last updated: 2026-02-01 after v1.3 milestone shipped*
