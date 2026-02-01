@@ -123,11 +123,12 @@ Plans:
   3. Docusaurus build completes with zero broken links and zero warnings
   4. All new decision callouts follow the established format (Choice, Rationale, Alternatives considered, Status)
   5. Landing page chapter descriptions and frontmatter `description` fields match the updated chapter content
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 19-01: TBD
-- [ ] 19-02: TBD
+- [ ] 19-01-PLAN.md — Automated validations (build, JSON, Mermaid, anchors) + BBj code validation checkpoint
+- [ ] 19-02-PLAN.md — Status block reconciliation (remove dates, reconcile with Ch7) + decision callout audit
+- [ ] 19-03-PLAN.md — Landing page/frontmatter description audit + final zero-warning build gate
 
 ## Progress
 
@@ -139,7 +140,7 @@ Plans:
 | 16. Compiler Validation | 2/2 | ✓ Complete | 2026-02-01 |
 | 17. Chat & Cross-References | 2/2 | ✓ Complete | 2026-02-01 |
 | 18. Implementation Roadmap | 1/1 | ✓ Complete | 2026-02-01 |
-| 19. Final Consistency Pass | 0/TBD | Not started | - |
+| 19. Final Consistency Pass | 0/3 | Not started | - |
 
 ---
 *Created: 2026-02-01 for milestone v1.3 MCP Architecture Integration*
