@@ -13,16 +13,16 @@ Milestone: v1.2 RAG Ingestion Pipeline
 Phase: 13 of 14 (Additional Parsers)
 Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-01 -- Completed 13-02-PLAN.md (WordPress Parsers)
+Last activity: 2026-02-01 -- Completed 13-01-PLAN.md (PDF and BBj Source Parsers)
 
-Progress: ███████████░░░ 11/14 (79%)
+Progress: ████████████░░ 12/14 (86%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (v1.2)
+- Total plans completed: 12 (v1.2)
 - Average duration: 5min
-- Total execution time: 59min
+- Total execution time: 65min
 
 **By Phase:**
 
@@ -33,7 +33,7 @@ Progress: ███████████░░░ 11/14 (79%)
 | 10-flare-parser | 3/3 | 23min | 8min |
 | 11-bbj-intelligence | 2/2 | 8min | 4min |
 | 12-embedding-pipeline | 2/2 | 12min | 6min |
-| 13-additional-parsers | 1/3 | 5min | 5min |
+| 13-additional-parsers | 2/3 | 11min | 6min |
 
 *Updated after each plan completion*
 
@@ -92,6 +92,11 @@ Recent decisions affecting current work:
 - Strip all media tags (img, video, audio, iframe, figure, svg) for text-only WordPress content
 - Advantage doc_type="article", KB doc_type="concept"
 - Sitemap XML fallback when index page HTML parsing finds zero links
+- Per-section generation tagging for PDF parser (content-based regex, not uniform)
+- DWC patterns checked before GUI patterns in source code classification
+- BBj keyword validation to skip non-BBj .txt files in source directories
+- PDF page 0 (TOC) skipped; doc_type: concept/example/tutorial based on content
+- Source URL format: pdf://filename#slug for PDF, file://relative-path for BBj source
 
 ### Pending Todos
 
@@ -103,7 +108,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T08:24Z
-Stopped at: Completed 13-02-PLAN.md (WordPress Parsers)
+Last session: 2026-02-01T08:25Z
+Stopped at: Completed 13-01-PLAN.md (PDF and BBj Source Parsers)
 Resume file: None
-Next action: Execute 13-01-PLAN.md or 13-03-PLAN.md (remaining Phase 13 plans).
+Next action: Execute 13-03-PLAN.md (MDX parser, last plan in Phase 13).
