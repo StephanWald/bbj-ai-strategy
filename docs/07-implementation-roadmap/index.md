@@ -32,7 +32,8 @@ Before presenting the roadmap, it is important to establish where the project ac
 :::info[Decision: Acknowledging Existing Work]
 **Choice:** Build the roadmap from the current state rather than starting from zero.
 **Rationale:** The language server is already shipped with 450+ commits and 13 contributors. The fine-tuning effort has ~10K training data points with promising results. Presenting a from-scratch roadmap would misrepresent the actual effort remaining and undermine credibility with technical reviewers.
-**Impact:** What was originally planned as a 6-month full-project timeline becomes a continuation plan that builds on a partially-complete foundation.
+**Alternatives considered:** Present a from-scratch roadmap covering the full project lifecycle (rejected: misrepresents actual effort remaining and ignores shipped components); present only remaining work without acknowledging what exists (rejected: loses context for why certain phases are partially complete and what foundations are already in place).
+**Status:** Adopted. The roadmap reflects current state as of February 2026.
 :::
 
 ## Implementation Phases
@@ -199,8 +200,9 @@ The critical insight is that this is not a large-scale infrastructure project. T
 
 :::info[Decision: Hardware and Infrastructure Costs Only]
 **Choice:** Present infrastructure costs without staffing or personnel estimates.
-**Rationale:** Staffing costs vary enormously by organization, geography, and whether the work is done by existing team members, new hires, or contractors. Including speculative personnel estimates (the original strategy paper estimated $150K-250K in development costs) would distract from the infrastructure discussion and risk undermining credibility with organizations whose cost structures differ.
-**Guidance:** Technical leads should estimate staffing based on their own team's capacity and the phase-by-phase deliverable descriptions above.
+**Rationale:** Staffing costs vary enormously by organization, geography, and whether the work is done by existing team members, new hires, or contractors. Including speculative personnel estimates (the original strategy paper estimated $150K-250K in development costs) would distract from the infrastructure discussion and risk undermining credibility with organizations whose cost structures differ. Technical leads should estimate staffing based on their own team's capacity and the phase-by-phase deliverable descriptions above.
+**Alternatives considered:** Include full staffing cost estimates alongside infrastructure (rejected: speculative personnel numbers vary too widely by organization to be useful and risk undermining credibility); present only total project cost as a single range (rejected: obscures the distinction between one-time hardware investment and ongoing operational costs).
+**Status:** Adopted. Infrastructure costs presented; staffing estimation deferred to individual organizations.
 :::
 
 ## Risk Assessment
