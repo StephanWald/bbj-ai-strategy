@@ -10,7 +10,7 @@ from bbj_rag.intelligence.context_headers import (
 )
 from bbj_rag.intelligence.doc_types import DocType, classify_doc_type
 from bbj_rag.intelligence.generations import Generation, tag_generation
-from bbj_rag.intelligence.report import build_report, print_report
+from bbj_rag.intelligence.report import build_report, print_quality_report, print_report
 
 __all__ = [
     "DocType",
@@ -19,6 +19,7 @@ __all__ = [
     "build_report",
     "classify_doc_type",
     "extract_heading_hierarchy",
+    "print_quality_report",
     "print_report",
     "tag_generation",
 ]

@@ -100,6 +100,12 @@ def ingest(source: str, resume: bool, batch_size: int) -> None:
             f"  Chunks embedded:  {stats['chunks_embedded']}\n"
             f"  Chunks stored:    {stats['chunks_stored']}"
         )
+
+        # Auto-print quality report after successful ingestion
+        from bbj_rag.intelligence.report import print_quality_report
+
+        click.echo()  # blank line separator
+        print_quality_report(conn)
     except Exception as exc:
         logger.exception("Pipeline failed")
         # Check for common Ollama errors.
@@ -140,6 +146,28 @@ def parse(source: str) -> None:
         click.echo("Sample titles:")
         for title in sample_titles:
             click.echo(f"  - {title}")
+
+
+@cli.command()
+def report() -> None:
+    """Show post-ingestion quality report."""
+    from bbj_rag.db import get_connection
+    from bbj_rag.intelligence.report import print_quality_report
+
+    settings = Settings()
+    try:
+        conn = get_connection(settings.database_url)
+    except Exception as exc:
+        safe_url = _mask_password(settings.database_url)
+        click.echo(
+            f"Database connection failed: {exc}\nURL: {safe_url}",
+            err=True,
+        )
+        sys.exit(1)
+    try:
+        print_quality_report(conn)
+    finally:
+        conn.close()
 
 
 @cli.command()
