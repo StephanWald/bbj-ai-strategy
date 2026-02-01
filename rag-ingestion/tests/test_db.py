@@ -57,7 +57,7 @@ def test_schema_sql_contains_required_elements():
     # Key columns
     assert "content_hash" in sql
     assert "UNIQUE" in sql
-    assert "vector(1536)" in sql
+    assert "vector(1024)" in sql
     assert "GENERATED ALWAYS AS" in sql
 
     # tsvector with two-arg form

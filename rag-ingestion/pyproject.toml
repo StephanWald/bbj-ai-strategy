@@ -11,6 +11,9 @@ dependencies = [
     "lxml>=5.3,<6",
     "httpx>=0.28,<1",
     "beautifulsoup4>=4.13,<5",
+    "ollama>=0.6,<1",
+    "click>=8.1,<9",
+    "pyyaml>=6.0,<7",
 ]
 
 [build-system]
@@ -24,6 +27,7 @@ dev = [
     "mypy>=1.19.0",
     "pre-commit>=4.3.0",
     "lxml-stubs>=0.5",
+    "openai>=1.0,<2",
 ]
 
 [tool.ruff]
@@ -52,6 +56,9 @@ disallow_untyped_defs = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["-ra", "-q"]
+
+[project.scripts]
+bbj-rag = "bbj_rag.cli:cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bbj_rag"]

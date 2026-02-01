@@ -17,9 +17,9 @@ from bbj_rag.models import Chunk
 _INSERT_CHUNK_SQL = """
 INSERT INTO chunks (
     source_url, title, doc_type, content, content_hash,
-    generations, embedding, metadata
+    context_header, generations, deprecated, embedding, metadata
 )
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (content_hash) DO NOTHING
 RETURNING id
 """
@@ -44,7 +44,9 @@ def _chunk_to_params(chunk: Chunk) -> tuple[object, ...]:
         chunk.doc_type,
         chunk.content,
         chunk.content_hash,
+        chunk.context_header,
         chunk.generations,
+        chunk.deprecated,
         chunk.embedding,
         Json(chunk.metadata),
     )
@@ -75,5 +77,74 @@ def insert_chunks_batch(conn: psycopg.Connection[object], chunks: list[Chunk]) -
     with conn.cursor() as cur:
         cur.executemany(_INSERT_CHUNK_SQL, params_list)
         count: int = cur.rowcount
+    conn.commit()
+    return count
+
+
+def bulk_insert_chunks(conn: psycopg.Connection[object], chunks: list[Chunk]) -> int:
+    """Bulk insert chunks using psycopg3 binary COPY protocol.
+
+    Uses a staging table + INSERT ... ON CONFLICT pattern to combine
+    fast COPY throughput with idempotent content_hash deduplication.
+
+    Returns the number of newly inserted rows (excludes duplicates).
+    """
+    if not chunks:
+        return 0
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "CREATE TEMP TABLE _chunks_staging "
+            "(LIKE chunks INCLUDING DEFAULTS) ON COMMIT DROP"
+        )
+
+        with cur.copy(
+            "COPY _chunks_staging ("
+            "source_url, title, doc_type, content, content_hash, "
+            "context_header, generations, deprecated, embedding, metadata"
+            ") FROM STDIN WITH (FORMAT BINARY)"
+        ) as copy:
+            copy.set_types(
+                [
+                    "text",
+                    "text",
+                    "text",
+                    "text",
+                    "varchar",
+                    "text",
+                    "text[]",
+                    "bool",
+                    "vector",
+                    "jsonb",
+                ]
+            )
+            for chunk in chunks:
+                copy.write_row(
+                    [
+                        chunk.source_url,
+                        chunk.title,
+                        chunk.doc_type,
+                        chunk.content,
+                        chunk.content_hash,
+                        chunk.context_header,
+                        chunk.generations,
+                        chunk.deprecated,
+                        chunk.embedding,
+                        Json(chunk.metadata),
+                    ]
+                )
+
+        cur.execute(
+            "INSERT INTO chunks ("
+            "source_url, title, doc_type, content, content_hash, "
+            "context_header, generations, deprecated, embedding, metadata"
+            ") SELECT "
+            "source_url, title, doc_type, content, content_hash, "
+            "context_header, generations, deprecated, embedding, metadata "
+            "FROM _chunks_staging "
+            "ON CONFLICT (content_hash) DO NOTHING"
+        )
+        count: int = cur.rowcount
+
     conn.commit()
     return count

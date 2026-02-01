@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     context_header  TEXT            NOT NULL DEFAULT '',
     generations     TEXT[]          NOT NULL DEFAULT '{}',
     deprecated      BOOLEAN         NOT NULL DEFAULT false,
-    embedding       vector(1536),
+    -- 1024 dimensions matches Qwen3-Embedding-0.6B default output.
+    embedding       vector(1024),
     search_vector   tsvector        GENERATED ALWAYS AS (
                         to_tsvector('english', coalesce(context_header, '') || ' ' || coalesce(title, '') || ' ' || coalesce(content, ''))
                     ) STORED,

@@ -28,10 +28,12 @@ class Settings(BaseSettings):
     database_url: str = Field(
         default="postgresql://localhost:5432/bbj_rag",
     )
-    embedding_model: str = Field(default="text-embedding-3-small")
-    embedding_dimensions: int = Field(default=1536)
-    chunk_size: int = Field(default=512)
-    chunk_overlap: int = Field(default=64)
+    embedding_model: str = Field(default="qwen3-embedding:0.6b")
+    embedding_dimensions: int = Field(default=1024)
+    embedding_provider: str = Field(default="ollama")
+    embedding_batch_size: int = Field(default=64)
+    chunk_size: int = Field(default=400)
+    chunk_overlap: int = Field(default=50)
     flare_source_path: str = Field(default="")
     crawl_source_urls: list[str] = Field(default_factory=list)
 
