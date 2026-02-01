@@ -108,10 +108,10 @@ Plans:
   1. MCP server deliverables appear in the appropriate implementation phases (not as a new top-level phase, but woven into existing ones)
   2. Risk assessment includes compiler validation as a concrete mitigation for the "LLM hallucinates BBj syntax" risk
   3. Status blocks and phase descriptions reflect both v1.2 accomplishments (RAG pipeline shipped) and v1.3 additions (MCP architecture)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 18-01: TBD
+- [ ] 18-01-PLAN.md — Update status table, TL;DR, phase descriptions with MCP bullets, risk assessment with compiler validation, Current Status block
 
 ### Phase 19: Final Consistency Pass
 **Goal**: All updated chapters are internally consistent, cross-references resolve, BBj code validates, and the site builds clean
@@ -138,7 +138,7 @@ Plans:
 | 15. Strategic Architecture | 2/2 | ✓ Complete | 2026-02-01 |
 | 16. Compiler Validation | 2/2 | ✓ Complete | 2026-02-01 |
 | 17. Chat & Cross-References | 2/2 | ✓ Complete | 2026-02-01 |
-| 18. Implementation Roadmap | 0/TBD | Not started | - |
+| 18. Implementation Roadmap | 0/1 | Not started | - |
 | 19. Final Consistency Pass | 0/TBD | Not started | - |
 
 ---
