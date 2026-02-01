@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 13 complete (Additional Parsers)
+**Current focus:** v1.2 -- Phase 14 in progress (Documentation & Quality)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
-Phase: 13 of 14 (Additional Parsers)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-02-01 -- Completed 13-03-PLAN.md (MDX Parser & Full Integration)
+Phase: 14 of 14 (Documentation & Quality)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-01 -- Completed 14-01-PLAN.md (Getting Started Sub-Page)
 
-Progress: █████████████░ 13/14 (93%)
+Progress: █████████████░ 14/15 (93%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13 (v1.2)
+- Total plans completed: 14 (v1.2)
 - Average duration: 5min
-- Total execution time: 69min
+- Total execution time: 71min
 
 **By Phase:**
 
@@ -34,6 +34,7 @@ Progress: █████████████░ 13/14 (93%)
 | 11-bbj-intelligence | 2/2 | 8min | 4min |
 | 12-embedding-pipeline | 2/2 | 12min | 6min |
 | 13-additional-parsers | 3/3 | 15min | 5min |
+| 14-documentation-quality | 1/2 | 2min | 2min |
 
 *Updated after each plan completion*
 
@@ -101,6 +102,9 @@ Recent decisions affecting current work:
 - DWC-Course uniform tagging: all content gets generations=["dwc"] and doc_type="tutorial"
 - MDX context header: "DWC Course > {chapter} > {title}" with chapter from parent dir name
 - MDX title priority: frontmatter > first # heading > filename stem
+- Design-first Getting Started page structure: why-this-approach before practical details
+- GitHub reference link definitions for maintainable parser URLs in Getting Started page
+- Branch-based GitHub URLs (blob/main/) since project has no release tags
 
 ### Pending Todos
 
@@ -112,7 +116,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T08:32Z
-Stopped at: Completed 13-03-PLAN.md (MDX Parser & Full Integration)
+Last session: 2026-02-01T09:06Z
+Stopped at: Completed 14-01-PLAN.md (Getting Started Sub-Page)
 Resume file: None
-Next action: Phase 14 (Documentation) -- final phase of v1.2 milestone.
+Next action: Phase 14 plan 02 (README & Quality Report) -- final plan of v1.2 milestone.
