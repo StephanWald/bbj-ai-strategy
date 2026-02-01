@@ -33,8 +33,8 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 5. Settings load entirely from environment variables with no TOML file present in the container
 
 Plans:
-- [ ] 20-01-PLAN.md -- Docker Compose + Dockerfile + FastAPI skeleton + health endpoint
-- [ ] 20-02-PLAN.md -- Config refactor + startup wiring + Docker integration verification
+- [x] 20-01-PLAN.md -- Docker Compose + Dockerfile + FastAPI skeleton + health endpoint
+- [x] 20-02-PLAN.md -- Config refactor + startup wiring + Docker integration verification
 
 ### Phase 21: Data Configuration + Ingestion
 
@@ -138,7 +138,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 20. Docker + Database Foundation | v1.4 | 0/2 | Not started | - |
+| 20. Docker + Database Foundation | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 21. Data Configuration + Ingestion | v1.4 | 0/2 | Not started | - |
 | 22. REST Retrieval API | v1.4 | 0/2 | Not started | - |
 | 23. MCP Server | v1.4 | 0/1 | Not started | - |
