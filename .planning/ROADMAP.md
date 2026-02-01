@@ -47,7 +47,7 @@ Phase 14: Documentation & Quality
 
 - [x] **Phase 15: Strategic Architecture** - Chapter 2 updated with MCP server as the concrete unified architecture
 - [x] **Phase 16: Compiler Validation** - Chapter 4 updated with bbjcpl validation module and proof-of-concept
-- [ ] **Phase 17: Chat & Cross-References** - Chapters 5, 3, 6 updated with MCP tool integration and cross-references
+- [x] **Phase 17: Chat & Cross-References** - Chapters 5, 3, 6 updated with MCP tool integration and cross-references
 - [ ] **Phase 18: Implementation Roadmap** - Chapter 7 updated with MCP deliverables and revised risk assessment
 - [ ] **Phase 19: Final Consistency Pass** - Quality verification across all updated chapters
 
@@ -97,8 +97,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Restructure Chapter 5 with two-path framing (MCP + chat), unified sequence diagram, decision callout, updated status
-- [ ] 17-02-PLAN.md — Add MCP Integration subsections to Chapters 3 and 6, update Chapter 6 status block for v1.2
+- [x] 17-01-PLAN.md — Restructure Chapter 5 with two-path framing (MCP + chat), unified sequence diagram, decision callout, updated status
+- [x] 17-02-PLAN.md — Add MCP Integration subsections to Chapters 3 and 6, update Chapter 6 status block for v1.2
 
 ### Phase 18: Implementation Roadmap
 **Goal**: Chapter 7 reflects the current state of the project -- v1.2 accomplishments incorporated, MCP server deliverables woven into phases, compiler validation recognized as hallucination mitigation
@@ -137,7 +137,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 15. Strategic Architecture | 2/2 | ✓ Complete | 2026-02-01 |
 | 16. Compiler Validation | 2/2 | ✓ Complete | 2026-02-01 |
-| 17. Chat & Cross-References | 0/TBD | Not started | - |
+| 17. Chat & Cross-References | 2/2 | ✓ Complete | 2026-02-01 |
 | 18. Implementation Roadmap | 0/TBD | Not started | - |
 | 19. Final Consistency Pass | 0/TBD | Not started | - |
 

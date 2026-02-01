@@ -24,16 +24,16 @@
 
 ## Documentation Chat (Chapter 5)
 
-- [ ] **CHAT-01**: MCP-based architecture framing — chat backend as MCP client, `search_bbj_knowledge` tool for retrieval
-- [ ] **CHAT-02**: Two-tier presentation: "Quick start: any MCP client" for immediate access, "Optimized: custom chat backend" for generation-aware UX
-- [ ] **CHAT-03**: Updated sequence diagram showing MCP tool calls in the chat flow
-- [ ] **CHAT-04**: Decision callout: "Decision: MCP Tool for RAG Access" using existing :::info format
-- [ ] **CHAT-05**: Current Status block updated
+- [x] **CHAT-01**: MCP-based architecture framing — chat backend as MCP client, `search_bbj_knowledge` tool for retrieval
+- [x] **CHAT-02**: Two-tier presentation: "Quick start: any MCP client" for immediate access, "Optimized: custom chat backend" for generation-aware UX
+- [x] **CHAT-03**: Updated sequence diagram showing MCP tool calls in the chat flow
+- [x] **CHAT-04**: Decision callout: "Decision: MCP Tool for RAG Access" using existing :::info format
+- [x] **CHAT-05**: Current Status block updated
 
 ## Cross-References & Updates (Chapters 3, 6, 7)
 
-- [ ] **XREF-01**: Chapter 3 (Fine-Tuning) — brief mention that model is consumed via MCP `generate_bbj_code` tool, cross-reference to Ch2
-- [ ] **XREF-02**: Chapter 6 (RAG Database) — mention retrieval exposed via MCP `search_bbj_knowledge` tool, cross-reference to Ch2, status updated for v1.2 shipped pipeline
+- [x] **XREF-01**: Chapter 3 (Fine-Tuning) — brief mention that model is consumed via MCP `generate_bbj_code` tool, cross-reference to Ch2
+- [x] **XREF-02**: Chapter 6 (RAG Database) — mention retrieval exposed via MCP `search_bbj_knowledge` tool, cross-reference to Ch2, status updated for v1.2 shipped pipeline
 - [ ] **XREF-03**: Chapter 7 (Implementation Roadmap) — MCP server deliverables woven into existing phases, risk assessment updated with compiler validation as hallucination mitigation
 - [ ] **XREF-04**: Chapter 7 — status blocks and phase descriptions updated to reflect v1.2 accomplishments and v1.3 MCP additions
 
@@ -82,13 +82,13 @@
 | IDE-04 | Phase 16 | Complete |
 | IDE-05 | Phase 16 | Complete |
 | IDE-06 | Phase 16 | Complete |
-| CHAT-01 | Phase 17 | Pending |
-| CHAT-02 | Phase 17 | Pending |
-| CHAT-03 | Phase 17 | Pending |
-| CHAT-04 | Phase 17 | Pending |
-| CHAT-05 | Phase 17 | Pending |
-| XREF-01 | Phase 17 | Pending |
-| XREF-02 | Phase 17 | Pending |
+| CHAT-01 | Phase 17 | Complete |
+| CHAT-02 | Phase 17 | Complete |
+| CHAT-03 | Phase 17 | Complete |
+| CHAT-04 | Phase 17 | Complete |
+| CHAT-05 | Phase 17 | Complete |
+| XREF-01 | Phase 17 | Complete |
+| XREF-02 | Phase 17 | Complete |
 | XREF-03 | Phase 18 | Pending |
 | XREF-04 | Phase 18 | Pending |
 | QUAL-01 | Phase 19 | Pending |
