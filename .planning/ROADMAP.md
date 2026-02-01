@@ -41,7 +41,7 @@ Plans:
 **Goal**: All 6 BBj documentation sources are configured with real data paths and successfully ingested into pgvector, producing a searchable corpus
 **Depends on**: Phase 20 (containers running, schema applied, Ollama reachable)
 **Requirements**: DATA-01, DATA-02, DATA-03, DATA-04, DATA-06
-**Plans**: TBD
+**Plans**: 2 plans
 
 **Success Criteria** (what must be TRUE):
 1. A single command triggers ingestion of all 6 sources in sequence (Flare, PDF, MDX, BBj source, WordPress, web crawl)
@@ -50,8 +50,8 @@ Plans:
 4. An interrupted ingestion run can be resumed without re-processing already-completed sources
 
 Plans:
-- [ ] 21-01: Multi-MDX config support + real source path wiring
-- [ ] 21-02: Ingestion orchestration script + full corpus run
+- [ ] 21-01-PLAN.md -- Source config infrastructure: sources.toml, config loader, multi-MDX prefix support, report fix
+- [ ] 21-02-PLAN.md -- Ingestion orchestration CLI: bbj-ingest-all with fail-fast, resume, clean, summary table
 
 ### Phase 22: REST Retrieval API
 
