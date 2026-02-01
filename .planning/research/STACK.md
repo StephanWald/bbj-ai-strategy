@@ -1,567 +1,530 @@
-# Technology Stack: MCP Architecture Documentation (v1.3 Milestone)
+# Technology Stack: RAG Deployment Service (v1.4 Milestone)
 
-**Project:** BBj AI Strategy -- Docusaurus Documentation Update
+**Project:** BBj AI Strategy -- RAG Pipeline Docker Deployment
 **Researched:** 2026-02-01
-**Scope:** Technologies and patterns for documenting MCP server architecture, compiler validation loops, and ecosystem integration across existing 7 chapters
-**Overall confidence:** HIGH (MCP SDK versions verified via npm/GitHub; Docusaurus config verified from project source; Mermaid patterns verified against official docs)
+**Scope:** Docker Compose, retrieval REST API, MCP server for search_bbj_knowledge tool
+**Overall confidence:** HIGH (versions verified via PyPI, Docker Hub, and GitHub as of 2026-02-01)
 
 ---
 
 ## Context: What This Stack Is For
 
-This is NOT a stack for building an MCP server. This is a stack for **documenting** an MCP server architecture -- updating existing Docusaurus chapters with accurate MCP TypeScript patterns, architecture diagrams, and compiler validation concepts. The audience is technical readers of the BBj AI Strategy site who need to understand how the pieces (RAG search + fine-tuned model + compiler validation) connect via MCP.
+This stack adds **deployment infrastructure** to the existing bbj-rag ingestion pipeline. The pipeline already works as a CLI tool (`bbj-rag ingest`); this milestone wraps it in Docker Compose and exposes retrieval via two interfaces:
 
-The existing site runs Docusaurus 3.9.2 with Mermaid enabled (`@docusaurus/theme-mermaid`), BBj syntax highlighting (`prism: { additionalLanguages: ['bbj'] }`), and GitHub Pages deployment. All recommendations below must integrate with this existing setup.
+1. **REST API** -- HTTP endpoint for hybrid search queries (consumed by future applications)
+2. **MCP Server** -- Model Context Protocol server exposing `search_bbj_knowledge` as a tool (consumed by Claude Desktop, VS Code, and other MCP-compatible hosts)
 
----
+The existing codebase provides: Python 3.12, psycopg3, pgvector Python bindings, Ollama embedder, Pydantic settings, Click CLI, and a `search.py` module with `hybrid_search()`, `dense_search()`, and `bm25_search()` functions that return `SearchResult` dataclasses. The deployment stack builds on top of these -- it does NOT replace them.
 
-## MCP Protocol & SDK Reference
-
-### Current Protocol Version
-
-| Attribute | Value | Confidence | Source |
-|-----------|-------|------------|--------|
-| Current spec version | **2025-11-25** | HIGH | [Official spec](https://modelcontextprotocol.io/specification/2025-11-25) |
-| Previous spec version | 2025-06-18 | HIGH | Official blog |
-| Next spec expected | ~Q2 2026 (6-month cadence) | MEDIUM | Release pattern inference |
-| Governance | Linux Foundation (Agentic AI Foundation) | HIGH | [Official announcement](https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/) |
-
-**Key 2025-11-25 additions relevant to documentation:**
-- Async Tasks primitive (experimental) -- enables "call-now, fetch-later" for long-running tool calls. Relevant for `validate_bbj_syntax` if compilation is slow.
-- Modernized OAuth authorization with Client ID Metadata Documents (CIMD). Relevant for enterprise deployment narrative.
-- Protocol Extensions Framework -- formalized extension naming and discovery.
-- Streamable HTTP transport replaces deprecated HTTP+SSE as the recommended remote transport.
-
-### TypeScript SDK
-
-| Attribute | Value | Confidence | Source |
-|-----------|-------|------------|--------|
-| Package | `@modelcontextprotocol/sdk` | HIGH | [npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) |
-| Current version | **1.25.2** (as of ~2026-01-21) | HIGH | npm registry |
-| Spec compliance | 2025-11-25 | HIGH | [Releases](https://github.com/modelcontextprotocol/typescript-sdk/releases) |
-| Zod dependency | `zod` v3.25+ (SDK imports from `zod/v4` internally) | HIGH | GitHub README |
-| v2 timeline | Q1 2026 (anticipated) | MEDIUM | npm README |
-| Dependents | 21,227+ npm packages | HIGH | npm registry |
-
-**Why this version matters for documentation:** The code examples shown in strategy docs should use v1.x `registerTool()` patterns with Zod schemas, as this is what any reader implementing the BBj MCP Server would use in production. The v2 migration is imminent but v1.x will receive 6+ months of support after v2 ships.
-
-### SDK Middleware Packages
-
-| Package | Purpose | When to Mention |
-|---------|---------|-----------------|
-| `@modelcontextprotocol/node` | Node.js http adapter | For stdio-based local server docs |
-| `@modelcontextprotocol/express` | Express adapter with DNS rebinding protection | For Streamable HTTP remote server docs |
-| `@modelcontextprotocol/hono` | Hono web framework adapter | Alternative to Express |
-
-### Tool Registration Pattern (For Code Examples in Docs)
-
-The canonical TypeScript pattern for defining an MCP tool, which documentation should show when describing the BBj MCP Server tools:
-
-```typescript
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
-
-const server = new McpServer({
-  name: "bbj-mcp-server",
-  version: "1.0.0",
-});
-
-// Tool: search_bbj_knowledge (RAG search)
-server.registerTool(
-  "search_bbj_knowledge",
-  {
-    title: "Search BBj Knowledge Base",
-    description: "Search the BBj documentation and code examples using RAG",
-    inputSchema: {
-      query: z.string().describe("Natural language search query"),
-      generation: z.enum(["all", "character", "vpro5", "bbj-gui", "dwc"])
-        .optional()
-        .describe("Filter by BBj generation"),
-      limit: z.number().default(5).describe("Number of results to return"),
-    },
-  },
-  async ({ query, generation, limit }) => {
-    // RAG pipeline: embed query -> pgvector similarity search -> return chunks
-    const results = await ragSearch(query, { generation, limit });
-    return {
-      content: [{ type: "text", text: JSON.stringify(results) }],
-    };
-  }
-);
-
-// Tool: generate_bbj_code (fine-tuned model)
-server.registerTool(
-  "generate_bbj_code",
-  {
-    title: "Generate BBj Code",
-    description: "Generate BBj code using the fine-tuned model with RAG context",
-    inputSchema: {
-      prompt: z.string().describe("Code generation request"),
-      generation: z.enum(["character", "vpro5", "bbj-gui", "dwc"])
-        .describe("Target BBj generation"),
-      context: z.string().optional()
-        .describe("Additional code context"),
-    },
-  },
-  async ({ prompt, generation, context }) => {
-    // Query RAG for relevant examples, then call fine-tuned model via Ollama
-    const ragContext = await ragSearch(prompt, { generation });
-    const code = await ollamaGenerate(prompt, generation, ragContext, context);
-    return {
-      content: [{ type: "text", text: code }],
-    };
-  }
-);
-
-// Tool: validate_bbj_syntax (compiler validation)
-server.registerTool(
-  "validate_bbj_syntax",
-  {
-    title: "Validate BBj Syntax",
-    description: "Validate BBj code using the bbjcpl compiler",
-    inputSchema: {
-      code: z.string().describe("BBj source code to validate"),
-      filename: z.string().optional()
-        .describe("Virtual filename for error reporting"),
-    },
-  },
-  async ({ code, filename }) => {
-    // Write to temp file, run bbjcpl -N, parse output
-    const result = await runBbjCompiler(code, filename);
-    return {
-      content: [{
-        type: "text",
-        text: result.valid
-          ? "Syntax valid"
-          : `Errors:\n${result.errors.join("\n")}`,
-      }],
-    };
-  }
-);
-```
-
-**Confidence:** HIGH -- Pattern verified against [official SDK server docs](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md). The `registerTool()` method with Zod schemas is the current canonical approach. Recent PR #816 expanded it to accept `ZodType<object>` for unions and intersections.
+**Key constraint:** Ollama runs on the host macOS machine, not in Docker. Containers must reach it via `host.docker.internal:11434`.
 
 ---
 
-## MCP Architecture Concepts (For Documentation Content)
+## Recommended Stack
 
-### Core Architecture Model
+### Docker Images
 
-The MCP architecture that documentation should present:
+| Image | Tag | Purpose | Why This Tag |
+|-------|-----|---------|-------------|
+| `pgvector/pgvector` | `0.8.0-pg17` | PostgreSQL 17 with pgvector extension | Version-pinned for reproducibility. PG17 is current stable. pgvector 0.8.0 is the latest version with a confirmed pg17 tag on Docker Hub. The `pg17` floating tag currently resolves to 0.8.0 or newer, but pinning avoids surprise upgrades. |
+| `python` | `3.12-slim-bookworm` | Base image for API and MCP containers | Matches project's `requires-python = ">=3.12"`. Slim-bookworm minimizes image size (~150MB vs ~1GB full). Bookworm (Debian 12) is current stable. |
+| `ghcr.io/astral-sh/uv` | `0.9.28` | uv binary for Dockerfile COPY --from | Pinned to current latest (2026-01-29). Used as a build-stage source only: `COPY --from=ghcr.io/astral-sh/uv:0.9.28 /uv /bin/uv`. |
 
-| Concept | What It Is | How It Maps to BBj MCP Server |
-|---------|-----------|-------------------------------|
-| **Host** | AI application (Claude Desktop, VS Code, etc.) | The IDE or chat client where a developer interacts |
-| **Client** | Component inside host that connects to servers | One MCP client per server connection, managed by host |
-| **Server** | Program exposing tools/resources/prompts | The BBj MCP Server with 3 tools |
-| **Transport** | Communication layer (stdio or Streamable HTTP) | stdio for local dev, Streamable HTTP for shared deployment |
-| **Tools** | Executable functions the LLM can invoke | `search_bbj_knowledge`, `generate_bbj_code`, `validate_bbj_syntax` |
-| **Resources** | Read-only data sources | Could expose BBj API docs as resources (future) |
-| **Prompts** | Reusable interaction templates | Could expose generation-aware prompt templates (future) |
+**Why PostgreSQL 17 over 16:** PG17 adds incremental JSON parsing, improved VACUUM performance, and better query planner cost estimates for JIT. Since this is a fresh deployment (not an upgrade of an existing PG16 database), there is no reason to use an older major version.
 
-### JSON-RPC Protocol Flow
+**Why pgvector 0.8.0 over 0.8.1:** The `0.8.1-pg17` tag does not yet appear as a confirmed published tag on Docker Hub (0.8.1 tags are confirmed only for pg18-trixie). The `0.8.0-pg17` and `0.8.0-pg17-bookworm` tags are confirmed available. If `0.8.1-pg17` becomes available by implementation time, it is safe to use -- pgvector follows semver for point releases.
 
-For documentation sequence diagrams, the protocol flow is:
-1. `initialize` request/response (capability negotiation, protocol version)
-2. `notifications/initialized` (client ready)
-3. `tools/list` request/response (tool discovery)
-4. `tools/call` request/response (tool execution)
-5. Optional: `notifications/tools/list_changed` (dynamic tool updates)
+**Confidence:** HIGH -- Docker Hub tags verified via web search 2026-02-01.
 
-All messages use JSON-RPC 2.0. No `id` field on notifications.
+### Python Retrieval API
 
-**Confidence:** HIGH -- Verified against [official architecture docs](https://modelcontextprotocol.io/docs/learn/architecture).
+| Package | Version Constraint | Purpose | Why |
+|---------|-------------------|---------|-----|
+| `fastapi` | `>=0.115,<1` | REST API framework | Industry standard for Python async APIs. Already in the project's ecosystem (Pydantic models, httpx). Zero new conceptual overhead. The project's Pydantic v2 models serialize directly to FastAPI responses. |
+| `uvicorn[standard]` | `>=0.32,<1` | ASGI server | Required to serve FastAPI. The `[standard]` extra includes uvloop and httptools for production performance. |
+| `psycopg-pool` | `>=3.2,<4` | Connection pooling | The existing codebase uses raw `psycopg.connect()` per-operation. A connection pool is required for a long-running API server to avoid exhausting PostgreSQL connections. `psycopg-pool` is the official pool for psycopg3. Latest: 3.3.0. |
+
+**Why FastAPI over alternatives:**
+
+| Alternative | Why Not |
+|-------------|---------|
+| Litestar | Smaller ecosystem, less community support for MCP integration. FastAPI has direct ASGI mount support for MCP servers. |
+| Flask | Synchronous by default. The embedding step (calling Ollama for query vectors) benefits from async I/O. Flask requires WSGI-to-ASGI bridging. |
+| Django/DRF | Massive overhead for a single-endpoint retrieval API. Wrong tool for the job. |
+| Starlette (raw) | FastAPI IS Starlette + Pydantic. Using raw Starlette means reimplementing request validation that FastAPI provides for free from the existing Pydantic models. |
+
+**Why the version range `>=0.115,<1`:** FastAPI 0.115+ is the range that requires Python 3.9+ and has full Pydantic v2 compatibility. The `<1` bound is future-safe -- when FastAPI 1.0 ships, it may have breaking changes. Current latest is 0.128.0.
+
+**Confidence:** HIGH -- FastAPI version verified via PyPI (0.128.0 as of 2026-02-01). uvicorn version verified (0.40.0). psycopg-pool version verified (3.3.0).
+
+### MCP Server
+
+| Package | Version Constraint | Purpose | Why |
+|---------|-------------------|---------|-----|
+| `mcp` | `>=1.25,<2` | Official MCP Python SDK | Provides `FastMCP` class with `@mcp.tool()` decorator and Streamable HTTP transport. The `>=1.25,<2` pin follows the official recommendation for production stability while v2 is in development. |
+
+**What `mcp` brings transitively (DO NOT add these separately):**
+- `anyio` (async I/O -- already in the project via httpx)
+- `httpx` (already a direct dependency)
+- `httpx-sse` (SSE client support)
+- `pydantic` (already a direct dependency)
+- `pydantic-settings` (already a direct dependency)
+- `starlette` (ASGI framework -- also used by FastAPI)
+- `sse-starlette` (SSE response support)
+- `uvicorn` (ASGI server -- also needed by FastAPI)
+
+This means the `mcp` package and `fastapi` share most of their dependency tree. Installing both adds minimal extra weight.
+
+**Why the official `mcp` SDK, not standalone `fastmcp`:**
+
+The standalone `fastmcp` package (by jlowin) is a superset with features like OpenAPI-to-MCP conversion, server composition, and proxying. For this project, we need exactly one tool (`search_bbj_knowledge`) registered on a single server -- the built-in `FastMCP` class in the official `mcp` SDK handles this perfectly. Adding standalone `fastmcp` would add complexity for features we do not need.
+
+**MCP Transport choice: Streamable HTTP**
+
+| Transport | Status | Fits This Project? |
+|-----------|--------|-------------------|
+| stdio | Active | No -- requires spawning the server as a child process. Does not work for a Docker-hosted remote service. |
+| SSE | Deprecated | No -- superseded by Streamable HTTP in the 2025-11-25 spec. |
+| Streamable HTTP | Recommended | Yes -- single HTTP endpoint, works with Docker networking, supports both request-response and streaming. |
+
+The MCP server will be mounted on the same FastAPI ASGI application using `app.mount("/mcp", mcp.streamable_http_app())`. This means a single uvicorn process serves both the REST API and the MCP endpoint. No separate service required.
+
+**Confidence:** HIGH -- MCP SDK v1.26.0 verified on PyPI (2026-01-24). Streamable HTTP transport verified as recommended in official docs. FastAPI ASGI mounting pattern verified in SDK docs and community examples.
+
+### Supporting Configuration
+
+| Package | Version Constraint | Purpose | Why |
+|---------|-------------------|---------|-----|
+| `pydantic-settings` | (already in project) | Environment-based configuration | Already used for `Settings` class with `BBJ_RAG_` prefix. Docker Compose will pass env vars that the existing Settings class reads automatically. No new config library needed. |
+
+**No new configuration library needed.** The existing `Settings(BaseSettings)` class with `env_prefix="BBJ_RAG_"` works perfectly with Docker Compose `environment:` blocks. Example:
+
+```yaml
+environment:
+  BBJ_RAG_DATABASE_URL: postgresql://bbj:secret@db:5432/bbj_rag
+  OLLAMA_HOST: http://host.docker.internal:11434
+```
+
+The `OLLAMA_HOST` env var is read by the `ollama` Python client library natively -- it does not need to go through pydantic-settings.
 
 ---
 
-## Compiler-in-the-Loop Validation Pattern
+## Complete New Dependencies
 
-### What bbjcpl Provides
+Only these packages need to be added to `pyproject.toml` for the v1.4 milestone:
 
-`bbjcpl` is the BBj compiler (command-line). `bbjcpl -N <file>.bbj` performs syntax-only compilation (no output binary) and reports errors to stderr. This is the validation mechanism for the `validate_bbj_syntax` MCP tool.
-
-### PostToolUse Hook Pattern (Claude Code)
-
-The existing proof-of-concept (`bbjcpltool`) uses Claude Code's PostToolUse hooks to run compiler validation after code generation. This is a distinct integration point from the MCP server itself:
-
-| Integration Point | Mechanism | When It Runs |
-|-------------------|-----------|-------------|
-| MCP Server tool | `validate_bbj_syntax` tool via `tools/call` | When the LLM explicitly decides to validate |
-| Claude Code hook | PostToolUse hook on Write/Edit tools | Automatically after any file write to `.bbj` files |
-
-PostToolUse hooks in Claude Code match tool patterns like `mcp__<server>__<tool>` and can run shell commands or LLM-based evaluation. A BBj validation hook would:
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "type": "command",
-        "command": "if [[ \"$TOOL_INPUT\" == *\".bbj\"* ]]; then bbjcpl -N \"$TOOL_INPUT\"; fi",
-        "timeout": 10000
-      }
-    ]
-  }
-}
+```toml
+[project]
+dependencies = [
+    # ... existing dependencies unchanged ...
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.32,<1",
+    "psycopg-pool>=3.2,<4",
+    "mcp>=1.25,<2",
+]
 ```
 
-**Known limitation:** PostToolUse hooks do not fire when the underlying Bash command fails (non-zero exit). This means if a Write tool fails, the compiler validation hook is skipped.
+**That is 4 new direct dependencies.** All other needs (starlette, anyio, sse-starlette, etc.) are pulled transitively.
 
-### Validation Loop Diagram Pattern
+### Installation Command
 
-For documenting the compiler-in-the-loop concept, the recommended Mermaid pattern:
-
-```mermaid
-flowchart TD
-    A["Developer Request"] --> B["LLM generates BBj code"]
-    B --> C["bbjcpl -N validates syntax"]
-    C --> D{"Compilation<br/>successful?"}
-    D -->|Yes| E["Return validated code"]
-    D -->|No| F["Extract error messages"]
-    F --> G["LLM receives errors +<br/>original code"]
-    G --> B
-
-    style D fill:#f9f,stroke:#333
-    style E fill:#9f9,stroke:#333
+```bash
+cd rag-ingestion
+uv add "fastapi>=0.115,<1" "uvicorn[standard]>=0.32,<1" "psycopg-pool>=3.2,<4" "mcp>=1.25,<2"
 ```
 
-For the full MCP flow including RAG, use a sequence diagram:
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant Host as MCP Host<br/>(IDE / Claude)
-    participant Server as BBj MCP Server
-    participant RAG as RAG Pipeline<br/>(pgvector)
-    participant Model as Fine-Tuned Model<br/>(Ollama)
-    participant Compiler as bbjcpl
-
-    Dev->>Host: "Create a DWC grid component"
-    Host->>Server: tools/call: search_bbj_knowledge
-    Server->>RAG: Embed query + similarity search
-    RAG-->>Server: Relevant docs + examples
-    Server-->>Host: RAG results
-
-    Host->>Server: tools/call: generate_bbj_code
-    Server->>Model: Prompt + RAG context + generation hint
-    Model-->>Server: Generated BBj code
-    Server-->>Host: Code response
-
-    Host->>Server: tools/call: validate_bbj_syntax
-    Server->>Compiler: bbjcpl -N temp.bbj
-    Compiler-->>Server: Validation result
-    Server-->>Host: Valid / errors
-
-    alt Errors found
-        Host->>Server: tools/call: generate_bbj_code (with errors)
-        Server->>Model: Prompt + errors + previous attempt
-        Model-->>Server: Corrected code
-        Server-->>Host: Corrected code
-    end
-
-    Host-->>Dev: Validated BBj code
-```
-
-**Confidence:** MEDIUM-HIGH -- The validation loop pattern is well-established in AI code generation (see "Intent-Validation-Refinement" and "Red-Green-Blue" TDD patterns in literature). The specific `bbjcpl -N` integration is project-specific and confirmed from project context. PostToolUse hook patterns verified against [Claude Code hooks documentation](https://code.claude.com/docs/en/hooks).
+**Confidence:** HIGH -- All version ranges verified against current PyPI releases and existing project constraints.
 
 ---
 
-## Docusaurus Presentation Stack
+## Docker Compose Architecture
 
-### Already Configured (DO NOT change)
+### Service Layout
 
-These are confirmed present in the project's `docusaurus.config.ts`:
+```yaml
+services:
+  db:
+    image: pgvector/pgvector:0.8.0-pg17
+    # PostgreSQL with pgvector. Schema applied via /docker-entrypoint-initdb.d/
 
-| Feature | Configuration | Status |
-|---------|--------------|--------|
-| Mermaid diagrams | `markdown: { mermaid: true }`, `@docusaurus/theme-mermaid` | Active |
-| Mermaid themes | `light: 'neutral', dark: 'dark'` | Configured |
-| BBj syntax highlighting | `prism: { additionalLanguages: ['bbj'] }` | Active |
-| Custom CSS | `./src/css/custom.css` | Active |
-| Local search | `@easyops-cn/docusaurus-search-local` | Active |
-| Docusaurus future flags | `v4: true, experimental_faster: true` | Active |
-
-### Diagram Types for MCP Architecture Documentation
-
-Use the **already-installed** Mermaid theme. No new plugins needed. Recommended diagram types by content:
-
-| Content | Mermaid Type | Why |
-|---------|-------------|-----|
-| MCP host/client/server topology | `graph TB` (flowchart) | Matches existing architecture diagrams in Chapter 2 |
-| MCP tool call sequence | `sequenceDiagram` | Shows temporal flow of JSON-RPC messages; matches existing Ch. 2 sequence diagram |
-| Compiler validation loop | `flowchart TD` | Decision nodes for pass/fail; loop back on error |
-| Three-tool overview | `graph LR` | Left-to-right flow: query -> RAG -> model -> compiler |
-| Data flow through pipeline | `flowchart LR` | Shows data transformation at each stage |
-
-**architecture-beta diagrams:** Mermaid's `architecture-beta` diagram type is supported in Docusaurus v3.6+ (the project runs 3.9.2). However, it requires custom icon registration via `clientModules` for non-default icons. **Recommendation: Do NOT use architecture-beta.** Standard `graph TB/LR` flowcharts with subgraphs achieve the same visual hierarchy with less configuration and better dark mode support. The existing chapters all use `graph` and `sequenceDiagram` -- maintain visual consistency.
-
-### Code Example Presentation
-
-For documenting MCP tool definitions and TypeScript patterns, use the existing Prism setup:
-
-| Language | Prism Token | Available? |
-|----------|------------|------------|
-| TypeScript | `typescript` / `ts` | Yes (built-in) |
-| JSON | `json` | Yes (built-in) |
-| BBj | `bbj` | Yes (custom, configured) |
-| Bash | `bash` | Yes (built-in) |
-| SQL | `sql` | Yes (built-in) |
-| Python | `python` | Yes (built-in) |
-
-**Code tabs pattern:** For showing the same concept in multiple contexts (e.g., MCP tool definition vs. JSON-RPC wire format), use Docusaurus Tabs:
-
-```mdx
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
-<Tabs>
-  <TabItem value="typescript" label="TypeScript (SDK)" default>
-
-\`\`\`typescript
-server.registerTool("validate_bbj_syntax", {
-  inputSchema: {
-    code: z.string(),
-    filename: z.string().optional(),
-  },
-}, async ({ code, filename }) => { /* ... */ });
-\`\`\`
-
-  </TabItem>
-  <TabItem value="json" label="JSON-RPC Wire Format">
-
-\`\`\`json
-{
-  "jsonrpc": "2.0",
-  "id": 3,
-  "method": "tools/call",
-  "params": {
-    "name": "validate_bbj_syntax",
-    "arguments": {
-      "code": "PRINT \"Hello World\"",
-      "filename": "hello.bbj"
-    }
-  }
-}
-\`\`\`
-
-  </TabItem>
-</Tabs>
+  api:
+    build: ./rag-ingestion
+    # FastAPI + MCP server. Serves REST API on :8000 and MCP on :8000/mcp
+    depends_on:
+      db:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # extra_hosts is technically not needed on macOS Docker Desktop
+    # (host.docker.internal is available by default), but including it
+    # makes the compose file portable to Linux.
 ```
 
-**Confidence:** HIGH -- Tabs are a built-in Docusaurus feature. The existing project does not currently use Tabs but they require no additional installation.
+### Ollama Host Connectivity
 
-### JSON Schema Rendering
+On macOS with Docker Desktop, `host.docker.internal` resolves to the host machine automatically. The `extra_hosts` directive is included for Linux portability.
 
-**Option considered:** `docusaurus-json-schema-plugin` (v1.15.0, Docusaurus 3 compatible, AGPL-3.0 license).
+The existing `OllamaEmbedder` uses the `ollama` Python client which reads the `OLLAMA_HOST` environment variable. Set this in the api service:
 
-**Recommendation: Do NOT install.** The BBj AI Strategy docs are explaining architecture concepts, not serving as API reference documentation. Showing MCP tool schemas as TypeScript code blocks with Zod definitions is clearer for the target audience (technical decision-makers and implementers) than an interactive JSON Schema viewer. The overhead of adding a plugin (AGPL license, additional dependency, configuration) is not justified for rendering 3 tool schemas that can be shown as simple code blocks.
+```yaml
+environment:
+  OLLAMA_HOST: http://host.docker.internal:11434
+```
 
-If the project later evolves into serving as actual MCP server developer documentation (not just strategy docs), reconsider the JSON schema plugin at that point.
+No code changes needed in `embedder.py` -- the `ollama` client library handles the host resolution.
 
-### Docusaurus Content Patterns Already Established
+**Confidence:** HIGH -- Docker Desktop host.docker.internal behavior verified via multiple sources. The `ollama` Python library's `OLLAMA_HOST` env var is documented in Ollama's official docs.
 
-The existing 7 chapters use consistent patterns that new MCP content should follow:
+### Database Initialization
 
-| Pattern | Usage | Example |
-|---------|-------|---------|
-| `:::tip[TL;DR]` | Chapter opening summary | Every chapter |
-| `:::info[Decision: ...]` | Architecture decisions with choice/rationale/alternatives/status | Chapters 2, 4 |
-| `:::note[Where Things Stand]` | Status sections with dates | Chapters 2, 3, 4 |
-| Mermaid `graph TB` | Architecture overviews | Chapter 2 strategic architecture |
-| Mermaid `sequenceDiagram` | Flow diagrams | Chapter 2 RAG flow |
-| TypeScript code blocks | Implementation patterns | Chapter 4 InlineCompletionProvider |
-| BBj code blocks | BBj code examples | Chapter 4 generation detection |
-| Status tables | Component status tracking | Chapters 2, 7 |
+The existing `sql/schema.sql` file can be mounted directly into the pgvector container:
 
-**New MCP content should reuse ALL of these patterns.** Do not introduce new admonition styles or diagram types.
+```yaml
+volumes:
+  - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+```
+
+PostgreSQL's official Docker image automatically executes `.sql` files in `/docker-entrypoint-initdb.d/` on first startup. The existing schema uses `IF NOT EXISTS` throughout, making it idempotent.
+
+### Health Checks
+
+```yaml
+db:
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U bbj -d bbj_rag"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+```
+
+The `api` service uses `depends_on: db: condition: service_healthy` to wait for PostgreSQL to be ready before starting.
 
 ---
 
-## What This Stack Does NOT Include (And Why)
+## Dockerfile Strategy
 
-### No New npm Dependencies for Documentation
+### Multi-Stage Build with uv
 
-The Docusaurus site does not need new npm packages for v1.3. The MCP architecture content is presented using:
-- Mermaid diagrams (already configured)
-- TypeScript/JSON code blocks (already configured)
-- BBj code blocks (already configured)
-- Tabs component (built-in, no install needed)
-- Admonitions (built-in)
+```dockerfile
+# Stage 1: Build
+FROM python:3.12-slim-bookworm AS builder
+COPY --from=ghcr.io/astral-sh/uv:0.9.28 /uv /bin/uv
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-install-project --no-dev
+COPY . .
+RUN uv sync --locked --no-dev
 
-### No OpenAPI/Swagger Plugin
+# Stage 2: Runtime
+FROM python:3.12-slim-bookworm
+COPY --from=builder /app /app
+WORKDIR /app
+ENV PATH="/app/.venv/bin:$PATH"
+EXPOSE 8000
+CMD ["uvicorn", "bbj_rag.api:app", "--host", "0.0.0.0", "--port", "8000"]
+```
 
-MCP uses JSON-RPC 2.0, not REST APIs. OpenAPI documentation tools (`docusaurus-openapi-docs`) do not apply. The protocol is documented via sequence diagrams and code examples, not API reference pages.
+**Key decisions:**
+- `--locked` ensures the uv.lock is respected exactly (reproducible builds)
+- `--no-dev` excludes test/lint dependencies from the production image
+- `UV_COMPILE_BYTECODE=1` pre-compiles .pyc files for faster startup
+- Two-stage `uv sync` exploits Docker layer caching: dependency changes rebuild from the first `RUN`, source-only changes only rebuild the second `RUN`
+- No `--mount=type=cache` on the uv cache -- simpler, and the two-stage pattern already provides good caching via Docker layers
 
-### No Interactive Playground
-
-Building a live MCP tool tester or compiler validation playground would be a separate project. The v1.3 milestone is about updating strategy documentation content, not building interactive tooling.
-
-### No Structurizr Plugin
-
-`docusaurus-plugin-structurizr` generates C4 architecture diagrams from Structurizr DSL. The existing docs use Mermaid exclusively, and adding a second diagramming system creates visual inconsistency. Stick with Mermaid.
+**Confidence:** HIGH -- Pattern verified against official uv Docker documentation at docs.astral.sh.
 
 ---
 
-## Recommended Documentation Code Examples
+## Integration Points with Existing Code
 
-### MCP Server Initialization (For Chapter 2 / Architecture)
+### Search Module (search.py)
 
-Show the complete server setup pattern so readers understand the three-tool architecture:
+The existing `hybrid_search()` function accepts a `psycopg.Connection` and returns `list[SearchResult]`. The API layer will:
 
-```typescript
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+1. Obtain a connection from `psycopg_pool.ConnectionPool`
+2. Call `hybrid_search(conn, query_embedding, query_text, limit, generation_filter)`
+3. Serialize `SearchResult` dataclasses to JSON via Pydantic response models
 
-const server = new McpServer({
-  name: "bbj-mcp-server",
-  version: "1.0.0",
-  capabilities: {
-    tools: { listChanged: true },
-  },
-});
+**No changes to search.py required.** The existing function signature is already clean for reuse.
 
-// Register tools: search_bbj_knowledge, generate_bbj_code, validate_bbj_syntax
-// (tool definitions as shown above)
+### Embedder Module (embedder.py)
 
-// Start with stdio transport for local development
-const transport = new StdioServerTransport();
-await server.connect(transport);
+The API must embed the query text before calling `hybrid_search()`. The existing `OllamaEmbedder.embed_batch()` is synchronous (it calls `ollama.embed()` which is blocking). Two options:
+
+| Approach | Pros | Cons | Recommendation |
+|----------|------|------|----------------|
+| Wrap in `asyncio.to_thread()` | No changes to embedder.py. Non-blocking in async context. | Small overhead from thread dispatch. | **Use this.** |
+| Add `async def embed_batch_async()` | Native async. | Changes the existing tested interface. The `ollama` client's sync API would still block internally. | Not worth it for query-time single embeddings. |
+
+The `asyncio.to_thread()` approach is correct because the Ollama client is CPU-bound for a single query embedding (sub-100ms). Thread dispatch overhead is negligible.
+
+### Config Module (config.py)
+
+The existing `Settings` class needs one addition for the API service:
+
+```python
+api_host: str = Field(default="0.0.0.0")
+api_port: int = Field(default=8000)
 ```
 
-### Compiler Validation Example (For Chapter 4 / IDE Integration)
+These are optional -- uvicorn can also receive host/port from CLI args. But adding them to Settings allows Docker Compose to override via `BBJ_RAG_API_HOST` / `BBJ_RAG_API_PORT` env vars, maintaining the project's existing configuration pattern.
 
-Show how bbjcpl integrates:
+### Database Module (db.py)
 
-```typescript
-import { execFile } from "node:child_process";
-import { writeFile, unlink } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+The existing `get_connection()` function creates a single connection. For the API server, we need a connection pool. Add a `get_pool()` function:
 
-interface ValidationResult {
-  valid: boolean;
-  errors: string[];
-  exitCode: number;
-}
+```python
+from psycopg_pool import ConnectionPool
 
-async function runBbjCompiler(
-  code: string,
-  filename = "temp.bbj"
-): Promise<ValidationResult> {
-  const tmpPath = join(tmpdir(), filename);
-  await writeFile(tmpPath, code, "utf-8");
-
-  return new Promise((resolve) => {
-    execFile("bbjcpl", ["-N", tmpPath], (error, stdout, stderr) => {
-      unlink(tmpPath).catch(() => {});
-      if (error) {
-        const errors = stderr
-          .split("\n")
-          .filter((line) => line.trim().length > 0);
-        resolve({ valid: false, errors, exitCode: error.code ?? 1 });
-      } else {
-        resolve({ valid: true, errors: [], exitCode: 0 });
-      }
-    });
-  });
-}
+def get_pool(database_url: str, min_size: int = 2, max_size: int = 10) -> ConnectionPool:
+    """Create a psycopg connection pool with pgvector types registered."""
+    pool = ConnectionPool(
+        conninfo=database_url,
+        min_size=min_size,
+        max_size=max_size,
+        open=False,  # Opened explicitly in FastAPI lifespan
+        configure=lambda conn: register_vector(conn),
+    )
+    return pool
 ```
 
-### MCP Client Configuration Example (For IDE Chapter)
+The `configure` callback ensures every connection from the pool has pgvector types registered, matching the existing `get_connection()` behavior.
 
-Show how a developer would configure the BBj MCP Server in Claude Desktop or VS Code:
+### Models Module (models.py)
+
+The existing `SearchResult` dataclass (in search.py) will need a corresponding Pydantic response model for the API. This can be a thin wrapper:
+
+```python
+class SearchResultResponse(BaseModel):
+    id: int
+    source_url: str
+    title: str
+    content: str
+    doc_type: str
+    generations: list[str]
+    score: float
+```
+
+This mirrors the existing `SearchResult` dataclass fields exactly.
+
+---
+
+## MCP Server Integration Pattern
+
+### Single-Process Architecture
+
+The MCP server and REST API run in the **same uvicorn process** via ASGI mounting:
+
+```python
+from fastapi import FastAPI
+from mcp.server.fastmcp import FastMCP
+
+app = FastAPI(title="BBj RAG API")
+mcp_server = FastMCP(
+    name="bbj-rag",
+    stateless_http=True,
+)
+
+@mcp_server.tool()
+def search_bbj_knowledge(
+    query: str,
+    generation: str | None = None,
+    limit: int = 5,
+) -> str:
+    """Search BBj documentation using hybrid RAG retrieval."""
+    # embed query, call hybrid_search, format results
+    ...
+
+# Mount MCP server on the same ASGI app
+app.mount("/mcp", mcp_server.streamable_http_app())
+```
+
+**Why single-process, not separate services:**
+- One tool (`search_bbj_knowledge`) does not justify a separate container
+- Shared connection pool and embedder instance
+- Simpler deployment and monitoring
+- The MCP server and REST API share the same database and Ollama access
+
+**Why `stateless_http=True`:**
+- No session state to manage
+- Simpler deployment (no session persistence needed)
+- Compatible with horizontal scaling if ever needed
+- The `search_bbj_knowledge` tool is pure retrieval -- no state between calls
+
+### MCP Server stdio Support (For Local Dev)
+
+For developers who want to use the MCP server locally with Claude Desktop via stdio transport (not Docker), provide a separate entry point:
+
+```python
+# bbj_rag/mcp_server.py
+if __name__ == "__main__":
+    mcp_server.run(transport="stdio")
+```
+
+This allows the same tool registration code to serve both Docker (Streamable HTTP via FastAPI mount) and local development (stdio via direct run). The `claude_desktop_config.json` would reference:
 
 ```json
 {
   "mcpServers": {
-    "bbj": {
-      "command": "node",
-      "args": ["./dist/bbj-mcp-server.js"],
+    "bbj-rag": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "bbj_rag.mcp_server"],
       "env": {
-        "OLLAMA_HOST": "http://localhost:11434",
-        "PGVECTOR_URL": "postgresql://localhost:5432/bbj_rag",
-        "BBJCPL_PATH": "/usr/local/bin/bbjcpl"
+        "BBJ_RAG_DATABASE_URL": "postgresql://localhost:5432/bbj_rag"
       }
     }
   }
 }
 ```
 
-**Confidence:** HIGH -- Client configuration format verified against [official MCP docs](https://modelcontextprotocol.io/docs/learn/architecture). The `command` + `args` pattern is the standard stdio transport configuration.
+**Confidence:** HIGH -- FastMCP ASGI mounting pattern verified in official SDK docs. The `stateless_http` option verified in SDK examples.
+
+---
+
+## What NOT to Add (And Why)
+
+| Temptation | Why Not |
+|------------|---------|
+| **SQLAlchemy / SQLModel** | The project uses raw psycopg3 SQL with explicit queries. Adding an ORM for 3 search queries and 1 insert operation adds abstraction without value. The existing `search.py` SQL is clean, tested, and performant. |
+| **Alembic (migrations)** | The schema is applied via `schema.sql` with `IF NOT EXISTS`. For a single-table schema that changes rarely, a migration framework is overhead. Revisit if schema changes become frequent. |
+| **Redis (caching)** | Query caching is premature. The hybrid search is already fast (<100ms with HNSW index). Add caching only when profiling shows it is needed. |
+| **Celery / task queue** | Ingestion runs as a batch CLI operation, not as an API-triggered task. No async task queue needed for v1.4. |
+| **nginx / reverse proxy** | Uvicorn can serve directly for this use case. The API serves a single internal tool. Add nginx only if you need TLS termination, rate limiting, or static file serving. |
+| **Standalone `fastmcp` package** | The official `mcp` SDK's built-in `FastMCP` class is sufficient for a single-tool server. The standalone package adds server composition, proxying, and OpenAPI conversion that are not needed. |
+| **`fastapi-mcp` package** | This auto-converts FastAPI endpoints to MCP tools. We want a single curated MCP tool with specific behavior, not an auto-mirror of REST endpoints. Manual `@mcp.tool()` registration gives full control. |
+| **Docker Compose `ollama` service** | Ollama runs on the host for GPU access (macOS Metal). Containerizing it loses GPU acceleration and complicates model management. |
+| **`pgbouncer`** | `psycopg_pool.ConnectionPool` provides application-level pooling. An external pooler is only needed for multi-service database sharing or very high connection counts. |
+| **Gunicorn** | Uvicorn with `--workers` flag provides multi-process serving if needed. Gunicorn as a process manager adds complexity for marginal benefit at this scale. |
 
 ---
 
 ## Version Matrix (All Verified 2026-02-01)
 
-| Technology | Version | Role in Documentation | Verified Source |
-|------------|---------|----------------------|-----------------|
-| MCP Spec | 2025-11-25 | Protocol version cited in docs | [Official spec](https://modelcontextprotocol.io/specification/2025-11-25) |
-| `@modelcontextprotocol/sdk` | 1.25.2 | TypeScript code examples | [npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) |
-| Zod | v3.25+ (SDK peer dep) | Schema definitions in code examples | SDK README |
-| Docusaurus | 3.9.2 | Site framework (existing) | Project `docusaurus.config.ts` |
-| `@docusaurus/theme-mermaid` | (matches Docusaurus) | Diagram rendering (existing) | Project config |
-| Mermaid | (bundled with theme) | Architecture diagrams | Project config |
-| Prism | (bundled with Docusaurus) | Code syntax highlighting (incl. BBj) | Project config |
+### New Dependencies
+
+| Package | Constraint | Current Latest | Verified Source |
+|---------|-----------|---------------|-----------------|
+| `fastapi` | `>=0.115,<1` | 0.128.0 | [PyPI](https://pypi.org/project/fastapi/) |
+| `uvicorn[standard]` | `>=0.32,<1` | 0.40.0 | [PyPI](https://pypi.org/project/uvicorn/) |
+| `psycopg-pool` | `>=3.2,<4` | 3.3.0 | [PyPI](https://pypi.org/project/psycopg-pool/) |
+| `mcp` | `>=1.25,<2` | 1.26.0 | [PyPI](https://pypi.org/project/mcp/) |
+
+### Docker Images
+
+| Image | Tag | Verified Source |
+|-------|-----|-----------------|
+| `pgvector/pgvector` | `0.8.0-pg17` | [Docker Hub](https://hub.docker.com/r/pgvector/pgvector/tags) |
+| `python` | `3.12-slim-bookworm` | [Docker Hub](https://hub.docker.com/_/python) |
+| `ghcr.io/astral-sh/uv` | `0.9.28` | [GitHub Releases](https://github.com/astral-sh/uv/releases) |
+
+### Existing Dependencies (Unchanged)
+
+| Package | Current Constraint | Role | Changes for v1.4? |
+|---------|--------------------|------|-------------------|
+| `psycopg[binary]` | `>=3.3,<4` | Database driver | None. Pool uses same driver. |
+| `pgvector` | `>=0.4,<0.5` | Python vector type support | None. |
+| `pydantic` | `>=2.12,<3` | Data models | None. API response models extend same base. |
+| `pydantic-settings` | `>=2.12,<3` | Configuration | None. Docker env vars work with existing Settings. |
+| `ollama` | `>=0.6,<1` | Embedding client | None. OLLAMA_HOST env var configures remote access. |
+| `httpx` | `>=0.28,<1` | HTTP client | None. Also a transitive dep of `mcp`. |
+| `click` | `>=8.1,<9` | CLI | None. CLI commands remain for batch ingestion. |
 
 ---
 
 ## Alternatives Considered
 
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Architecture diagrams | Mermaid `graph`/`sequenceDiagram` | Mermaid `architecture-beta` | Requires custom icon registration; existing docs use `graph` consistently; visual consistency > novelty |
-| Architecture diagrams | Mermaid (existing) | Structurizr plugin | Second diagramming system creates inconsistency; Mermaid subgraphs achieve adequate C4-like hierarchy |
-| JSON Schema display | TypeScript code blocks with Zod | `docusaurus-json-schema-plugin` | AGPL license; overkill for 3 tool schemas in strategy docs; audience reads TypeScript not JSON Schema trees |
-| API documentation | Sequence diagrams + code tabs | `docusaurus-openapi-docs` | MCP uses JSON-RPC, not REST; OpenAPI tooling does not apply |
-| Code tabs | `@theme/Tabs` (built-in) | `docusaurus-plugin-code-tabs` | Built-in Tabs suffice; no need for plugin |
-| MCP SDK examples | v1.x `registerTool()` | v2 patterns (anticipated Q1 2026) | v2 not yet released; v1.x has 6+ months support; examples should use what readers can install today |
+### API Framework
+
+| Option | Considered | Decision | Rationale |
+|--------|-----------|----------|-----------|
+| FastAPI | Yes | **Selected** | Native Pydantic integration, async support, ASGI mount for MCP, massive ecosystem, auto-docs via OpenAPI |
+| Litestar | Yes | Rejected | Good framework but smaller ecosystem. No clear advantage over FastAPI for this use case. MCP mounting examples all target Starlette/FastAPI. |
+| Flask | Yes | Rejected | WSGI, not ASGI. Would need `asgiref` bridging for async Ollama calls. No native Pydantic support. |
+| Raw Starlette | Yes | Rejected | FastAPI adds Pydantic request/response validation for free. The search endpoint benefits from typed query parameters. |
+
+### MCP SDK
+
+| Option | Considered | Decision | Rationale |
+|--------|-----------|----------|-----------|
+| `mcp` (official SDK) | Yes | **Selected** | Built-in `FastMCP` with `@tool()` decorator. Supports stdio + Streamable HTTP. Maintained by MCP org. Pin `>=1.25,<2` for stability. |
+| `fastmcp` (standalone) | Yes | Rejected | Superset of official SDK. Adds server composition, proxying, OpenAPI generation. These features are not needed for a single-tool server. Adds unnecessary dependency. |
+| `fastapi-mcp` | Yes | Rejected | Auto-converts FastAPI endpoints to MCP tools. We want a curated tool with specific RAG behavior, not an auto-mirror. |
+| Custom JSON-RPC | Yes | Rejected | Reinventing the wheel. The MCP SDK handles protocol compliance, tool schema generation, and transport management. |
+
+### Connection Pooling
+
+| Option | Considered | Decision | Rationale |
+|--------|-----------|----------|-----------|
+| `psycopg-pool` | Yes | **Selected** | Official pool for psycopg3. Supports sync and async. `configure` callback for pgvector registration. |
+| `asyncpg` | Yes | Rejected | Would require rewriting all database code. The existing `search.py` uses psycopg3 SQL syntax. |
+| Raw connections per request | Yes | Rejected | Exhausts PostgreSQL connections under load. Connection creation overhead (~50ms) per request is unacceptable. |
+| pgbouncer container | Yes | Rejected | External pooler adds deployment complexity. Application-level pooling is sufficient for a single API server. |
+
+### PostgreSQL Version
+
+| Option | Considered | Decision | Rationale |
+|--------|-----------|----------|-----------|
+| PostgreSQL 17 | Yes | **Selected** | Current stable release. Fresh deployment, no migration concerns. Better VACUUM and planner. |
+| PostgreSQL 16 | Yes | Rejected | No reason to use older version for a new deployment. |
+| PostgreSQL 18 | Yes | Rejected | Not yet GA. pgvector 0.8.1-pg18-trixie exists but PG18 is pre-release. |
 
 ---
 
 ## Implications for Roadmap
 
-### Phase Structure Recommendation
+### Phase 1: Docker Compose + Database
 
-Based on the stack analysis, the v1.3 milestone content updates should proceed in this order:
+Start with Docker Compose and the pgvector service. Verify the existing `schema.sql` applies correctly in the container. Run the existing CLI `bbj-rag ingest` against the Dockerized database to confirm the full ingestion pipeline works with the containerized PostgreSQL.
 
-1. **Chapter 2 (Strategic Architecture) first** -- Update the architecture diagram to show MCP as the integration layer between shared foundation and application layer. This is the conceptual anchor that all other chapter updates reference. Add MCP host/client/server concepts and the three-tool overview.
+- **Risk:** Low. Standard Docker Compose + PostgreSQL setup.
+- **Key deliverable:** `docker compose up db` works, schema applied, ingestion succeeds.
 
-2. **Chapter 4 (IDE Integration) second** -- Add compiler validation loop (bbjcpl PostToolUse hooks), MCP tool integration with Langium context, and the generate-validate-iterate pattern. This chapter already has TypeScript code examples and Mermaid diagrams, so MCP patterns fit naturally.
+### Phase 2: REST API
 
-3. **Remaining chapters** -- Update Chapter 3 (Fine-Tuning) to reference the `generate_bbj_code` tool, Chapter 5 (Documentation Chat) to show MCP as the interface layer, Chapter 6 (RAG Database) to reference the `search_bbj_knowledge` tool, and Chapter 7 (Roadmap) to add MCP server milestones.
+Add the FastAPI retrieval API with connection pooling. This is the core new code: an API endpoint that embeds a query via Ollama and runs hybrid search.
 
-### No New Dependencies Required
+- **Risk:** Low-medium. The main integration point is `psycopg_pool` with pgvector type registration.
+- **Key deliverable:** `POST /search` returns results; Swagger UI at `/docs` works.
 
-The entire v1.3 content update can be accomplished with the existing Docusaurus configuration. No `npm install` needed. This simplifies deployment and eliminates dependency-related risk.
+### Phase 3: MCP Server
 
-### MCP SDK Version Sensitivity
+Add the MCP server with `search_bbj_knowledge` tool mounted on the same FastAPI app. This is mostly wiring -- the search logic is identical to the REST API endpoint.
 
-The v2 SDK release is expected Q1 2026. If it ships during v1.3 development:
-- Keep v1.x code examples (they remain valid for 6+ months)
-- Add a note: "These examples use MCP SDK v1.x. See migration guide for v2."
-- Do NOT rush to update all examples to v2 patterns until v2 is stable
+- **Risk:** Medium. MCP SDK v1.x is mature but Streamable HTTP mounting on FastAPI has a known issue (#1367 in the SDK repo) around path handling. May require `streamable_http_path="/"` workaround.
+- **Key deliverable:** MCP tool callable via Claude Desktop or MCP inspector.
+
+### Phase Ordering Rationale
+
+Database first because everything depends on it. REST API second because it validates the connection pooling and search integration without MCP protocol complexity. MCP server third because it reuses the search logic from the REST API and adds only MCP protocol wiring.
+
+### Research Flags
+
+- **Phase 3 (MCP):** The SDK's Streamable HTTP mounting on FastAPI may need workarounds. The issue (#1367) involves path prefix handling when mounting via `app.mount()`. Check the v1.x branch for fixes before implementation.
+- **Phase 2 (API):** The `psycopg_pool.ConnectionPool.configure` callback for pgvector registration is straightforward but verify it works with the pool's `check_connection` logic.
 
 ---
 
 ## Sources
 
-- [MCP TypeScript SDK - GitHub](https://github.com/modelcontextprotocol/typescript-sdk) -- Official repository, README, and release notes
-- [MCP TypeScript SDK - npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) -- Current version 1.25.2, publish dates, dependency count
-- [MCP SDK Server Documentation](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md) -- Tool registration patterns, transport setup
-- [MCP Architecture Overview](https://modelcontextprotocol.io/docs/learn/architecture) -- Host/client/server model, transport layers, protocol primitives
-- [MCP Specification 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25) -- Current spec with Tasks, OAuth, Extensions
-- [MCP One-Year Anniversary Blog](https://blog.modelcontextprotocol.io/posts/2025-11-25-first-mcp-anniversary/) -- Spec release context, Linux Foundation governance
-- [MCP 2025-11-25 Spec Update Analysis (WorkOS)](https://workos.com/blog/mcp-2025-11-25-spec-update) -- Tasks, OAuth, enterprise features breakdown
-- [Claude Code Hooks Reference](https://code.claude.com/docs/en/hooks) -- PostToolUse hook patterns, MCP tool matching
-- [Docusaurus Diagrams Documentation](https://docusaurus.io/docs/markdown-features/diagrams) -- Mermaid integration, theme configuration
-- [Mermaid Architecture Diagrams](https://mermaid.ai/open-source/syntax/architecture.html) -- architecture-beta syntax and limitations
-- [Custom Mermaid Icons in Docusaurus](https://www.simonpainter.com/mermaid-icons/) -- Iconify integration for architecture-beta (evaluated but not recommended)
-- [docusaurus-json-schema-plugin](https://github.com/jy95/docusaurus-json-schema-plugin) -- Evaluated for JSON Schema rendering; v1.15.0, AGPL-3.0
-- [MCP Best Practices Guide](https://modelcontextprotocol.info/docs/best-practices/) -- Single responsibility, scalable deployment patterns
-- [registerTool PR #816](https://github.com/modelcontextprotocol/typescript-sdk/pull/816) -- Expanded Zod schema support for unions/intersections
+- [FastAPI - PyPI](https://pypi.org/project/fastapi/) -- Version 0.128.0, release notes, Python 3.9+ requirement
+- [FastAPI Release Notes](https://fastapi.tiangolo.com/release-notes/) -- Pydantic v2 compatibility, Python version support
+- [uvicorn - PyPI](https://pypi.org/project/uvicorn/) -- Version 0.40.0, ASGI server
+- [MCP Python SDK - PyPI](https://pypi.org/project/mcp/) -- Version 1.26.0, v2 timeline Q1 2026
+- [MCP Python SDK - GitHub](https://github.com/modelcontextprotocol/python-sdk) -- FastMCP API, Streamable HTTP transport, ASGI mounting
+- [MCP SDK Issue #1367](https://github.com/modelcontextprotocol/python-sdk/issues/1367) -- Streamable HTTP mounting on FastAPI path issue
+- [MCP Transport Protocols](https://mcpcat.io/guides/comparing-stdio-sse-streamablehttp/) -- stdio vs SSE vs Streamable HTTP comparison
+- [psycopg-pool - PyPI](https://pypi.org/project/psycopg-pool/) -- Version 3.3.0, connection pool for psycopg3
+- [psycopg3 Connection Pools](https://www.psycopg.org/psycopg3/docs/advanced/pool.html) -- FastAPI lifespan pattern, configure callback
+- [pgvector/pgvector - Docker Hub](https://hub.docker.com/r/pgvector/pgvector/tags) -- Image tags, 0.8.0-pg17 confirmed
+- [pgvector - GitHub](https://github.com/pgvector/pgvector) -- Version 0.8.1 source, Dockerfile defaults
+- [uv Docker Guide](https://docs.astral.sh/uv/guides/integration/docker/) -- Multi-stage build pattern, version pinning
+- [astral/uv - Docker Hub](https://hub.docker.com/r/astral/uv) -- Image tags for COPY --from
+- [uv - GitHub Releases](https://github.com/astral-sh/uv/releases) -- Version 0.9.28 (2026-01-29)
+- [FastAPI + psycopg3 Connection Pooling](https://spwoodcock.dev/blog/2024-10-fastapi-pydantic-psycopg/) -- Lifespan pattern, pool lifecycle
+- [Docker host.docker.internal](https://forums.docker.com/t/how-to-link-my-ollama-with-my-app-in-docker/144682) -- macOS Docker Desktop connectivity
+- [Ollama Docker Integration](https://docs.ollama.com/integrations/n8n) -- OLLAMA_HOST env var, host connectivity
 
 ---
 
-*Research conducted 2026-02-01 via WebSearch for current SDK versions, WebFetch for official documentation, and project source code analysis. MCP SDK version verified against npm registry. Docusaurus configuration verified from project `docusaurus.config.ts`. All diagram recommendations tested against existing chapter patterns.*
+*Research conducted 2026-02-01 via WebSearch for current package versions, Docker Hub tag verification, and GitHub issue review. All version numbers verified against PyPI and Docker Hub as of research date. Existing codebase analyzed for integration points.*

@@ -1,587 +1,524 @@
-# Architecture Research: MCP Integration into Existing Chapters
+# Architecture: RAG Deployment (Docker + REST API + MCP Server)
 
-**Milestone:** v1.3 -- MCP Architecture Integration
+**Milestone:** RAG Service Deployment
 **Researched:** 2026-02-01
-**Confidence:** HIGH (chapter analysis, content flow) / MEDIUM (MCP spec details, conflict assessment)
+**Confidence:** HIGH (existing codebase analysis, Docker patterns, MCP SDK docs)
 
-> **Supersedes:** Previous ARCHITECTURE.md covered the v1.2 RAG ingestion sub-project. That architecture is built and shipped. This document covers how MCP server architecture content should be distributed across the existing 7 Docusaurus chapters for v1.3.
-
----
-
-## 1. The Core Integration Question
-
-The existing 7 chapters tell a story: problem (Ch1) -> architecture (Ch2) -> components (Ch3-6) -> execution (Ch7). Currently, Ch2's "Strategic Architecture" describes a **passive, abstract** unified infrastructure -- "one model and RAG pipeline shared by multiple consumers." The consumers (IDE extension, documentation chat) connect directly to Ollama and the RAG database.
-
-MCP transforms this from a passive shared-infrastructure story into an **active orchestration** story. The MCP server becomes the concrete realization of Ch2's promise: a single server that exposes tools for RAG search, code generation, and compiler validation. The generate-validate-fix loop -- where the BBj compiler provides ground-truth feedback on AI-generated code -- is the key innovation that ties Ch3 (model), Ch4 (IDE/compiler), Ch5 (chat/RAG search), and Ch6 (RAG database) together through a concrete protocol.
-
-**The fundamental content architecture decision:** MCP is NOT a new Chapter 8. It is the integration layer that connects the existing chapters. Ch2 is its natural home; Ch4 and Ch5 get substantial new sections; Ch3, Ch6, and Ch7 get lighter updates.
+> **Context:** The bbj_rag package is a working src-layout Python 3.12 CLI application with 6 parsers, an intelligence pipeline, chunker, embedder, and hybrid search module. This document defines how Docker Compose, a REST retrieval API, and an MCP server integrate with that existing codebase -- not a rewrite.
 
 ---
 
-## 2. Per-Chapter Content Assessment
-
-### Chapter 1: The BBj Challenge (index.mdx)
-
-**Change level:** NONE (cross-reference only, optional)
-
-**Current content (324 lines):** Problem statement. Four BBj generations, LLM hallucination failures, why Copilot fails, the webforJ contrast, current status.
-
-**Why no changes needed:** Ch1 establishes the *problem*. MCP is part of the *solution*. The problem statement remains unchanged regardless of the solution architecture. Ch1 already links forward to Ch2 ("the unified architecture") and all other chapters.
-
-**Optional enhancement:** The "Current Status" note at the bottom could add one bullet mentioning the bbjcpltool proof-of-concept validating the compiler-in-the-loop concept. This is minor and deferrable.
-
-**Risk of changes:** LOW. Ch1 is stable, well-reviewed content. Adding MCP references here would dilute the clean problem-focused narrative.
-
-**Recommendation:** Leave Ch1 untouched. It works as-is.
-
----
-
-### Chapter 2: Strategic Architecture (index.md)
-
-**Change level:** MAJOR REWRITE of the architecture section
-
-**Current content (215 lines):** "Case against point solutions," abstract architecture diagram (apps -> model + RAG), description of shared foundation, three initiatives overview, benefits, current status.
-
-**What needs to change:**
-
-The current Ch2 is too abstract. It says "shared infrastructure" but never explains *how* the components connect. The architecture diagram shows direct arrows from each consumer app to Model and RAG, with no intermediary. MCP provides the concrete answer: a server that exposes tools via a standard protocol, any MCP-compatible client can call them, and the generate-validate-fix loop adds a quality dimension the current architecture lacks.
-
-**Specific content additions:**
-
-1. **MCP Server as the Orchestration Layer** (new major section, ~150-200 lines)
-   - What MCP is (brief -- the protocol, not a deep spec dive)
-   - Why MCP fits: standard protocol, JSON-RPC 2.0, same architectural lineage as LSP (which Langium/bbj-language-server already uses)
-   - The BBj MCP server concept: one server, three tools
-   - Tool definitions (concrete, with inputSchema):
-     - `bbj_rag_search` -- query the RAG database with generation-aware filtering
-     - `bbj_generate_code` -- invoke the fine-tuned model for code generation
-     - `bbj_compile_check` -- validate BBj code via `bbjcpl -N` compiler
-   - How any MCP-compatible client (Claude, VS Code via Copilot, custom IDE extension) can use these tools
-
-2. **The Generate-Validate-Fix Loop** (new major section, ~100-150 lines)
-   - The key innovation: compiler as ground truth
-   - Flow: LLM generates BBj code -> compiler validates -> if errors, LLM fixes with compiler feedback -> repeat until valid
-   - Why this matters for BBj specifically (LLMs have zero training data, hallucination is the default)
-   - Mermaid sequence diagram showing the loop
-   - Reference to bbjcpltool proof-of-concept validating this concept
-
-3. **Updated Architecture Diagram** (replace existing)
-   - Current: `Apps -> Model + RAG` (flat, passive)
-   - New: `MCP Clients -> MCP Server -> {RAG DB, Fine-Tuned Model, BBj Compiler}` (orchestrated, active)
-   - Show the three tools as the interface between clients and capabilities
-
-4. **Deployment Options** (new section, ~50-80 lines)
-   - Local stdio transport (Claude Code, Claude Desktop)
-   - Remote Streamable HTTP transport (web-based chat, multi-user)
-   - Both use the same server code, different transports
-
-**What to preserve:**
-- "The Case Against Point Solutions" section -- still relevant, still motivates shared infrastructure
-- Benefits section -- update to reflect MCP-specific benefits (standard protocol, any-client compatibility)
-- The conceptual framing of "shared foundation" -- MCP is the *concrete realization* of this concept
-
-**What to remove or substantially rewrite:**
-- The current abstract architecture diagram (replace with MCP-centered version)
-- The "How They Work Together" sequence diagram (replace with generate-validate-fix loop)
-- The "Three Initiatives" section needs updating -- IDE and Chat are now MCP *clients*, not independent consumers
-
-**Conflict risk:** MEDIUM. The current Ch2 is the most abstract chapter. Rewriting it to be concrete (MCP tools, protocol details) changes its character from "strategic overview" to "strategic overview with implementation specifics." This is intentional -- the chapter currently has a gap between its promise ("unified infrastructure") and its delivery (hand-waving about how apps connect). MCP fills that gap. But the rewrite must maintain the strategic-audience accessibility. Technical details (inputSchema, JSON-RPC) should be in code blocks or expandable sections, not in the main narrative flow.
-
-**Content dependencies:** Ch2 must be written/updated FIRST because Ch4, Ch5, and Ch7 reference it. The MCP tool definitions established here become the vocabulary used in downstream chapters.
-
----
-
-### Chapter 3: Fine-Tuning the Model (index.md)
-
-**Change level:** LIGHT UPDATE (cross-references + one new subsection)
-
-**Current content (416 lines):** Training data structure, base model selection (Qwen2.5-Coder-7B), QLoRA approach, Unsloth + llama.cpp + Ollama toolchain, Ollama hosting, deployment architecture, current status.
-
-**What needs to change:**
-
-Ch3's content is primarily about model training -- a domain that MCP does not directly affect. The model is still trained the same way, served via Ollama the same way. What changes is *how clients access it*.
-
-**Specific content additions:**
-
-1. **Model as MCP Tool Backend** (new subsection under "Hosting via Ollama," ~30-50 lines)
-   - The fine-tuned model is now accessed through the MCP server's `bbj_generate_code` tool, not directly by consumer apps
-   - The MCP server calls Ollama's OpenAI-compatible API internally
-   - This means consumer apps no longer need to know about Ollama endpoints -- they call MCP tools
-   - Cross-reference to Ch2's tool definitions
-
-2. **Updated Deployment Diagram** (modify existing)
-   - Add MCP server as intermediary between consumer apps and Ollama
-   - Keep the Ollama -> customer premises diagram but add MCP server in the flow
-
-3. **Updated cross-references in "Current Status"**
-   - Mention the MCP architecture in Ch2 as the access layer
-   - Note that the bbjcpltool proof-of-concept validates compiler-in-the-loop
-
-**What to preserve:** Everything else. The training data section, base model selection, QLoRA methodology, quantization details -- all unchanged.
-
-**Conflict risk:** LOW. The changes are additive. The existing content about Ollama's OpenAI-compatible API actually *supports* the MCP story -- the MCP server uses that same API internally.
-
-**Content dependencies:** Can reference Ch2's MCP tool definitions. Should be updated after Ch2.
-
----
-
-### Chapter 4: IDE Integration (index.md)
-
-**Change level:** MAJOR ADDITION (new section, ~200-250 lines)
-
-**Current content (431 lines):** bbj-language-server foundation, two-layer completion (Langium popup + LLM ghost text), generation-aware completion, semantic context for prompts, LSP 3.18, Copilot BYOK bridge, Continue.dev / Langium AI alternatives, current status.
-
-**What needs to change:**
-
-Ch4 currently describes the IDE as calling Ollama directly for ghost text completions. With MCP, there are two significant additions:
-
-1. **Compiler Validation Module** -- the `bbj_compile_check` tool validates LLM-generated code before it reaches the developer. This is a new quality layer between the LLM and the ghost text display.
-
-2. **bbjcpltool Proof-of-Concept** -- a working implementation that validates the compiler-in-the-loop concept. This grounds the theoretical architecture in demonstrated reality.
-
-**Specific content additions:**
-
-1. **Compiler Validation: Ground-Truth Syntax Checking** (new major section, ~150-180 lines)
-   - The problem: LLM ghost text suggestions may contain hallucinated syntax that passes no validation
-   - The solution: route generated code through `bbjcpl -N` (BBj's syntax-only compiler) before presenting
-   - The `bbj_compile_check` MCP tool: accepts BBj code, returns compiler output (clean or error messages)
-   - How this integrates with the existing ghost text pipeline:
-     - Current: `LLM generates -> render ghost text`
-     - New: `LLM generates -> compiler validates -> if valid, render ghost text; if invalid, LLM fixes with error context -> re-validate -> render`
-   - Mermaid diagram showing the validation loop within the IDE completion pipeline
-   - Latency implications: compiler check adds ~50-100ms, but prevents broken suggestions
-   - This is the Langium parser validation concept (already mentioned in existing Ch4) taken further with the actual BBj compiler as the authority
-
-2. **bbjcpltool: Proof-of-Concept Validation** (new subsection, ~50-80 lines)
-   - What bbjcpltool is: PostToolUse hook in Claude Code that runs `bbjcpl -N` on every `.bbj` file
-   - What it proved: the compiler-in-the-loop concept works in practice
-   - Key learnings from the proof-of-concept
-   - How it maps to the MCP server's `bbj_compile_check` tool
-   - The shared `bbj-reference.md` language reference as a precursor to the RAG search tool
-   - Cross-reference to Ch2's MCP architecture
-
-3. **Updated Ghost Text Architecture Diagram** (modify existing)
-   - Add compiler validation step between LLM response and ghost text rendering
-   - Show the MCP server in the flow
-
-**What to preserve:**
-- Everything about the bbj-language-server foundation
-- The two-layer completion model (Langium popup + LLM ghost text) -- unchanged
-- Generation-aware completion -- unchanged
-- Semantic context for prompts -- unchanged
-- LSP 3.18 discussion -- unchanged
-- Copilot BYOK bridge -- update with MCP context (Copilot Chat can be an MCP client)
-- Continue.dev / Langium AI references -- unchanged
-
-**What to update in existing content:**
-- The "Copilot Bridge" section should note that Copilot Chat is now an MCP host, meaning the BBj MCP server tools are directly accessible in Copilot Chat -- a significant upgrade over the BYOK-chat-only story
-- The ghost text architecture section needs a note about the compiler validation step
-- Current status section needs updating
-
-**Conflict risk:** MEDIUM. The biggest risk is that the compiler validation section adds significant length to an already-long chapter (431 lines). The new content (~200-250 lines) would push it past 650 lines. Consider whether compiler validation should be a subsection of the existing "Ghost Text Architecture" section or a standalone peer section. Recommendation: make it a peer section after "Generation-Aware Completion" and before "LSP 3.18." This maintains the logical flow: how completions work -> how they become generation-aware -> how they get validated -> protocol evolution.
-
-**Content dependencies:** References Ch2's `bbj_compile_check` tool definition. Should be written after Ch2.
-
----
-
-### Chapter 5: Documentation Chat (index.md)
-
-**Change level:** MODERATE ADDITION (new section, ~100-150 lines)
-
-**Current content (254 lines):** Why generic chat fails, architectural requirements, generation-aware response design, chat architecture sequence diagram, deployment options, streaming/citations, conversation context, token budget, current status.
-
-**What needs to change:**
-
-Ch5 currently describes the chat system as calling the RAG database and Ollama directly. With MCP, the chat backend can use the MCP server's `bbj_rag_search` tool for retrieval, which standardizes the interface and means any MCP-compatible chat client (not just a custom-built one) can offer BBj documentation assistance.
-
-**Specific content additions:**
-
-1. **MCP-Based RAG Search Tool** (new section, ~80-100 lines)
-   - The `bbj_rag_search` tool as the standard interface for documentation queries
-   - Tool definition: accepts query text and optional generation hint, returns ranked documentation chunks with citations
-   - How this changes the chat architecture: instead of a custom RAG retrieval API, the chat backend (or any MCP client) calls `bbj_rag_search`
-   - Updated sequence diagram showing MCP tool call in the flow
-   - The benefit: any MCP-compatible client (Claude Desktop, VS Code Copilot Chat, custom web chat) gets BBj documentation assistance without building custom retrieval code
-
-2. **Updated Architecture Implications** (modify existing section, ~30-50 lines)
-   - The "Chat Architecture" sequence diagram should show the MCP tool call step
-   - Deployment options now include "any MCP client" as a zero-custom-code option alongside the embedded widget and standalone service
-   - This strengthens Ch5's "shared infrastructure" argument -- the same `bbj_rag_search` tool serves IDE context enrichment AND chat documentation queries
-
-**What to preserve:**
-- "Why Generic Chat Services Fail" -- unchanged
-- "Architectural Requirements" -- all 6 requirements still valid; add a 7th about MCP tool compatibility
-- "Generation-Aware Response Design" -- unchanged (the MCP tool passes through generation hints)
-- "Streaming and Citations" -- unchanged
-- "Conversation Context" / "Token Budget" -- unchanged
-
-**What to update in existing content:**
-- The chat architecture sequence diagram should include an MCP tool call step
-- "Deployment Options" table should add "MCP client (zero-code)" as an option
-- Current status section
-
-**Conflict risk:** LOW-MEDIUM. The new content is additive and complementary. The risk is that Ch5 currently positions the chat as a custom-built system, and the MCP story makes some of that custom-build unnecessary (any MCP client can query BBj documentation). This is a *good* change -- it simplifies the story -- but it means some existing content about the custom chat backend becomes "one option among several" rather than "the only path." The rewrite should frame the custom chat backend as the optimized experience, with MCP-client access as the "quick start" that works out of the box.
-
-**Content dependencies:** References Ch2's `bbj_rag_search` tool definition and Ch6's RAG database. Should be written after Ch2.
-
----
-
-### Chapter 6: RAG Database Design (index.md)
-
-**Change level:** LIGHT UPDATE (cross-references + one subsection)
-
-**Current content (517 lines):** Source corpus, MadCap Flare ingestion, multi-generation document structure, chunking strategy, embedding strategy, pgvector, hybrid retrieval, generation-aware retrieval, current status.
-
-**What needs to change:**
-
-Ch6's content is about the RAG database internals -- ingestion, chunking, embedding, storage, retrieval. MCP does not change any of this. What changes is that the retrieval API described at the end of Ch6 (`retrieveDocumentation()` function) is now exposed as the MCP server's `bbj_rag_search` tool.
-
-**Specific content additions:**
-
-1. **RAG as MCP Tool Backend** (new subsection in "Hybrid Retrieval Strategy," ~30-50 lines)
-   - The `retrieveDocumentation()` function described in Ch6 is the implementation behind the `bbj_rag_search` MCP tool
-   - The MCP server wraps this function with JSON-RPC protocol handling
-   - This means the retrieval logic described in Ch6 is directly accessible to any MCP client
-   - Cross-reference to Ch2's tool definition and Ch5's usage in documentation chat
-
-2. **Updated "What Comes Next" section**
-   - Mention MCP as the protocol layer that exposes the RAG pipeline to consumers
-   - Cross-reference to Ch2
-
-**What to preserve:** Everything. The ingestion pipeline, chunking strategy, embedding approach, pgvector selection, hybrid retrieval implementation, generation-aware scoring -- all unchanged.
-
-**Conflict risk:** VERY LOW. The changes are purely additive cross-references. Ch6's technical content is not affected by MCP.
-
-**Content dependencies:** References Ch2's tool definitions. Can be updated in any order relative to Ch4/Ch5 but after Ch2.
-
----
-
-### Chapter 7: Implementation Roadmap (index.md)
-
-**Change level:** MODERATE UPDATE (revise phases, add MCP-specific deliverables)
-
-**Current content (301 lines):** Four phases (model validation, IDE integration, RAG + doc chat, refinement), infrastructure costs, risk assessment, success metrics, current status.
-
-**What needs to change:**
-
-The four-phase structure remains valid, but MCP server development needs to be placed within the phases. The generate-validate-fix loop and MCP tool infrastructure are new deliverables that must be sequenced correctly.
-
-**Specific content additions:**
-
-1. **MCP Server Development in Phase Sequencing** (~50-80 lines of updates across phases)
-   - Phase 1 (Model Validation): Add `bbj_compile_check` tool implementation as a deliverable -- the compiler validation can be built and tested independently of the full MCP server
-   - Phase 2 (IDE Integration): Add MCP server with `bbj_generate_code` and `bbj_compile_check` tools; add the generate-validate-fix loop as a deliverable; reference bbjcpltool as the validated proof-of-concept
-   - Phase 3 (RAG + Doc Chat): Add `bbj_rag_search` tool; the chat system can now be "any MCP client" for quick deployment, with custom chat as the optimized path
-   - Phase 4 (Refinement): MCP server hardening, transport optimization (stdio vs Streamable HTTP), multi-client support
-
-2. **Updated Risk Assessment** (~30-40 lines)
-   - New risk: MCP ecosystem evolving rapidly (protocol versions, SDK changes)
-   - Mitigation: MCP is backed by Anthropic + Linux Foundation (AAIF), standard is stabilizing
-   - New risk: Compiler validation latency impact on IDE completion speed
-   - Mitigation: `bbjcpl -N` is syntax-only (fast), can be async/parallel
-
-3. **Updated "Where We Stand" Table**
-   - Add MCP server row: "Architecture defined in Ch2, bbjcpltool validates compiler-in-the-loop concept"
-
-4. **Updated Cost Assessment**
-   - MCP server itself adds no infrastructure cost (it is a process, not a service requiring new hardware)
-   - The BBj compiler (`bbjcpl`) is part of the existing BBj installation
-
-**What to preserve:**
-- Four-phase structure -- still valid
-- MVP checkpoint concept -- still valid
-- Infrastructure cost analysis -- mostly unchanged
-- Success metrics -- add one MCP-specific metric (e.g., "MCP tool call success rate > 99%")
-
-**Conflict risk:** LOW-MEDIUM. The phases need surgical additions, not rewrites. The risk is making the phases too long. Each phase should get 2-3 new bullet points for MCP deliverables, not paragraphs.
-
-**Content dependencies:** Should be updated LAST because it references all other chapters.
-
----
-
-## 3. Content Dependencies and Build Order
-
-### Dependency Graph
+## 1. Service Topology
 
 ```
-Ch2 (Strategic Architecture) -- MUST be first
-  |
-  +---> Ch4 (IDE Integration) -- references Ch2's tool definitions
-  |       |
-  |       +---> References bbjcpltool, bbj_compile_check
-  |
-  +---> Ch5 (Documentation Chat) -- references Ch2's tool definitions, Ch6's retrieval
-  |       |
-  |       +---> References bbj_rag_search
-  |
-  +---> Ch3 (Fine-Tuning) -- references Ch2's MCP layer
-  |
-  +---> Ch6 (RAG Database) -- references Ch2's tool definitions
-  |
-  +---> Ch7 (Implementation Roadmap) -- references ALL chapters
+                         macOS Host
+                    +------------------+
+                    |   Ollama :11434  |
+                    +--------+---------+
+                             |
+               host.docker.internal:11434
+                             |
+        Docker Compose Network (bbj-rag-net)
+   +-----------------------------+---------------------------+
+   |                             |                           |
+   |  +------------------+      |  +-----------------------+ |
+   |  | pgvector (db)    |      |  | bbj-rag-app           | |
+   |  | pg17 + pgvector  |      |  |                       | |
+   |  | :5432            |      |  |  bbj-rag ingest ...   | |
+   |  |                  |<---->|  |  uvicorn (REST :8000)  | |
+   |  | volume:          |      |  |  mcp stdio server     | |
+   |  |   pgdata:/var/   |      |  |                       | |
+   |  |   lib/postgresql |      |  | volumes:              | |
+   |  +------------------+      |  |   /data/flare (ro)    | |
+   |                             |  |   /data/pdf   (ro)   | |
+   |                             |  |   /data/mdx   (ro)   | |
+   |                             |  |   /data/bbj   (ro)   | |
+   |                             |  +-----------------------+ |
+   +-----------------------------+---------------------------+
 ```
 
-### Recommended Build Order
+### Three containers, one network
 
-| Order | Chapter | Change Level | Estimated New Lines | Rationale |
-|-------|---------|-------------|--------------------:|-----------|
-| 1 | Ch2: Strategic Architecture | MAJOR REWRITE | 300-400 | Establishes MCP vocabulary, tool definitions, and the generate-validate-fix loop. All other chapters reference this. |
-| 2 | Ch4: IDE Integration | MAJOR ADDITION | 200-250 | Largest content addition after Ch2. Compiler validation module is the most technically novel content. |
-| 3 | Ch5: Documentation Chat | MODERATE ADDITION | 100-150 | MCP-based RAG search tool and updated architecture. Depends on Ch2's tool definitions. |
-| 4 | Ch3: Fine-Tuning | LIGHT UPDATE | 30-50 | Cross-references to MCP layer. Low risk, low effort. |
-| 5 | Ch6: RAG Database | LIGHT UPDATE | 30-50 | Cross-references to MCP tool wrapping. Low risk, low effort. |
-| 6 | Ch7: Implementation Roadmap | MODERATE UPDATE | 80-120 | Phase updates, risk additions. Must be last because it references all chapters. |
-| -- | Ch1: BBj Challenge | NONE | 0 | No changes needed. |
+| Service | Image | Ports | Purpose |
+|---------|-------|-------|---------|
+| `db` | `pgvector/pgvector:0.8.1-pg17` | `5432:5432` | PostgreSQL 17 + pgvector 0.8.1 |
+| `app` | Custom Dockerfile (bbj-rag) | `8000:8000` | CLI ingestion, REST API, MCP server |
+| Ollama | **Not in Compose** -- runs on macOS host | `11434` (host) | Embedding model (accessed via `host.docker.internal`) |
 
-**Total estimated new content:** 740-1,020 lines across 6 chapters.
+**Why Ollama stays on the host:** Ollama uses macOS Metal GPU acceleration. Running it in a Linux Docker container on macOS loses GPU access entirely. The app container reaches it at `http://host.docker.internal:11434`.
 
-### Parallelization Opportunities
-
-- Ch3 and Ch6 can be updated in parallel (both are light cross-reference updates, no dependency on each other)
-- Ch4 and Ch5 can be updated in parallel AFTER Ch2 is complete (both depend on Ch2 but not on each other)
-- Ch7 must be last
-
-This gives a 4-step critical path:
-1. Ch2 (blocking)
-2. Ch4 + Ch5 (parallel)
-3. Ch3 + Ch6 (parallel, or combined with step 2 if they are trivial)
-4. Ch7 (blocking, final)
+**Why a single app container (not separate API + MCP):** The REST API and MCP server share the exact same search functions (`search.py`), the same database connection logic (`db.py`), and the same config (`config.py`). Running them as separate containers would double the image size and deployment complexity for zero architectural benefit. The MCP server runs via stdio (spawned by Claude Desktop per-session) and the REST API runs as a long-lived uvicorn process -- they do not conflict.
 
 ---
 
-## 4. MCP Architecture Patterns for the Content
+## 2. Integration with Existing Modules
 
-### The Three-Tool MCP Server
+### What Stays Unchanged
 
-This is the core architectural concept that Ch2 must establish and other chapters must reference consistently.
+These modules require **zero modification** for deployment:
+
+| Module | Why Unchanged |
+|--------|---------------|
+| `search.py` | Already accepts `conn` + query params, returns `SearchResult` dataclass. API/MCP just call these functions. |
+| `db.py` | `get_connection(database_url)` is the only entry point. Just pass a different URL. |
+| `models.py` | `Document`, `Chunk`, `SearchResult` data models are transport-agnostic. |
+| `chunker.py` | Pure function, no I/O dependencies. |
+| `pipeline.py` | `run_pipeline()` takes injected dependencies. Works from CLI or programmatically. |
+| `embedder.py` | `OllamaEmbedder` uses the `ollama` Python client which reads `OLLAMA_HOST` env var. Set it in Docker and it just works. |
+| `intelligence/` | Pure classification logic, no external dependencies. |
+| `parsers/` | Read from filesystem paths or HTTP URLs. Paths change via config; code unchanged. |
+
+### What Gets Modified
+
+| Module | Change | Reason |
+|--------|--------|--------|
+| `config.py` | Add `ollama_host` field (default `http://localhost:11434`) | Explicit Ollama URL config for Docker; the `ollama` client reads `OLLAMA_HOST` env var, but we also need it for the API health check. |
+| `schema.py` | Fix `_SQL_DIR` path resolution for installed packages | Currently uses `Path(__file__).resolve().parent.parent.parent / "sql"` which breaks when installed via pip in a container. Use `importlib.resources` or bundle sql in package data. |
+
+### What Gets Added
+
+| New Module | Location | Purpose |
+|------------|----------|---------|
+| `src/bbj_rag/api.py` | New file | FastAPI app wrapping `search.py` functions |
+| `src/bbj_rag/mcp_server.py` | New file | FastMCP server exposing `search_bbj_knowledge` tool |
+| `Dockerfile` | `rag-ingestion/Dockerfile` | Multi-stage build for the bbj-rag package |
+| `compose.yaml` | `rag-ingestion/compose.yaml` | Service definitions for db + app |
+| `sql/init.sql` | New or rename | Entrypoint script for pgvector container initialization |
+
+---
+
+## 3. REST Retrieval API (`api.py`)
+
+### Framework Choice: FastAPI
+
+**Use FastAPI** because:
+1. The project already depends on Pydantic (v2.12+) -- FastAPI uses it natively for request/response validation.
+2. Auto-generated OpenAPI docs (`/docs`) provide immediate testing UI for the search endpoint.
+3. Async support is native -- the search functions use synchronous psycopg3, but FastAPI handles them cleanly via threadpool execution for sync endpoints.
+4. Adding FastAPI is one dependency (`fastapi[standard]`) which includes uvicorn.
+
+**Architecture:**
+
+```python
+# src/bbj_rag/api.py (conceptual structure)
+
+from fastapi import FastAPI, Depends
+from bbj_rag.config import Settings
+from bbj_rag.db import get_connection
+from bbj_rag.embedder import create_embedder
+from bbj_rag.search import hybrid_search, SearchResult
+
+app = FastAPI(title="BBj RAG Search API")
+
+# Singleton settings + embedder (created once at startup)
+# Connection pool or per-request connection via dependency injection
+
+@app.get("/health")
+def health():
+    """Liveness check -- verifies DB and Ollama connectivity."""
+    ...
+
+@app.post("/search")
+def search(query: str, limit: int = 5, generation: str | None = None):
+    """Hybrid search: embed query via Ollama, then RRF over dense+BM25."""
+    # 1. Embed the query text using the embedder
+    # 2. Call hybrid_search(conn, embedding, query, limit, generation)
+    # 3. Return list of SearchResult as JSON
+    ...
+```
+
+### Key Design Decisions
+
+**Connection management:** Use psycopg3's `ConnectionPool` (from `psycopg_pool`) rather than creating a new connection per request. The existing `get_connection()` function opens a bare connection -- the API layer adds pooling on top. This is a new dependency (`psycopg-pool`) but it is the official psycopg3 companion library.
+
+**Embedder lifecycle:** Create one `OllamaEmbedder` instance at startup via FastAPI's lifespan context. The embedder is stateless (just holds model name + dimensions), so a single instance is safe for concurrent use.
+
+**Response model:** Convert `SearchResult` dataclass to a Pydantic model for the API response, or use `dataclasses.asdict()`. Since `SearchResult` is a frozen dataclass with simple types, serialization is trivial.
+
+**Single endpoint to start:** `/search` is the only retrieval endpoint needed. `/health` for operational monitoring. Expand later if needed.
+
+---
+
+## 4. MCP Server (`mcp_server.py`)
+
+### SDK Choice: Official MCP Python SDK (FastMCP)
+
+Use `mcp` package (the official SDK, which includes FastMCP). Currently at v1.26.0, stable for production. v2 anticipated Q1 2026 but v1.x will be maintained.
+
+**Architecture:**
+
+```python
+# src/bbj_rag/mcp_server.py (conceptual structure)
+
+from mcp.server.fastmcp import FastMCP
+from bbj_rag.config import Settings
+from bbj_rag.db import get_connection
+from bbj_rag.embedder import create_embedder
+from bbj_rag.search import hybrid_search
+
+mcp = FastMCP("bbj-knowledge")
+
+@mcp.tool()
+def search_bbj_knowledge(
+    query: str,
+    generation: str | None = None,
+    limit: int = 5,
+) -> str:
+    """Search the BBj documentation knowledge base.
+
+    Returns relevant documentation chunks ranked by hybrid
+    (dense vector + BM25 keyword) search with RRF fusion.
+
+    Args:
+        query: Natural language search query about BBj programming.
+        generation: Optional BBj generation filter (e.g. "BBj", "Visual PRO/5").
+        limit: Maximum number of results to return (default 5).
+    """
+    # 1. Embed query
+    # 2. hybrid_search(conn, embedding, query, limit, generation)
+    # 3. Format results as readable text for LLM consumption
+    ...
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
+```
+
+### Key Design Decisions
+
+**Transport: stdio only (for now).** The MCP server is spawned by Claude Desktop or Claude Code as a child process. stdio is the correct transport for local desktop usage. Streamable HTTP would be needed for web-based multi-user access, but that is a future concern -- not this milestone.
+
+**Separate process, not separate container.** The MCP server runs as `uv run python -m bbj_rag.mcp_server` on the host machine (not inside Docker). Reason: Claude Desktop spawns MCP servers as local child processes via stdio. It cannot connect to a process running inside a Docker container via stdio. The MCP server needs direct access to the database (via the Docker-exposed port 5432) and Ollama (localhost:11434).
+
+**Return format: formatted text, not JSON.** MCP tool results are consumed by LLMs, not APIs. Return human-readable formatted text with source URLs, titles, and content excerpts. The LLM does not need structured JSON -- it needs readable context.
+
+**Single tool.** `search_bbj_knowledge` is the only tool for this milestone. The project context mentions this explicitly. Additional tools (code generation, compile check) are future milestones.
+
+### Claude Desktop Configuration
+
+```json
+{
+  "mcpServers": {
+    "bbj-knowledge": {
+      "command": "uv",
+      "args": [
+        "--directory", "/Users/beff/_workspace/bbj-ai-strategy/rag-ingestion",
+        "run", "python", "-m", "bbj_rag.mcp_server"
+      ],
+      "env": {
+        "BBJ_RAG_DATABASE_URL": "postgresql://bbj_rag:bbj_rag@localhost:5432/bbj_rag"
+      }
+    }
+  }
+}
+```
+
+The MCP server runs on the host, connects to pgvector via the Docker-exposed port (localhost:5432), and to Ollama at localhost:11434. No `host.docker.internal` needed from the MCP server's perspective.
+
+---
+
+## 5. Docker Compose Design
+
+### compose.yaml Structure
+
+```yaml
+# rag-ingestion/compose.yaml
+services:
+  db:
+    image: pgvector/pgvector:0.8.1-pg17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: bbj_rag
+      POSTGRES_USER: bbj_rag
+      POSTGRES_PASSWORD: bbj_rag
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bbj_rag"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      BBJ_RAG_DATABASE_URL: "postgresql://bbj_rag:bbj_rag@db:5432/bbj_rag"
+      OLLAMA_HOST: "http://host.docker.internal:11434"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Source data (read-only bind mounts from host)
+      - /Users/beff/bbjdocs:/data/flare:ro
+      - ./GuideToGuiProgrammingInBBj.pdf:/data/pdf/guide.pdf:ro
+      # MDX and BBj source dirs configured via env vars
+    command: >
+      uvicorn bbj_rag.api:app --host 0.0.0.0 --port 8000
+
+volumes:
+  pgdata:
+```
+
+### Docker Networking Details
+
+| From | To | Address | Mechanism |
+|------|----|---------|-----------|
+| app container | db container | `db:5432` | Docker Compose DNS (same network) |
+| app container | Ollama on host | `host.docker.internal:11434` | `extra_hosts` mapping + Docker gateway |
+| MCP server (host) | db container | `localhost:5432` | Port mapping (`5432:5432`) |
+| MCP server (host) | Ollama on host | `localhost:11434` | Direct localhost |
+| REST clients | app container | `localhost:8000` | Port mapping (`8000:8000`) |
+
+**Critical: `extra_hosts` directive.** On Docker Desktop for macOS, `host.docker.internal` resolves automatically. On Linux Docker, you need `extra_hosts: ["host.docker.internal:host-gateway"]`. Include it always for portability.
+
+**Critical: Ollama Python client env var.** The `ollama` Python package reads `OLLAMA_HOST` to determine the server address. Setting `OLLAMA_HOST=http://host.docker.internal:11434` in the container environment makes `ollama.embed()` calls work without code changes to `embedder.py`.
+
+### Volume Mounts for Source Data
+
+Source data lives on the macOS host filesystem. The app container reads it via bind mounts.
+
+| Source | Host Path | Container Path | Config Var |
+|--------|-----------|----------------|------------|
+| Flare XHTML | `/Users/beff/bbjdocs` | `/data/flare` | `BBJ_RAG_FLARE_SOURCE_PATH=/data/flare` |
+| PDF Guide | `./GuideToGuiProgrammingInBBj.pdf` | `/data/pdf/guide.pdf` | `BBJ_RAG_PDF_SOURCE_PATH=/data/pdf/guide.pdf` |
+| MDX tutorials | `/Users/beff/_workspace/<sites>` | `/data/mdx/<site>` | `BBJ_RAG_MDX_SOURCE_PATH=/data/mdx` |
+| BBj source code | SVN checkout paths | `/data/bbj/<dir>` | `BBJ_RAG_BBJ_SOURCE_DIRS=["/data/bbj/src",...]` |
+| WordPress | N/A (HTTP) | N/A | Already URL-based, no mount needed |
+| Web crawl | N/A (HTTP) | N/A | Already URL-based, no mount needed |
+
+All bind mounts are `:ro` (read-only). Parsers only read; they never write to source directories.
+
+### Database Initialization
+
+PostgreSQL's `docker-entrypoint-initdb.d/` mechanism runs SQL files on first container startup. Mount `sql/schema.sql` as `01-schema.sql` to auto-create the pgvector extension, chunks table, indexes, and the `rrf_score()` function. This replaces the need to run `schema.py` manually.
+
+The schema is idempotent (`CREATE IF NOT EXISTS` throughout), so it is safe to re-run.
+
+---
+
+## 6. Dockerfile Design
+
+### Multi-stage Build
+
+```dockerfile
+# rag-ingestion/Dockerfile
+FROM python:3.12-slim AS base
+
+# Install system dependencies for psycopg binary and lxml
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM base AS builder
+
+RUN pip install --no-cache-dir uv
+
+WORKDIR /build
+COPY pyproject.toml .
+COPY src/ src/
+COPY sql/ sql/
+
+# Install the package and its dependencies
+RUN uv pip install --system --no-cache ".[standard]"
+
+FROM base AS runtime
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy sql directory for schema.py (if still needed for CLI apply-schema)
+COPY sql/ /app/sql/
+WORKDIR /app
+
+# Non-root user
+RUN useradd --create-home appuser
+USER appuser
+
+EXPOSE 8000
+
+# Default: run the REST API
+CMD ["uvicorn", "bbj_rag.api:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+**Key decisions:**
+- `python:3.12-slim` as base (not alpine) because psycopg binary wheels and lxml need glibc.
+- Multi-stage to keep the final image small (no build tools in runtime).
+- `uv pip install --system` to install into the system Python (no virtualenv needed in container).
+- SQL files copied into image for any programmatic schema application.
+- Non-root user for security.
+
+### Running Ingestion vs API
+
+The same image supports both use cases via command override:
+
+```bash
+# Run REST API (default)
+docker compose up app
+
+# Run ingestion for a specific source
+docker compose run --rm app bbj-rag ingest --source flare
+
+# Run quality report
+docker compose run --rm app bbj-rag report
+```
+
+---
+
+## 7. Component Dependency Graph
 
 ```
-BBj AI Development Assistant (MCP Server)
-|
-+-- bbj_rag_search
-|   Description: Search BBj documentation with generation-aware filtering
-|   Input: { query: string, generation?: string, limit?: number }
-|   Output: Ranked documentation chunks with citations and generation metadata
-|   Backend: pgvector hybrid retrieval (Ch6)
-|
-+-- bbj_generate_code
-|   Description: Generate BBj code using the fine-tuned model
-|   Input: { prompt: string, generation?: string, context?: string }
-|   Output: Generated BBj code with generation metadata
-|   Backend: Ollama API to fine-tuned Qwen2.5-Coder (Ch3)
-|
-+-- bbj_compile_check
-|   Description: Validate BBj code syntax using the BBj compiler
-|   Input: { code: string, filename?: string }
-|   Output: { valid: boolean, errors?: CompilerError[], diagnostics?: string }
-|   Backend: bbjcpl -N subprocess (Ch4)
+                    config.py (Settings)
+                   /     |      \       \
+                  /      |       \       \
+           db.py    embedder.py  parsers/  api.py (NEW)
+             |          |            |         |
+             |          |            |         |
+          search.py     |       pipeline.py   |
+             |          |         /    \       |
+             |          |        /      \      |
+             +----------+-------+       intelligence/
+             |
+        mcp_server.py (NEW)
 ```
 
-### The Generate-Validate-Fix Loop
+**Both `api.py` and `mcp_server.py` are thin wrappers** that:
+1. Load `Settings` from config
+2. Create an embedder via `create_embedder()`
+3. Get a database connection via `get_connection()`
+4. Call `hybrid_search()` (or `dense_search()` / `bm25_search()`)
+5. Format results for their respective consumers (JSON for API, text for MCP)
 
-This is the key innovation that Ch2 introduces and Ch4 demonstrates in the IDE context.
-
-```
-1. LLM receives task (write BBj code / complete code)
-2. LLM generates BBj code via bbj_generate_code tool
-3. Code is passed to bbj_compile_check tool
-4. IF compiler returns errors:
-   a. Error messages are fed back to LLM
-   b. LLM generates corrected code
-   c. Go to step 3 (max N iterations)
-5. IF compiler returns clean:
-   a. Code is presented to user (ghost text, chat response, etc.)
-```
-
-### MCP Transport Mapping
-
-| Deployment Scenario | Transport | Client Example |
-|--------------------|-----------|-|
-| Developer workstation | stdio | Claude Code, Claude Desktop |
-| VS Code extension | stdio | bbj-language-server calling MCP server |
-| Web-based chat | Streamable HTTP | Browser chat widget, custom web app |
-| Team server | Streamable HTTP | Multiple developers sharing one MCP server |
-
-### Relationship to Existing Patterns
-
-The MCP architecture maps cleanly to the existing content:
-
-| Existing Concept (Current Ch2) | MCP Realization |
-|-------------------------------|-----------------|
-| "Shared Foundation" | MCP Server (single process exposing all tools) |
-| "Fine-Tuned Model via Ollama" | Backend for `bbj_generate_code` tool |
-| "RAG Database" | Backend for `bbj_rag_search` tool |
-| "Consumer App detects generation context" | MCP client passes `generation` parameter to tools |
-| "Assembles enriched prompt" | MCP server combines RAG results + model prompt internally |
-| "Future Capabilities" | Any new MCP tool added to the server |
+This is the key architectural insight: the existing `search.py` module is already the right abstraction boundary. The new modules are **presentation layers**, not new business logic.
 
 ---
 
-## 5. Conflict Analysis and Mitigation
+## 8. Build Order (Recommended)
 
-### High-Risk Conflicts
+Build in this order to get working feedback loops at each step:
 
-**Ch2: Abstract vs. Concrete Balance**
+### Phase 1: Docker Compose + pgvector (foundation)
 
-The current Ch2 speaks to leadership and strategic audiences. Adding MCP tool definitions with JSON-RPC and inputSchema risks making it too technical.
+**Build:** `compose.yaml` with `db` service only, `Dockerfile` for app image.
 
-*Mitigation:* Keep the main narrative at the strategic level ("MCP server exposes three tools: documentation search, code generation, and compiler validation"). Put the technical details (inputSchema, JSON-RPC examples, transport options) in collapsible details blocks, code tabs, or a subsection clearly marked as "Technical Detail." The Docusaurus site already uses `:::info` admonitions and code blocks effectively -- follow the same pattern.
+**Validates:**
+- pgvector container starts and initializes schema
+- App container builds and installs bbj-rag package
+- App container can connect to db via Docker network
+- App container can reach Ollama on host via `host.docker.internal`
 
-**Ch4: Length After Additions**
+**Test:** `docker compose run --rm app bbj-rag ingest --source flare` (full pipeline through Docker)
 
-Ch4 is already 431 lines and the longest non-Ch6 chapter. Adding 200-250 lines of compiler validation content pushes it past 650 lines.
+**Why first:** Everything else depends on the containerized database and networking being correct.
 
-*Mitigation:* Consider whether compiler validation warrants a sub-page (like Ch6's getting-started.md). The Ch4 directory already supports sub-pages. If the content exceeds ~600 lines after editing, split the compiler validation into a sub-page. Alternatively, some existing content may be condensable -- the "Alternative Architectures" section (Continue.dev, Langium AI) could be trimmed since it is not the core narrative.
+### Phase 2: REST API (`api.py`)
 
-### Medium-Risk Conflicts
+**Build:** FastAPI app with `/health` and `/search` endpoints.
 
-**Ch5: Custom Chat Backend vs. "Any MCP Client"**
+**Validates:**
+- Search works through HTTP
+- Connection pooling works under concurrent requests
+- Embedder can reach Ollama from container
 
-The current Ch5 devotes significant space to a custom chat backend (SSE streaming, token budget management, session memory). MCP makes this one option among several -- any MCP client can query BBj documentation. The chapter must not invalidate the existing custom-backend content but must honestly present the MCP-client option as a simpler alternative.
+**Test:** `curl http://localhost:8000/search -d '{"query": "BBjGrid"}'`
 
-*Mitigation:* Frame it as two tiers: (1) "Quick start: any MCP client" for immediate access to BBj documentation assistance, and (2) "Optimized experience: custom chat backend" for generation-aware UX, session memory, and embedded-in-docs deployment. The existing content becomes the "optimized experience" tier. The new MCP content becomes the "quick start" tier.
+**Why second:** The REST API is the simplest new code (one file, two endpoints) and provides immediate interactive testing via the Swagger UI at `/docs`.
 
-**Ch7: Phase Bloat**
+### Phase 3: MCP Server (`mcp_server.py`)
 
-Each phase currently has 4-6 key deliverables. Adding MCP deliverables to each phase risks making the roadmap feel overwhelming.
+**Build:** FastMCP server with `search_bbj_knowledge` tool.
 
-*Mitigation:* Add MCP deliverables as sub-bullets under existing deliverables where possible, rather than as new top-level deliverables. For example, under Phase 2's "Inline completion provider," add a sub-bullet: "includes compiler validation via `bbj_compile_check` MCP tool."
+**Validates:**
+- MCP stdio transport works with Claude Desktop
+- Tool receives queries and returns formatted results
+- Database connection from host process works
 
-### Low-Risk Conflicts
+**Test:** Configure in Claude Desktop, ask "What is BBjGrid?"
 
-**Ch3 and Ch6:** These chapters are about internals (model training, RAG pipeline) that MCP does not change. The cross-references are purely additive. No conflict expected.
+**Why third:** The MCP server depends on the same search infrastructure as the API but adds the MCP SDK dependency and Claude Desktop integration testing, which is harder to automate.
 
-**Ch1:** No changes proposed. No conflict possible.
+### Phase 4: `schema.py` Fix + Config Additions
 
----
+**Build:** Fix the `_SQL_DIR` path in `schema.py`, add `ollama_host` to config.
 
-## 6. Content Patterns to Follow
-
-The existing chapters establish consistent patterns that new MCP content must follow:
-
-### TL;DR Block
-
-Every chapter opens with a `:::tip[TL;DR]` block. Ch2's TL;DR needs updating to mention MCP. Proposed:
-
-> Instead of building separate AI systems, the BBj strategy centers on an MCP server
-> that orchestrates three capabilities -- documentation search, code generation, and
-> compiler validation -- through a standard protocol. Any MCP-compatible client (Claude,
-> VS Code, custom tools) can access BBj AI intelligence. The key innovation: a
-> generate-validate-fix loop where the BBj compiler provides ground-truth feedback on
-> AI-generated code, eliminating hallucinated syntax before it reaches the developer.
-
-### Decision Callouts
-
-Use `:::info[Decision: ...]` for key architectural decisions. New decisions needed:
-
-- **Decision: MCP as the Integration Protocol** (Ch2)
-- **Decision: Compiler Validation in the Completion Pipeline** (Ch4)
-- **Decision: MCP Tool for RAG Access** (Ch5)
-
-### Mermaid Diagrams
-
-Every chapter uses Mermaid. New diagrams needed:
-
-- Ch2: MCP server architecture (replacing current flat diagram)
-- Ch2: Generate-validate-fix sequence diagram
-- Ch4: Updated ghost text pipeline with compiler validation step
-- Ch5: Updated chat architecture with MCP tool call
-
-### Code Blocks
-
-Use `typescript` and `json` code blocks with titles. New code blocks needed:
-
-- Ch2: MCP tool definitions (JSON or TypeScript)
-- Ch4: Compiler validation flow (TypeScript)
-- Ch4: bbjcpltool reference (shell/config)
-
-### Current Status Notes
-
-Every chapter ends with a `:::note[Where Things Stand]` block. These all need updating to reflect the MCP architecture.
-
-### Cross-References
-
-Follow the existing pattern of inline links: `[Chapter N](/docs/chapter-slug)`. New cross-references should link to the specific section where a concept is defined (e.g., `[MCP tool definitions](/docs/strategic-architecture#mcp-tool-definitions)`).
+**Why last (or folded into Phase 1):** These are small targeted fixes that can be addressed when they surface during container testing. They may also be folded into Phase 1 if they block the initial build.
 
 ---
 
-## 7. The bbjcpltool Proof-of-Concept Story
+## 9. Anti-Patterns to Avoid
 
-The bbjcpltool is a working implementation that validates the compiler-in-the-loop concept. It should be referenced in Ch2 (as evidence the concept works) and detailed in Ch4 (as the proof-of-concept for the `bbj_compile_check` tool). Here is what is known about it from PROJECT.md:
+### Do Not Containerize Ollama
 
-- **Location:** `/Users/beff/bbjcpltool/`
-- **What it does:** PostToolUse hook in Claude Code that runs `bbjcpl -N` on every `.bbj` file Claude writes/edits
-- **Companion:** Shared BBj language reference at `~/.claude/bbj-reference.md`
-- **Status:** v1 shipped, working
-- **What it validates:** The compiler-in-the-loop concept -- when Claude generates BBj code, the compiler immediately checks it and feeds errors back
+Running Ollama in Docker on macOS means no GPU acceleration (Metal is not available in Linux containers on macOS). Embedding throughput drops dramatically. Keep Ollama on the host.
 
-This is the strongest evidence that the generate-validate-fix loop works in practice. The MCP server's `bbj_compile_check` tool is the productized version of what bbjcpltool demonstrates.
+### Do Not Create Separate Containers for API and MCP
 
-**Content treatment:**
-- Ch2: Mention as proof-of-concept that validates the architecture ("the bbjcpltool demonstrates this loop in practice with Claude Code")
-- Ch4: Dedicate a subsection to the proof-of-concept, describing what it does, what it proved, and how the MCP tool generalizes it
+They share the same 500MB+ of Python dependencies and the same 6 lines of search logic. Separate containers double image pull time, double memory, and create a coordination problem for zero benefit.
 
----
+### Do Not Use SQLAlchemy
 
-## 8. Narrative Arc Assessment
+The codebase uses psycopg3 directly with raw SQL. The search queries use pgvector-specific operators (`<=>`, `vector` casts) and PostgreSQL-specific features (`ts_rank_cd`, `GENERATED ALWAYS`). An ORM adds complexity without value here.
 
-After MCP integration, the 7-chapter story should read:
+### Do Not Make the MCP Server Run Inside Docker
 
-1. **Ch1 (The Problem):** BBj is invisible to LLMs. They hallucinate. We need custom tooling.
-2. **Ch2 (The Architecture):** An MCP server orchestrates three capabilities -- RAG search, code generation, and compiler validation. The generate-validate-fix loop ensures correctness. Any MCP client can use it.
-3. **Ch3 (The Model):** We fine-tune Qwen2.5-Coder on BBj training data and serve it via Ollama. The MCP server calls it through the `bbj_generate_code` tool.
-4. **Ch4 (The IDE):** The bbj-language-server provides deterministic completions. The MCP server adds AI completions with compiler validation. Ghost text suggestions are syntax-validated before rendering.
-5. **Ch5 (The Chat):** Any MCP client can search BBj documentation via `bbj_rag_search`. A custom chat provides the optimized, generation-aware experience with streaming and citations.
-6. **Ch6 (The RAG Database):** The ingestion pipeline, chunking, embedding, and retrieval logic that powers `bbj_rag_search`.
-7. **Ch7 (The Plan):** Four phases, now with MCP server deliverables woven into each phase.
+Claude Desktop spawns MCP servers as local child processes via stdio. It writes to the process's stdin and reads from stdout. It cannot do this with a process inside a Docker container. The MCP server must run on the host, connecting to the Dockerized pgvector via the exposed port.
 
-This maintains the existing narrative flow while adding the MCP integration layer. No chapter changes its fundamental purpose. Ch2 goes from "abstract architecture" to "concrete architecture." Ch4 and Ch5 gain new capabilities. Ch3, Ch6, and Ch7 get updated references.
+### Do Not Use Async psycopg in the API
+
+The existing codebase uses synchronous `psycopg.Connection`. Switching to `psycopg.AsyncConnection` would require rewriting `search.py`, `db.py`, and all SQL execution paths. FastAPI handles sync functions by running them in a threadpool, which is perfectly adequate for a search endpoint serving a few requests per second.
 
 ---
 
-## 9. Risks and Open Questions
+## 10. Configuration Strategy
 
-### Open Questions
+The existing Pydantic Settings system (`config.py`) already supports:
+- TOML file defaults (`config.toml`)
+- Environment variable overrides (`BBJ_RAG_` prefix)
+- Constructor injection (highest priority)
 
-1. **MCP SDK choice for the BBj MCP server implementation:** TypeScript SDK (aligns with bbj-language-server) vs. Python SDK (aligns with rag-ingestion). The documentation site does not need to resolve this -- it describes the architecture, not the implementation language. But if the team has a preference, it could be mentioned.
+This maps perfectly to Docker:
 
-2. **Compiler availability:** The `bbjcpl -N` compiler is part of the BBj installation. Not all developers will have it installed. The MCP server needs a graceful degradation path when the compiler is unavailable (skip validation, warn the user). This should be mentioned in Ch2 or Ch4.
+| Setting | TOML Default | Docker Override | MCP Server Override |
+|---------|-------------|-----------------|---------------------|
+| `database_url` | `postgresql://localhost:5432/bbj_rag` | `BBJ_RAG_DATABASE_URL=postgresql://bbj_rag:bbj_rag@db:5432/bbj_rag` | `BBJ_RAG_DATABASE_URL=postgresql://bbj_rag:bbj_rag@localhost:5432/bbj_rag` |
+| `flare_source_path` | `""` | `BBJ_RAG_FLARE_SOURCE_PATH=/data/flare` | Not needed (ingestion only) |
+| `embedding_model` | `qwen3-embedding:0.6b` | Inherited | Inherited |
+| Ollama host | N/A (client reads `OLLAMA_HOST`) | `OLLAMA_HOST=http://host.docker.internal:11434` | `OLLAMA_HOST=http://localhost:11434` (default) |
 
-3. **MCP spec version:** The current spec is `2025-11-25` (also referred to as `2025-06-18` in some places -- need to verify which is the latest stable version). The protocol is evolving. Content should reference the specification version and note that updates may apply.
+The `config.toml` file provides development defaults. Docker Compose environment variables override them for containerized execution. The MCP server running on the host uses the defaults or its own env vars.
 
-4. **Tool naming conventions:** The tool names (`bbj_rag_search`, `bbj_generate_code`, `bbj_compile_check`) are working names from the concept paper. They should be finalized before being committed to the documentation. The convention of `bbj_` prefix is reasonable for namespace clarity in multi-server environments.
+No changes to the priority system (`init > env > TOML > defaults`) are needed.
 
-### Risks
+---
 
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| Ch2 rewrite changes the chapter's character from strategic to technical | MEDIUM | Keep narrative strategic; put technical details in code blocks and info callouts |
-| Ch4 becomes too long after additions | MEDIUM | Consider sub-page for compiler validation; trim alternative architectures section |
-| MCP protocol evolves, making content stale | LOW | Reference spec version; note that the architecture pattern (tool-based orchestration) is stable even if protocol details change |
-| bbjcpltool details may not be shareable publicly | LOW | Verify what can be described; focus on the concept validated rather than implementation details |
-| Cross-reference consistency across 6 updated chapters | MEDIUM | Use a consistent vocabulary established in Ch2; review all cross-references after all chapters are updated |
+## 11. Confidence Assessment
+
+| Area | Confidence | Rationale |
+|------|-----------|-----------|
+| Service topology | HIGH | Standard Docker Compose pattern for app + database. Verified pgvector/pgvector image tags on Docker Hub. |
+| Docker networking (Ollama) | HIGH | `host.docker.internal` + `OLLAMA_HOST` env var is a well-documented pattern. Ollama Python client confirmed to read this env var. |
+| REST API (FastAPI) | HIGH | FastAPI + psycopg3 + Pydantic is a well-established stack. The project already depends on Pydantic. |
+| MCP server (FastMCP) | HIGH | Official MCP Python SDK docs confirm `@mcp.tool()` decorator pattern. stdio transport is the canonical local transport. SDK at v1.26.0, stable. |
+| MCP stdio vs Docker | HIGH | MCP spec explicitly documents stdio as local child-process transport. Cannot work across container boundaries. |
+| Volume mount strategy | MEDIUM | Bind mounts work but paths are macOS-specific. Would need adjustment for CI/CD or other developers. |
+| schema.py path fix | MEDIUM | The `Path(__file__)` approach breaks in installed packages but the exact fix depends on whether `sql/` is included as package data or kept external. |
 
 ---
 
 ## Sources
 
-### Primary (HIGH confidence)
-- [MCP Specification (2025-11-25)](https://modelcontextprotocol.io/specification/2025-11-25) -- Official protocol specification
-- [MCP Architecture Overview](https://modelcontextprotocol.io/docs/learn/architecture) -- Official architecture documentation
-- [MCP GitHub Organization](https://github.com/modelcontextprotocol) -- Official repos, SDKs, reference implementations
-- Existing chapter content (all 7 chapters read and analyzed in full)
-- PROJECT.md context (MCP concept paper description, bbjcpltool details)
-
-### Secondary (MEDIUM confidence)
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) -- Tool definition patterns and API
-- [MCP Wikipedia](https://en.wikipedia.org/wiki/Model_Context_Protocol) -- Governance (donated to Linux Foundation AAIF)
-- [Code Feedback MCP pattern](https://blog.niradler.com/how-code-feedback-mcp-enhances-ai-generated-code-quality) -- Generate-validate-fix loop architecture pattern
-
-### Tertiary (LOW confidence)
-- WebSearch results on MCP ecosystem trends (2025-2026) -- general landscape context
-- MCP Apps announcement (January 2026) -- indicates protocol is actively evolving with UI capabilities
-
----
-
-*Research date: 2026-02-01*
-*Valid until: 2026-04-01 (MCP ecosystem is evolving; protocol version and SDK versions should be re-verified before implementation)*
+- [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) -- Official SDK, FastMCP included, v1.26.0 (Jan 2026)
+- [MCP Build Server Guide](https://modelcontextprotocol.io/docs/develop/build-server) -- `@mcp.tool()` pattern, stdio transport
+- [MCP Transport Specification](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports) -- stdio vs Streamable HTTP
+- [pgvector/pgvector Docker Hub](https://hub.docker.com/r/pgvector/pgvector) -- Image tags, `0.8.1-pg17`
+- [Ollama Python Client](https://github.com/ollama/ollama-python) -- `OLLAMA_HOST` env var, `Client(host=...)` constructor
+- [Ollama FAQ](https://docs.ollama.com/faq) -- Binding to `0.0.0.0`, Docker connectivity
+- [FastAPI Documentation](https://fastapi.tiangolo.com/) -- ASGI, Pydantic integration, sync endpoint threadpool
+- [Docker host.docker.internal](https://openillumi.com/en/en-docker-ollama-localhost-connect-host-docker-internal/) -- Container-to-host connectivity pattern
