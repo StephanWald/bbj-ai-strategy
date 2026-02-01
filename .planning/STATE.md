@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Engineers can start building the RAG ingestion pipeline with concrete code, schemas, and source-by-source guidance -- bridging Chapter 6's strategic design and actual implementation.
-**Current focus:** v1.2 -- Phase 12 in progress (Embedding Pipeline)
+**Current focus:** v1.2 -- Phase 12 complete (Embedding Pipeline)
 
 ## Current Position
 
 Milestone: v1.2 RAG Ingestion Pipeline
 Phase: 12 of 14 (Embedding Pipeline)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-01 -- Completed 12-01-PLAN.md (Embedding Pipeline Core)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-01 -- Completed 12-02-PLAN.md (Search Validation)
 
-Progress: █████████░░░░░ 9/14 (64%)
+Progress: ██████████░░░░ 10/14 (71%)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (v1.2)
+- Total plans completed: 10 (v1.2)
 - Average duration: 5min
-- Total execution time: 49min
+- Total execution time: 54min
 
 **By Phase:**
 
@@ -32,7 +32,7 @@ Progress: █████████░░░░░ 9/14 (64%)
 | 09-schema-data-models | 2/2 | 8min | 4min |
 | 10-flare-parser | 3/3 | 23min | 8min |
 | 11-bbj-intelligence | 2/2 | 8min | 4min |
-| 12-embedding-pipeline | 1/2 | 7min | 7min |
+| 12-embedding-pipeline | 2/2 | 12min | 6min |
 
 *Updated after each plan completion*
 
@@ -82,6 +82,10 @@ Recent decisions affecting current work:
 - Context header prepended to chunk content before embedding for richer semantic representation
 - Binary COPY via staging table + INSERT ON CONFLICT for idempotent bulk inserts
 - _fatal() helper for NoReturn-typed CLI error exits (keeps mypy strict mode clean)
+- RRF with k=50 constant matching standard academic formula
+- search_validation pytest marker separates DB-requiring integration tests from unit tests
+- Default pytest addopts excludes search_validation so CI runs without database
+- validate CLI delegates to pytest subprocess for full reporting
 
 ### Pending Todos
 
@@ -93,7 +97,7 @@ None open.
 
 ## Session Continuity
 
-Last session: 2026-02-01T07:18Z
-Stopped at: Completed 12-01-PLAN.md (Embedding Pipeline Core)
+Last session: 2026-02-01T07:27Z
+Stopped at: Completed 12-02-PLAN.md (Search Validation)
 Resume file: None
-Next action: Execute 12-02-PLAN.md (Search Validation).
+Next action: Begin Phase 13 planning.
