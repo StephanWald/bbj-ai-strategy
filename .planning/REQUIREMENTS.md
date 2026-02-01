@@ -80,36 +80,36 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOCK-01 | TBD | Pending |
-| DOCK-02 | TBD | Pending |
-| DOCK-03 | TBD | Pending |
-| DOCK-04 | TBD | Pending |
-| DOCK-05 | TBD | Pending |
-| DOCK-06 | TBD | Pending |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| DATA-05 | TBD | Pending |
-| DATA-06 | TBD | Pending |
-| API-01 | TBD | Pending |
-| API-02 | TBD | Pending |
-| API-03 | TBD | Pending |
-| API-04 | TBD | Pending |
-| API-05 | TBD | Pending |
-| API-06 | TBD | Pending |
-| MCP-01 | TBD | Pending |
-| MCP-02 | TBD | Pending |
-| MCP-03 | TBD | Pending |
-| MCP-04 | TBD | Pending |
-| E2E-01 | TBD | Pending |
-| E2E-02 | TBD | Pending |
+| DOCK-01 | Phase 20 | Pending |
+| DOCK-02 | Phase 20 | Pending |
+| DOCK-03 | Phase 20 | Pending |
+| DOCK-04 | Phase 20 | Pending |
+| DOCK-05 | Phase 20 | Pending |
+| DOCK-06 | Phase 20 | Pending |
+| DATA-01 | Phase 21 | Pending |
+| DATA-02 | Phase 21 | Pending |
+| DATA-03 | Phase 21 | Pending |
+| DATA-04 | Phase 21 | Pending |
+| DATA-05 | Phase 20 | Pending |
+| DATA-06 | Phase 21 | Pending |
+| API-01 | Phase 22 | Pending |
+| API-02 | Phase 22 | Pending |
+| API-03 | Phase 22 | Pending |
+| API-04 | Phase 22 | Pending |
+| API-05 | Phase 22 | Pending |
+| API-06 | Phase 22 | Pending |
+| MCP-01 | Phase 23 | Pending |
+| MCP-02 | Phase 23 | Pending |
+| MCP-03 | Phase 23 | Pending |
+| MCP-04 | Phase 23 | Pending |
+| E2E-01 | Phase 24 | Pending |
+| E2E-02 | Phase 24 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24
+- Mapped to phases: 24
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-01 after initial definition*
+*Last updated: 2026-02-01 after roadmap creation*
