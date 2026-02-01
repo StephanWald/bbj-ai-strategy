@@ -22,6 +22,8 @@ class SearchResult:
     content: str
     doc_type: str
     generations: list[str]
+    context_header: str
+    deprecated: bool
     score: float
 
 
@@ -35,7 +37,9 @@ def _rows_to_results(rows: list[Any]) -> list[SearchResult]:
             content=str(row[3]),
             doc_type=str(row[4]),
             generations=list(row[5]),
-            score=float(row[6]),
+            context_header=str(row[6]),
+            deprecated=bool(row[7]),
+            score=float(row[8]),
         )
         for row in rows
     ]
@@ -55,6 +59,7 @@ def dense_search(
     if generation_filter is not None:
         sql = (
             "SELECT id, source_url, title, content, doc_type, generations, "
+            "context_header, deprecated, "
             "1 - (embedding <=> %s::vector) AS score "
             "FROM chunks "
             "WHERE generations @> ARRAY[%s::text] "
@@ -70,6 +75,7 @@ def dense_search(
     else:
         sql = (
             "SELECT id, source_url, title, content, doc_type, generations, "
+            "context_header, deprecated, "
             "1 - (embedding <=> %s::vector) AS score "
             "FROM chunks "
             "ORDER BY embedding <=> %s::vector "
@@ -98,6 +104,7 @@ def bm25_search(
     if generation_filter is not None:
         sql = (
             "SELECT id, source_url, title, content, doc_type, generations, "
+            "context_header, deprecated, "
             "ts_rank_cd(search_vector, query) AS score "
             "FROM chunks, plainto_tsquery('english', %s) query "
             "WHERE search_vector @@ query "
@@ -109,6 +116,7 @@ def bm25_search(
     else:
         sql = (
             "SELECT id, source_url, title, content, doc_type, generations, "
+            "context_header, deprecated, "
             "ts_rank_cd(search_vector, query) AS score "
             "FROM chunks, plainto_tsquery('english', %s) query "
             "WHERE search_vector @@ query "
@@ -144,16 +152,19 @@ def hybrid_search(
 
     sql = (
         "SELECT id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated, "
         "sum(rrf_score) AS score "
         "FROM ( "
         # Dense vector sub-query
         "(SELECT id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated, "
         "rrf_score(rank() OVER (ORDER BY embedding <=> %s::vector)) AS rrf_score "
         "FROM chunks " + gen_where_dense + "ORDER BY embedding <=> %s::vector "
         "LIMIT 20) "
         "UNION ALL "
         # BM25 keyword sub-query
         "(SELECT id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated, "
         "rrf_score(rank() OVER ("
         "ORDER BY ts_rank_cd(search_vector, query) DESC"
         ")) AS rrf_score "
@@ -163,7 +174,8 @@ def hybrid_search(
         + "ORDER BY ts_rank_cd(search_vector, query) DESC "
         "LIMIT 20) "
         ") searches "
-        "GROUP BY id, source_url, title, content, doc_type, generations "
+        "GROUP BY id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated "
         "ORDER BY score DESC "
         "LIMIT %s"
     )
@@ -189,4 +201,79 @@ def hybrid_search(
     return _rows_to_results(rows)
 
 
-__all__ = ["SearchResult", "bm25_search", "dense_search", "hybrid_search"]
+async def async_hybrid_search(
+    conn: psycopg.AsyncConnection[object],
+    query_embedding: list[float],
+    query_text: str,
+    limit: int = 5,
+    generation_filter: str | None = None,
+) -> list[SearchResult]:
+    """Async version of hybrid_search for use with AsyncConnectionPool.
+
+    Runs dense vector and BM25 keyword sub-queries (each top-20), computes
+    RRF scores using the rrf_score() SQL function, then combines via SUM
+    for a unified ranking.
+    """
+    gen_where_dense = (
+        "WHERE generations @> ARRAY[%s::text] " if generation_filter else ""
+    )
+    gen_where_bm25 = "AND generations @> ARRAY[%s::text] " if generation_filter else ""
+
+    sql = (
+        "SELECT id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated, "
+        "sum(rrf_score) AS score "
+        "FROM ( "
+        # Dense vector sub-query
+        "(SELECT id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated, "
+        "rrf_score(rank() OVER (ORDER BY embedding <=> %s::vector)) AS rrf_score "
+        "FROM chunks " + gen_where_dense + "ORDER BY embedding <=> %s::vector "
+        "LIMIT 20) "
+        "UNION ALL "
+        # BM25 keyword sub-query
+        "(SELECT id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated, "
+        "rrf_score(rank() OVER ("
+        "ORDER BY ts_rank_cd(search_vector, query) DESC"
+        ")) AS rrf_score "
+        "FROM chunks, plainto_tsquery('english', %s) query "
+        "WHERE search_vector @@ query "
+        + gen_where_bm25
+        + "ORDER BY ts_rank_cd(search_vector, query) DESC "
+        "LIMIT 20) "
+        ") searches "
+        "GROUP BY id, source_url, title, content, doc_type, generations, "
+        "context_header, deprecated "
+        "ORDER BY score DESC "
+        "LIMIT %s"
+    )
+
+    # Build params tuple based on whether generation filter is active.
+    params: list[object] = []
+    # Dense sub-query params
+    params.append(query_embedding)  # for <=> comparison in rank()
+    if generation_filter:
+        params.append(generation_filter)
+    params.append(query_embedding)  # for ORDER BY
+    # BM25 sub-query params
+    params.append(query_text)
+    if generation_filter:
+        params.append(generation_filter)
+    # Outer limit
+    params.append(limit)
+
+    async with conn.cursor() as cur:
+        await cur.execute(sql, tuple(params))
+        rows = await cur.fetchall()
+
+    return _rows_to_results(rows)
+
+
+__all__ = [
+    "SearchResult",
+    "async_hybrid_search",
+    "bm25_search",
+    "dense_search",
+    "hybrid_search",
+]
