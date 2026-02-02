@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** A running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via REST API and MCP server.
-**Current focus:** Phase 23.1 -- WordPress Parser Fix (INSERTED, next)
+**Current focus:** Phase 23.1 -- WordPress Parser Fix (INSERTED)
 
 ## Current Position
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
 Phase: 23.1 (WordPress Parser Fix -- INSERTED)
 Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-02 -- Completed 23.1-02-PLAN.md (README documentation)
+Status: In progress (Plan 01 complete, Plan 02 complete)
+Last activity: 2026-02-02 -- Completed 23.1-01-PLAN.md (WordPress parser fix + Content-Type PDF detection)
 
 Progress: [█████████░] 82%
 
@@ -25,7 +25,7 @@ Progress: [█████████░] 82%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 6 phases, 9 plans (RAG deployment -- in progress, +23.1 inserted)
-- **Total: 25 phases, 57 plans (54 complete)**
+- **Total: 25 phases, 57 plans (55 complete)**
 
 ## Accumulated Context
 
@@ -57,10 +57,12 @@ Recent decisions affecting current work:
 - Individual volume mounts per source repo (symlinks don't resolve across Docker boundaries)
 - rrf_score function uses bigint to match rank() return type
 - Document Docker as primary deployment path with local as secondary in README
+- Keep _fetch_page() for backward compat; _fetch_response() for header-based routing
+- Content-Type substring check for PDF detection handles MIME params
 
 ### Pending Todos
 
-- Batch embedding requests (send 32+ chunks per Ollama `/api/embed` call instead of 1-at-a-time)
+- ~~Batch embedding requests~~ VERIFIED: already implemented (batch_size=64, embed_batch() -> ollama.embed(input=texts))
 - Concurrent ingestion workers (parallel embedding calls to keep GPU saturated)
 - Persistent HTTP connection reuse for Ollama embedding calls during ingestion
 - Map source_url to clickable HTTP links (e.g., flare:// → https://documentation.basis.cloud/...) — high value for chat users who want to read the full doc
@@ -77,6 +79,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Completed 23.1-02-PLAN.md (README documentation)
+Stopped at: Completed 23.1-01-PLAN.md (WordPress parser fix + Content-Type PDF detection)
 Resume file: None
-Next action: Execute 23.1-03-PLAN.md
+Next action: Execute 23.1-03-PLAN.md (re-ingestion)
