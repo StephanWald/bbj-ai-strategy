@@ -104,7 +104,7 @@ Plans:
 **Goal**: The complete system is proven to work -- a user query enters through either REST API or MCP, hits real ingested BBj documentation, and returns relevant results
 **Depends on**: Phases 22 and 23 (both interfaces operational)
 **Requirements**: E2E-01, E2E-02
-**Plans**: TBD
+**Plans**: 1 plan
 
 **Success Criteria** (what must be TRUE):
 1. A REST API query about a known BBj topic (e.g., "How do I create a BBjGrid?") returns chunks from the real corpus that answer the question
@@ -112,7 +112,7 @@ Plans:
 3. Results from both interfaces include chunks from multiple sources (not just one parser's output)
 
 Plans:
-- [ ] 24-01: REST API validation + MCP validation + cross-source verification
+- [ ] 24-01-PLAN.md -- E2E validation script + report generation (REST API + MCP + cross-source)
 
 ---
 
