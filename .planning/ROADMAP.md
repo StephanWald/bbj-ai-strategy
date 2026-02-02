@@ -14,7 +14,7 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 - [x] **Phase 21: Data Configuration + Ingestion** - All 6 real sources wired and ingested into pgvector via Docker
 - [x] **Phase 22: REST Retrieval API** - FastAPI endpoints for search, health, and stats over the populated corpus
 - [x] **Phase 23: MCP Server** - `search_bbj_knowledge` tool via stdio transport for Claude Desktop
-- [ ] **Phase 23.1: WordPress Parser Fix** - PDF handling fix, batch embeddings, full re-ingest, README update (INSERTED)
+- [x] **Phase 23.1: WordPress Parser Fix** - PDF handling fix, batch embeddings, full re-ingest, README update (INSERTED)
 - [ ] **Phase 24: End-to-End Validation** - Prove the full pipeline works: query in, relevant BBj docs out, through both interfaces
 
 ## Phase Details
@@ -97,7 +97,7 @@ Plans:
 - [x] 23.1-01-PLAN.md -- WordPress parser Content-Type PDF detection fix + tests
 - [x] 23.1-02-PLAN.md -- README Docker/API/MCP documentation update
 - [x] 23.1-03-PLAN.md -- Full clean re-ingest via Docker with verification
-- [ ] 23.1-04-PLAN.md -- Gap closure: Re-ingest Advantage source + database verification
+- [x] 23.1-04-PLAN.md -- Gap closure: Re-ingest Advantage source + database verification
 
 ### Phase 24: End-to-End Validation
 
@@ -155,10 +155,10 @@ Plans:
 | 21. Data Configuration + Ingestion | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 22. REST Retrieval API | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 23. MCP Server | v1.4 | 1/1 | Complete | 2026-02-02 |
-| 23.1. WordPress Parser Fix | v1.4 | 3/4 | Gap closure | 2026-02-02 |
+| 23.1. WordPress Parser Fix | v1.4 | 4/4 | Complete | 2026-02-02 |
 | 24. End-to-End Validation | v1.4 | 0/1 | Not started | - |
 
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-02 (Phase 23.1 inserted)_
+_Last updated: 2026-02-02 (Phase 23.1 complete with gap closure)_
