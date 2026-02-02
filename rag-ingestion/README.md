@@ -228,6 +228,124 @@ bbj-rag validate
 
 Requires a populated database with embedded chunks. Delegates to pytest with the `search_validation` marker.
 
+### All-Source Ingestion
+
+Ingest every enabled source from `sources.toml` in a single command:
+
+```bash
+bbj-ingest-all --config sources.toml --data-dir /path/to/data
+```
+
+**Options:**
+
+| Flag | Required | Default | Description |
+|------|----------|---------|-------------|
+| `--config` | No | `sources.toml` | Path to sources config file |
+| `--data-dir` | No | from config/env | Override base data directory |
+| `--clean` | No | off | Wipe existing chunks before re-ingesting each source |
+| `--resume` | No | off | Skip sources completed in a previous interrupted run |
+| `--source` | No | all | Run only named sources (repeatable) |
+| `-v, --verbose` | No | off | Per-file progress output |
+
+```bash
+# Ingest only specific sources
+bbj-ingest-all --config sources.toml --source flare --source pdf
+
+# Clean re-ingest with verbose output
+bbj-ingest-all --config sources.toml --clean -v
+```
+
+## Docker Usage
+
+Docker Compose is the primary deployment path. It runs pgvector and the FastAPI app together, with Ollama running on the host for GPU acceleration.
+
+### Quick Start
+
+```bash
+cd rag-ingestion
+cp .env.example .env   # edit credentials (at minimum, change BBJ_RAG_DB_PASSWORD)
+```
+
+Ensure Ollama is running on the host and listening on all interfaces:
+
+```bash
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+```
+
+Start the services:
+
+```bash
+docker compose up -d      # start pgvector + app
+docker compose logs -f     # watch startup (Ctrl-C to detach)
+```
+
+The app waits for the database health check to pass before starting. On first launch, the schema is applied automatically via the init script mounted into pgvector.
+
+### Environment Variables (.env)
+
+Copy `.env.example` to `.env` and edit as needed. Key variables:
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BBJ_RAG_DB_PASSWORD` | Yes | -- | Database password (fail-fast if unset) |
+| `BBJ_RAG_DB_USER` | No | `bbj` | Database user |
+| `BBJ_RAG_DB_NAME` | No | `bbj_rag` | Database name |
+| `DB_PORT_EXTERNAL` | No | `10432` | Host port mapped to PostgreSQL |
+| `APP_PORT_EXTERNAL` | No | `10800` | Host port mapped to the REST API |
+| `BBJDOCS_PATH` | No | `/Users/beff/bbjdocs` | Host path to Flare docs |
+| `BBJ_AI_STRATEGY_PATH` | No | `/Users/beff/_workspace/bbj-ai-strategy` | Host path to this repo |
+| `BBJ_DWC_TUTORIAL_PATH` | No | `/Users/beff/_workspace/bbj-dwc-tutorial` | Host path to DWC tutorial |
+| `BBJ_BEGINNER_TUTORIAL_PATH` | No | `/Users/beff/_workspace/bbj-beginner-tutorial` | Host path to beginner tutorial |
+| `BBJ_DB_MODERNIZATION_PATH` | No | `/Users/beff/_workspace/bbj-db-modernization-tutorial` | Host path to DB modernization tutorial |
+
+Source data directories are mounted as read-only volumes into the container at `/data`. The compose environment sets `DATA_DIR=/data` so `sources.toml` paths resolve automatically.
+
+### Ingestion via Docker
+
+All CLI commands work inside the running container via `docker compose exec`:
+
+**All sources:**
+
+```bash
+# Local
+bbj-ingest-all --config sources.toml --data-dir /path/to/data
+
+# Docker
+docker compose exec app bbj-ingest-all --config sources.toml
+```
+
+**Single source:**
+
+```bash
+# Local
+bbj-rag ingest --source flare
+
+# Docker
+docker compose exec app bbj-rag ingest --source flare
+```
+
+**Full clean re-ingest:**
+
+```bash
+# Local
+bbj-ingest-all --config sources.toml --data-dir /path/to/data --clean
+
+# Docker
+docker compose exec app bbj-ingest-all --config sources.toml --clean
+```
+
+**Parse only (no embedding):**
+
+```bash
+# Local
+bbj-rag parse --source pdf
+
+# Docker
+docker compose exec app bbj-rag parse --source pdf
+```
+
+Inside Docker, `DATA_DIR=/data` is set by the compose environment, so `--data-dir` is not needed. Source data is mounted read-only from the host paths configured in `.env`.
+
 ## Project Structure
 
 ```
