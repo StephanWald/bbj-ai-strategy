@@ -9,11 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 
 ## Current Position
 
-Milestone: v1.4 RAG Deployment -- COMPLETE
+Milestone: v1.4 RAG Deployment -- COMPLETE (all gaps closed)
 Phase: 24 (End-to-End Validation) -- COMPLETE
-Plan: 1 of 1 in current phase (complete)
-Status: v1.4 milestone fully validated. VALIDATION.md proves end-to-end pipeline works.
-Last activity: 2026-02-02 -- Completed 24-01-PLAN.md (end-to-end validation)
+Plan: 2 of 2 in current phase (complete)
+Status: v1.4 milestone fully validated with all 6 sources in corpus. PDF gap closed.
+Last activity: 2026-02-02 -- Completed 24-02-PLAN.md (PDF ingestion gap closure)
 
 Progress: [██████████] 100%
 
@@ -24,8 +24,8 @@ Progress: [██████████] 100%
 - v1.1: 2 phases, 5 plans (code corrections + branding)
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
-- v1.4: 7 phases, 11 plans (RAG deployment + validation, including 23.1 gap closure)
-- **Total: 26 phases, 59 plans (59 complete)**
+- v1.4: 7 phases, 12 plans (RAG deployment + validation, including 23.1 gap closure + PDF fix)
+- **Total: 26 phases, 60 plans (60 complete)**
 
 ## Accumulated Context
 
@@ -62,6 +62,8 @@ Recent decisions affecting current work:
 - Lightweight keyword heuristics for automated validation pass/fail assessment
 - Single MCP ClientSession for all validation queries (avoid per-query process spawn)
 - Cross-source validation via query results, not direct DB prefix queries
+- pymupdf4llm page_chunks=True suppresses heading detection; use single-string conversion for section-based parsing
+- Full-document fallback in PdfParser for PDFs with no detectable headings
 
 ### Pending Todos
 
@@ -84,6 +86,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Completed 24-01-PLAN.md (end-to-end validation) -- v1.4 MILESTONE COMPLETE
+Stopped at: Completed 24-02-PLAN.md (PDF ingestion gap closure) -- v1.4 MILESTONE FULLY VALIDATED
 Resume file: None
-Next action: None -- v1.4 milestone is fully complete. All 26 phases and 59 plans delivered.
+Next action: None -- v1.4 milestone fully complete with all 6 sources in corpus. 26 phases, 60 plans delivered.
