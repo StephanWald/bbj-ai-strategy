@@ -346,6 +346,166 @@ docker compose exec app bbj-rag parse --source pdf
 
 Inside Docker, `DATA_DIR=/data` is set by the compose environment, so `--data-dir` is not needed. Source data is mounted read-only from the host paths configured in `.env`.
 
+## REST API
+
+The app exposes a REST API on port 10800 (configurable via `APP_PORT_EXTERNAL`). Three endpoints are available.
+
+### POST /search
+
+Hybrid search over the BBj documentation corpus. Embeds the query via Ollama, runs dense + BM25 RRF search against pgvector, and returns ranked results.
+
+```bash
+curl -s http://localhost:10800/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "BBjGrid", "limit": 5}' | python -m json.tool
+```
+
+With generation filter:
+
+```bash
+curl -s http://localhost:10800/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "BBjGrid", "generation": "dwc", "limit": 5}' | python -m json.tool
+```
+
+**Request body:**
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `query` | string | Yes | -- | Search query text |
+| `generation` | string | No | `null` | Filter by BBj generation: `all`, `character`, `vpro5`, `bbj-gui`, `dwc` |
+| `limit` | int | No | `10` | Maximum results (1--50) |
+
+**Response:**
+
+```json
+{
+  "query": "BBjGrid",
+  "results": [
+    {
+      "content": "The BBjGrid control provides...",
+      "title": "BBjGrid",
+      "source_url": "flare://BBjGrid.htm",
+      "doc_type": "api-reference",
+      "generations": ["bbj_gui", "dwc"],
+      "context_header": "BBj Controls > BBjGrid",
+      "deprecated": false,
+      "score": 0.032
+    }
+  ],
+  "count": 1
+}
+```
+
+### GET /health
+
+Component health check for database and Ollama connectivity.
+
+```bash
+curl -s http://localhost:10800/health | python -m json.tool
+```
+
+Returns HTTP 200 when healthy, 503 when degraded (partial) or unhealthy (all checks failed).
+
+**Response:**
+
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "database": "ok",
+    "ollama": "ok"
+  }
+}
+```
+
+Status values: `healthy` (all checks pass), `degraded` (some pass), `unhealthy` (none pass).
+
+### GET /stats
+
+Corpus statistics showing total chunk count and breakdowns by document type and generation tag.
+
+```bash
+curl -s http://localhost:10800/stats | python -m json.tool
+```
+
+**Response:**
+
+```json
+{
+  "total_chunks": 4173,
+  "by_source": {
+    "api-reference": 1956,
+    "concept": 892,
+    "tutorial": 312
+  },
+  "by_generation": {
+    "all": 1823,
+    "bbj_gui": 1412,
+    "dwc": 634
+  }
+}
+```
+
+## MCP Server (Claude Desktop)
+
+The MCP server enables Claude Desktop to search the BBj documentation corpus via the `search_bbj_knowledge` tool. It runs on the **host** (not inside Docker) using stdio transport, and proxies search requests to the REST API running in Docker.
+
+### Prerequisites
+
+The REST API must be running:
+
+```bash
+cd rag-ingestion
+docker compose up -d
+curl -s http://localhost:10800/health   # verify healthy
+```
+
+### Claude Desktop Configuration
+
+Add the following to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "bbj-knowledge": {
+      "command": "uv",
+      "args": ["--directory", "/path/to/rag-ingestion", "run", "bbj-mcp"],
+      "env": {
+        "BBJ_RAG_API_URL": "http://localhost:10800"
+      }
+    }
+  }
+}
+```
+
+Replace `/path/to/rag-ingestion` with the absolute path to the `rag-ingestion` directory on your machine.
+
+### Usage
+
+1. Save the configuration and restart Claude Desktop.
+2. The `search_bbj_knowledge` tool will appear in the tool list (hammer icon).
+3. Ask Claude about BBj topics -- it will automatically search the documentation.
+
+**Tool parameters:**
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `query` | string | Yes | -- | Natural language search query about BBj |
+| `generation` | string | No | `null` | Filter: `all`, `character`, `vpro5`, `bbj-gui`, `dwc` |
+| `limit` | int | No | `5` | Maximum results (1--50) |
+
+### How It Works
+
+```
+Claude Desktop --stdio--> bbj-mcp (host) --HTTP--> REST API (Docker) --SQL--> pgvector
+```
+
+The MCP server (`bbj-mcp` entry point) is a thin proxy that:
+1. Receives tool calls from Claude Desktop over stdio JSON-RPC.
+2. Forwards search requests to the REST API at `BBJ_RAG_API_URL`.
+3. Formats results as LLM-friendly text blocks with source citations.
+
 ## Project Structure
 
 ```

@@ -45,28 +45,45 @@ def _soup(html: str) -> BeautifulSoup:
     return BeautifulSoup(html, "lxml")
 
 
-def _mock_get(url_map: dict[str, str | bytes]):
+def _mock_get(url_map: dict[str, str | bytes | tuple[str | bytes, str]]):
     """Create a mock ``httpx.Client.get`` returning canned responses.
 
-    Values may be ``str`` (HTML) or ``bytes`` (PDF).  Both ``.text`` and
-    ``.content`` are set so the mock works for HTML and PDF fetches.
+    Values may be:
+    - ``str`` -- HTML body (Content-Type defaults to ``text/html``)
+    - ``bytes`` -- binary body (Content-Type defaults to ``application/pdf``)
+    - ``(str|bytes, content_type)`` -- explicit Content-Type override
+
+    Both ``.text`` and ``.content`` are set so the mock works for HTML,
+    PDF, and ``_fetch_response()`` (header-based) code paths.
     """
 
     def mock_get(url: str) -> MagicMock:
         resp = MagicMock()
         if url in url_map:
             resp.status_code = 200
-            val = url_map[url]
+            raw = url_map[url]
+
+            # Unpack optional explicit content-type.
+            if isinstance(raw, tuple):
+                val, content_type = raw
+            elif isinstance(raw, bytes):
+                val, content_type = raw, "application/pdf"
+            else:
+                val, content_type = raw, "text/html; charset=utf-8"
+
             if isinstance(val, bytes):
                 resp.content = val
                 resp.text = ""
             else:
                 resp.text = val
                 resp.content = val.encode()
+
+            resp.headers = {"content-type": content_type}
         else:
             resp.status_code = 404
             resp.text = ""
             resp.content = b""
+            resp.headers = {"content-type": "text/html"}
         return resp
 
     return mock_get

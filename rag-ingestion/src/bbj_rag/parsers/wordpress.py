@@ -128,6 +128,32 @@ def _fetch_page(
     return None
 
 
+def _fetch_response(
+    client: httpx.Client,
+    url: str,
+    max_retries: int,
+) -> httpx.Response | None:
+    """Fetch a URL, retrying on transient errors.  Returns the raw response or *None*.
+
+    Unlike ``_fetch_page`` (which returns ``resp.text``), this returns the full
+    ``httpx.Response`` so callers can inspect headers (e.g. Content-Type) before
+    deciding how to handle the body.
+    """
+    for attempt in range(1 + max_retries):
+        try:
+            resp = client.get(url)
+            if resp.status_code == 200:
+                return resp
+            logger.warning(
+                "HTTP %d for %s (attempt %d)", resp.status_code, url, attempt + 1
+            )
+        except httpx.HTTPError as exc:
+            logger.warning("HTTP error for %s: %s (attempt %d)", url, exc, attempt + 1)
+        if attempt < max_retries:
+            time.sleep(1.0 * (attempt + 1))
+    return None
+
+
 def _extract_title_from_soup(soup: BeautifulSoup) -> str:
     """Extract a clean page title from *soup*.
 
@@ -277,13 +303,26 @@ class AdvantageParser:
                         if doc is not None:
                             yield doc
                 else:
-                    html = _fetch_page(client, url, self.max_retries)
-                    if html is None:
+                    resp = _fetch_response(client, url, self.max_retries)
+                    if resp is None:
                         logger.warning("Advantage: failed to fetch %s", url)
                         if i < len(urls):
                             time.sleep(self.rate_limit)
                         continue
 
+                    # Content-Type fallback: URL had no .pdf extension but
+                    # server responded with a PDF (e.g. redirect to PDF).
+                    ct = resp.headers.get("content-type", "")
+                    if "application/pdf" in ct.lower():
+                        logger.debug("Advantage: Content-Type PDF detected for %s", url)
+                        doc = self._parse_pdf_bytes(url, resp.content)
+                        if doc is not None:
+                            yield doc
+                        if i < len(urls):
+                            time.sleep(self.rate_limit)
+                        continue
+
+                    html = resp.text
                     soup = BeautifulSoup(html, "lxml")
                     title = _extract_title_from_soup(soup)
                     _strip_wp_chrome(soup)
