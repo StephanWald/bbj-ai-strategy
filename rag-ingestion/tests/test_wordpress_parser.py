@@ -14,7 +14,9 @@ from bbj_rag.parsers import DocumentParser
 from bbj_rag.parsers.wordpress import (
     AdvantageParser,
     KnowledgeBaseParser,
+    _is_pdf_url,
     _strip_wp_chrome,
+    _title_from_pdf_url,
 )
 
 # ---------------------------------------------------------------------------
@@ -31,6 +33,8 @@ _ADV_SM1 = "https://basis.cloud/advantage/sitemap-article-one/"
 _ADV_SM2 = "https://basis.cloud/advantage/sitemap-article-two/"
 _ADV_SITEMAP = "https://basis.cloud/post-sitemap.xml"
 
+_ADV_PDF1 = "https://basis.cloud/advantage/BBJSPCommandFramework.pdf"
+
 _KB_ART1 = "https://basis.cloud/knowledge-base/kb01069/getting-started/"
 _KB_ART2 = "https://basis.cloud/knowledge-base/kb01070/advanced-topics/"
 _KB_MEDIA = "https://basis.cloud/knowledge-base/kb99999/media-test/"
@@ -41,17 +45,28 @@ def _soup(html: str) -> BeautifulSoup:
     return BeautifulSoup(html, "lxml")
 
 
-def _mock_get(url_map: dict[str, str]):
-    """Create a mock ``httpx.Client.get`` returning canned responses."""
+def _mock_get(url_map: dict[str, str | bytes]):
+    """Create a mock ``httpx.Client.get`` returning canned responses.
+
+    Values may be ``str`` (HTML) or ``bytes`` (PDF).  Both ``.text`` and
+    ``.content`` are set so the mock works for HTML and PDF fetches.
+    """
 
     def mock_get(url: str) -> MagicMock:
         resp = MagicMock()
         if url in url_map:
             resp.status_code = 200
-            resp.text = url_map[url]
+            val = url_map[url]
+            if isinstance(val, bytes):
+                resp.content = val
+                resp.text = ""
+            else:
+                resp.text = val
+                resp.content = val.encode()
         else:
             resp.status_code = 404
             resp.text = ""
+            resp.content = b""
         return resp
 
     return mock_get
@@ -503,3 +518,143 @@ class TestStripWpChrome:
         assert "Footer" not in text
         assert "Comments" not in text
         assert "Widgets" not in text
+
+
+# ---------------------------------------------------------------------------
+# PDF helper tests
+# ---------------------------------------------------------------------------
+
+
+class TestIsPdfUrl:
+    def test_detects_pdf_extension(self):
+        assert _is_pdf_url("https://example.com/advantage/Doc.pdf") is True
+
+    def test_case_insensitive(self):
+        assert _is_pdf_url("https://example.com/advantage/Doc.PDF") is True
+
+    def test_non_pdf(self):
+        assert _is_pdf_url("https://example.com/advantage/article/") is False
+
+    def test_pdf_in_path_but_not_extension(self):
+        assert _is_pdf_url("https://example.com/pdf-files/article/") is False
+
+
+class TestTitleFromPdfUrl:
+    def test_camel_case_split(self):
+        url = "https://example.com/advantage/BBJSPCommandFramework.pdf"
+        assert _title_from_pdf_url(url) == "BBJSP Command Framework"
+
+    def test_underscores_replaced(self):
+        url = "https://example.com/advantage/my_great_doc.pdf"
+        assert _title_from_pdf_url(url) == "my great doc"
+
+    def test_hyphens_replaced(self):
+        url = "https://example.com/advantage/my-great-doc.pdf"
+        assert _title_from_pdf_url(url) == "my great doc"
+
+    def test_mixed_separators(self):
+        url = "https://example.com/advantage/CamelCase_and-mixed.pdf"
+        assert _title_from_pdf_url(url) == "Camel Case and mixed"
+
+    def test_simple_name(self):
+        url = "https://example.com/advantage/Overview.pdf"
+        assert _title_from_pdf_url(url) == "Overview"
+
+
+class TestRelativeUrlResolution:
+    def test_relative_href_resolved(self):
+        """Relative hrefs on the index page are resolved to absolute URLs."""
+        index_html = textwrap.dedent("""\
+            <html><body>
+            <a href="/advantage/relative-article/">Relative</a>
+            <a href="https://basis.cloud/advantage/absolute-article/">Absolute</a>
+            </body></html>
+        """)
+
+        with patch("httpx.Client") as MockClient:
+            instance = MockClient.return_value.__enter__.return_value
+            instance.get.side_effect = _mock_get({INDEX_URL_ADV: index_html})
+
+            urls = AdvantageParser._discover_article_urls(instance, INDEX_URL_ADV)
+
+        assert "https://basis.cloud/advantage/relative-article/" in urls
+        assert "https://basis.cloud/advantage/absolute-article/" in urls
+
+
+class TestParsePdfBytes:
+    @patch("bbj_rag.parsers.wordpress.pymupdf4llm")
+    @patch("bbj_rag.parsers.wordpress.pymupdf")
+    def test_parse_pdf_bytes_returns_document(self, mock_pymupdf, mock_pymupdf4llm):
+        """_parse_pdf_bytes yields a Document from valid PDF bytes."""
+        mock_pymupdf4llm.to_markdown.return_value = [
+            {"text": "Page one content."},
+            {"text": "Page two content."},
+        ]
+
+        url = "https://basis.cloud/advantage/MyArticle.pdf"
+        doc = AdvantageParser._parse_pdf_bytes(url, b"fake-pdf-bytes")
+
+        assert doc is not None
+        assert doc.source_url == url
+        assert doc.title == "My Article"
+        assert "Page one content." in doc.content
+        assert "Page two content." in doc.content
+        assert doc.metadata["source"] == "advantage"
+        assert doc.metadata["format"] == "pdf"
+        assert doc.doc_type == "article"
+
+    @patch("bbj_rag.parsers.wordpress.pymupdf4llm")
+    @patch("bbj_rag.parsers.wordpress.pymupdf")
+    def test_parse_pdf_bytes_empty_returns_none(self, mock_pymupdf, mock_pymupdf4llm):
+        """_parse_pdf_bytes returns None when PDF has no text."""
+        mock_pymupdf4llm.to_markdown.return_value = [
+            {"text": ""},
+            {"text": "   "},
+        ]
+
+        url = "https://basis.cloud/advantage/Empty.pdf"
+        doc = AdvantageParser._parse_pdf_bytes(url, b"fake-pdf-bytes")
+
+        assert doc is None
+
+
+class TestMixedContent:
+    @patch("bbj_rag.parsers.wordpress.pymupdf4llm")
+    @patch("bbj_rag.parsers.wordpress.pymupdf")
+    @patch("bbj_rag.parsers.wordpress.time.sleep")
+    def test_index_with_html_and_pdf_urls(
+        self, _mock_sleep, mock_pymupdf, mock_pymupdf4llm
+    ):
+        """Index with both HTML and PDF links yields Documents for each."""
+        index_html = textwrap.dedent(f"""\
+            <html><body>
+            <a href="{_ADV_ART1}">Article One</a>
+            <a href="{_ADV_PDF1}">PDF Article</a>
+            </body></html>
+        """)
+
+        url_map: dict[str, str | bytes] = {
+            INDEX_URL_ADV: index_html,
+            _ADV_ART1: ADVANTAGE_ARTICLE_HTML,
+            _ADV_PDF1: b"fake-pdf-bytes",
+        }
+
+        mock_pymupdf4llm.to_markdown.return_value = [
+            {"text": "PDF extracted content here."},
+        ]
+
+        with patch("httpx.Client") as MockClient:
+            instance = MockClient.return_value.__enter__.return_value
+            instance.get.side_effect = _mock_get(url_map)
+
+            parser = AdvantageParser(index_url=INDEX_URL_ADV, rate_limit=0.0)
+            docs = list(parser.parse())
+
+        assert len(docs) == 2
+        titles = {d.title for d in docs}
+        assert "Article One" in titles
+        assert "BBJSP Command Framework" in titles
+
+        pdf_doc = next(d for d in docs if d.metadata.get("format") == "pdf")
+        assert pdf_doc.metadata["source"] == "advantage"
+        assert "PDF extracted content" in pdf_doc.content

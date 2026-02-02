@@ -19,9 +19,12 @@ import re
 import time
 from collections.abc import Iterator
 from typing import Final
+from urllib.parse import urljoin, urlparse
 from xml.etree import ElementTree
 
 import httpx
+import pymupdf  # type: ignore[import-untyped]
+import pymupdf4llm  # type: ignore[import-untyped]
 from bs4 import BeautifulSoup, Tag
 
 from bbj_rag.models import Document
@@ -168,6 +171,57 @@ def _find_content(soup: BeautifulSoup, selectors: list[str]) -> Tag | None:
     return None
 
 
+def _is_pdf_url(url: str) -> bool:
+    """Return *True* if *url* points to a PDF (by extension)."""
+    return urlparse(url).path.lower().endswith(".pdf")
+
+
+def _fetch_pdf_bytes(
+    client: httpx.Client,
+    url: str,
+    max_retries: int,
+) -> bytes | None:
+    """Fetch a PDF URL, retrying on transient errors.  Returns bytes or *None*."""
+    for attempt in range(1 + max_retries):
+        try:
+            resp = client.get(url)
+            if resp.status_code == 200:
+                return resp.content
+            logger.warning(
+                "HTTP %d for %s (attempt %d)", resp.status_code, url, attempt + 1
+            )
+        except httpx.HTTPError as exc:
+            logger.warning("HTTP error for %s: %s (attempt %d)", url, exc, attempt + 1)
+        if attempt < max_retries:
+            time.sleep(1.0 * (attempt + 1))
+    return None
+
+
+# Regex that inserts a space before an uppercase letter that follows a
+# lowercase letter or before an uppercase letter followed by a lowercase
+# letter (handles runs like "BBJSPCommand" -> "BBJSP Command").
+_CAMEL_RE = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+
+
+def _title_from_pdf_url(url: str) -> str:
+    """Derive a human-readable title from a PDF URL.
+
+    Strips the ``.pdf`` extension, inserts spaces at camelCase boundaries,
+    and replaces ``_`` / ``-`` with spaces.
+    """
+    path = urlparse(url).path
+    filename = path.rsplit("/", 1)[-1]
+    if filename.lower().endswith(".pdf"):
+        filename = filename[:-4]
+    # Insert spaces at camelCase boundaries.
+    title = _CAMEL_RE.sub(" ", filename)
+    # Replace underscores and hyphens with spaces.
+    title = title.replace("_", " ").replace("-", " ")
+    # Collapse multiple spaces.
+    title = re.sub(r" {2,}", " ", title).strip()
+    return title or "Untitled"
+
+
 # ---------------------------------------------------------------------------
 # AdvantageParser
 # ---------------------------------------------------------------------------
@@ -213,38 +267,95 @@ class AdvantageParser:
 
             for i, url in enumerate(urls, 1):
                 logger.debug("Advantage: fetching %d/%d %s", i, len(urls), url)
-                html = _fetch_page(client, url, self.max_retries)
-                if html is None:
-                    logger.warning("Advantage: failed to fetch %s", url)
-                    continue
 
-                soup = BeautifulSoup(html, "lxml")
-                title = _extract_title_from_soup(soup)
-                _strip_wp_chrome(soup)
+                if _is_pdf_url(url):
+                    pdf_bytes = _fetch_pdf_bytes(client, url, self.max_retries)
+                    if pdf_bytes is None:
+                        logger.warning("Advantage: failed to fetch PDF %s", url)
+                    else:
+                        doc = self._parse_pdf_bytes(url, pdf_bytes)
+                        if doc is not None:
+                            yield doc
+                else:
+                    html = _fetch_page(client, url, self.max_retries)
+                    if html is None:
+                        logger.warning("Advantage: failed to fetch %s", url)
+                        if i < len(urls):
+                            time.sleep(self.rate_limit)
+                        continue
 
-                content_root = _find_content(soup, list(_ADVANTAGE_CONTENT_SELECTORS))
-                if content_root is None:
-                    logger.debug("Advantage: no content container for %s", url)
-                    continue
+                    soup = BeautifulSoup(html, "lxml")
+                    title = _extract_title_from_soup(soup)
+                    _strip_wp_chrome(soup)
 
-                content = _html_to_markdown(content_root)
-                if not content.strip():
-                    logger.debug("Advantage: empty content for %s", url)
-                    continue
+                    content_root = _find_content(
+                        soup, list(_ADVANTAGE_CONTENT_SELECTORS)
+                    )
+                    if content_root is None:
+                        logger.debug("Advantage: no content container for %s", url)
+                        if i < len(urls):
+                            time.sleep(self.rate_limit)
+                        continue
 
-                yield Document(
-                    source_url=url,
-                    title=title,
-                    doc_type="article",
-                    content=content,
-                    generations=["bbj"],
-                    context_header=f"Advantage Magazine > {title}",
-                    metadata={"source": "advantage"},
-                    deprecated=False,
-                )
+                    content = _html_to_markdown(content_root)
+                    if not content.strip():
+                        logger.debug("Advantage: empty content for %s", url)
+                        if i < len(urls):
+                            time.sleep(self.rate_limit)
+                        continue
+
+                    yield Document(
+                        source_url=url,
+                        title=title,
+                        doc_type="article",
+                        content=content,
+                        generations=["bbj"],
+                        context_header=f"Advantage Magazine > {title}",
+                        metadata={"source": "advantage"},
+                        deprecated=False,
+                    )
 
                 if i < len(urls):
                     time.sleep(self.rate_limit)
+
+    # ------------------------------------------------------------------
+    # PDF handling
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _parse_pdf_bytes(url: str, pdf_bytes: bytes) -> Document | None:
+        """Parse in-memory PDF bytes into a single ``Document``.
+
+        Returns *None* when the PDF yields no extractable text.
+        """
+        doc = pymupdf.open(stream=pdf_bytes, filetype="pdf")
+        data: list[dict[str, object]] = pymupdf4llm.to_markdown(
+            doc, page_chunks=True, write_images=False
+        )
+
+        page_texts: list[str] = []
+        for page_data in data:
+            text = page_data.get("text", "")
+            if isinstance(text, str) and text.strip():
+                page_texts.append(text)
+
+        if not page_texts:
+            logger.debug("Advantage: empty PDF %s", url)
+            return None
+
+        content = "\n\n".join(page_texts)
+        title = _title_from_pdf_url(url)
+
+        return Document(
+            source_url=url,
+            title=title,
+            doc_type="article",
+            content=content,
+            generations=["bbj"],
+            context_header=f"Advantage Magazine > {title}",
+            metadata={"source": "advantage", "format": "pdf"},
+            deprecated=False,
+        )
 
     # ------------------------------------------------------------------
     # URL discovery
@@ -269,7 +380,7 @@ class AdvantageParser:
             href = a_tag["href"]
             if isinstance(href, list):
                 href = href[0]
-            href = str(href)
+            href = urljoin(index_url, str(href))
             if "/advantage/" not in href:
                 continue
             # Skip the index page itself.
@@ -286,8 +397,6 @@ class AdvantageParser:
 
     def _sitemap_fallback(self, client: httpx.Client) -> list[str]:
         """Try to discover article URLs from the post sitemap."""
-        from urllib.parse import urlparse
-
         parsed = urlparse(self.index_url)
         sitemap_url = f"{parsed.scheme}://{parsed.netloc}/post-sitemap.xml"
         html = _fetch_page(client, sitemap_url, max_retries=1)
@@ -425,8 +534,6 @@ class KnowledgeBaseParser:
 
     def _sitemap_fallback(self, client: httpx.Client) -> list[str]:
         """Try to discover KB URLs from sitemaps."""
-        from urllib.parse import urlparse
-
         parsed = urlparse(self.index_url)
         base = f"{parsed.scheme}://{parsed.netloc}"
         sitemap_candidates = [f"{base}/kb-sitemap.xml", f"{base}/sitemap.xml"]
