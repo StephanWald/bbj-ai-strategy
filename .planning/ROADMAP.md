@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS
 **Phases:** 20-24 (+23.1)
-**Total Plans:** 12
+**Total Plans:** 13
 
 ## Overview
 
@@ -91,12 +91,13 @@ Plans:
 
 **Goal**: Fix WordPress parser PDF handling (binary garbage bug), add Content-Type detection, full re-ingest all sources, and update README with Docker + API + MCP documentation
 **Depends on**: Phase 23
-**Plans**: 3 plans
+**Plans**: 4 plans (3 original + 1 gap closure)
 
 Plans:
 - [x] 23.1-01-PLAN.md -- WordPress parser Content-Type PDF detection fix + tests
 - [x] 23.1-02-PLAN.md -- README Docker/API/MCP documentation update
 - [x] 23.1-03-PLAN.md -- Full clean re-ingest via Docker with verification
+- [ ] 23.1-04-PLAN.md -- Gap closure: Re-ingest Advantage source + database verification
 
 ### Phase 24: End-to-End Validation
 
@@ -154,7 +155,7 @@ Plans:
 | 21. Data Configuration + Ingestion | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 22. REST Retrieval API | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 23. MCP Server | v1.4 | 1/1 | Complete | 2026-02-02 |
-| 23.1. WordPress Parser Fix | v1.4 | 3/3 | Complete | 2026-02-02 |
+| 23.1. WordPress Parser Fix | v1.4 | 3/4 | Gap closure | 2026-02-02 |
 | 24. End-to-End Validation | v1.4 | 0/1 | Not started | - |
 
 ---
