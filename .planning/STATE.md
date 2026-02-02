@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** A running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via REST API and MCP server.
-**Current focus:** Phase 23 -- MCP Server (next)
+**Current focus:** Phase 24 -- End-to-End Validation (next)
 
 ## Current Position
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
-Phase: 23 of 24 (MCP Server)
+Phase: 24 of 24 (End-to-End Validation)
 Plan: 0 of 1 in current phase
-Status: Phase 22 complete, Phase 23 not started
-Last activity: 2026-02-01 -- Phase 22 verified and complete
+Status: Phase 23 complete, Phase 24 not started
+Last activity: 2026-02-02 -- Phase 23 verified and complete
 
-Progress: [██████░░░░] 53%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -24,8 +24,8 @@ Progress: [██████░░░░] 53%
 - v1.1: 2 phases, 5 plans (code corrections + branding)
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
-- v1.4: 5 phases, 8 plans (RAG deployment -- in progress)
-- **Total: 24 phases, 53 plans (51 complete)**
+- v1.4: 5 phases, 9 plans (RAG deployment -- in progress)
+- **Total: 24 phases, 54 plans (52 complete)**
 
 ## Accumulated Context
 
@@ -53,20 +53,25 @@ Recent decisions affecting current work:
 - Annotated[T, Depends()] pattern for FastAPI DI (ruff B008 compliance)
 - tuple_row cursor factory for mypy-safe row indexing in /stats endpoint
 - Sync psycopg fallback in health check for early startup race condition
+- MCP SDK v1.x (mcp>=1.25,<2) with FastMCP for single-tool server
+- Individual volume mounts per source repo (symlinks don't resolve across Docker boundaries)
+- rrf_score function uses bigint to match rank() return type
 
 ### Pending Todos
 
-None.
+- Batch embedding requests (send 32+ chunks per Ollama `/api/embed` call instead of 1-at-a-time)
+- Concurrent ingestion workers (parallel embedding calls to keep GPU saturated)
+- Persistent HTTP connection reuse for Ollama embedding calls during ingestion
+- Map source_url to clickable HTTP links (e.g., flare:// → https://documentation.basis.cloud/...) — high value for chat users who want to read the full doc
 
 ### Blockers/Concerns
 
 - Ollama must be running on host with `OLLAMA_HOST=0.0.0.0:11434` for Docker connectivity
 - shm_size required for pgvector HNSW index builds (256mb minimum)
-- Flare source (bbjdocs) directory not present on host -- will error during validation until Flare export is available
 
 ## Session Continuity
 
-Last session: 2026-02-01
-Stopped at: Phase 22 verified and complete (REST Retrieval API)
+Last session: 2026-02-02
+Stopped at: Phase 23 verified and complete (MCP Server)
 Resume file: None
-Next action: `/gsd:discuss-phase 23` or `/gsd:plan-phase 23`
+Next action: `/gsd:plan-phase 24` or `/gsd:discuss-phase 24`

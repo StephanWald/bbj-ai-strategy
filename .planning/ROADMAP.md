@@ -13,7 +13,7 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 - [x] **Phase 20: Docker + Database Foundation** - Containerized pgvector and Python app with schema initialization, Ollama connectivity, and env-based config
 - [x] **Phase 21: Data Configuration + Ingestion** - All 6 real sources wired and ingested into pgvector via Docker
 - [x] **Phase 22: REST Retrieval API** - FastAPI endpoints for search, health, and stats over the populated corpus
-- [ ] **Phase 23: MCP Server** - `search_bbj_knowledge` tool via stdio transport for Claude Desktop
+- [x] **Phase 23: MCP Server** - `search_bbj_knowledge` tool via stdio transport for Claude Desktop
 - [ ] **Phase 24: End-to-End Validation** - Prove the full pipeline works: query in, relevant BBj docs out, through both interfaces
 
 ## Phase Details
@@ -84,7 +84,7 @@ Plans:
 4. MCP server runs on the host via stdio transport (not inside Docker)
 
 Plans:
-- [ ] 23-01-PLAN.md -- MCP server module + stdio transport + Claude Desktop config
+- [x] 23-01-PLAN.md -- MCP server module + stdio transport + Claude Desktop config
 
 ### Phase 24: End-to-End Validation
 
@@ -141,10 +141,10 @@ Plans:
 | 20. Docker + Database Foundation | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 21. Data Configuration + Ingestion | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 22. REST Retrieval API | v1.4 | 2/2 | Complete | 2026-02-01 |
-| 23. MCP Server | v1.4 | 0/1 | Not started | - |
+| 23. MCP Server | v1.4 | 1/1 | Complete | 2026-02-02 |
 | 24. End-to-End Validation | v1.4 | 0/1 | Not started | - |
 
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-02 (Phase 23 planned)_
+_Last updated: 2026-02-02 (Phase 23 complete)_

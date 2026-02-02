@@ -34,10 +34,10 @@
 
 ### MCP Server
 
-- [ ] **MCP-01**: `search_bbj_knowledge` tool implemented matching Chapter 2's JSON schema definition
-- [ ] **MCP-02**: MCP server uses stdio transport (Claude Desktop spawns it as local process)
-- [ ] **MCP-03**: Tool returns formatted text responses optimized for LLM consumption (not raw JSON)
-- [ ] **MCP-04**: Tool supports `generation` parameter for filtering by BBj product generation
+- [x] **MCP-01**: `search_bbj_knowledge` tool implemented matching Chapter 2's JSON schema definition
+- [x] **MCP-02**: MCP server uses stdio transport (Claude Desktop spawns it as local process)
+- [x] **MCP-03**: Tool returns formatted text responses optimized for LLM consumption (not raw JSON)
+- [x] **MCP-04**: Tool supports `generation` parameter for filtering by BBj product generation
 
 ### End-to-End Validation
 
@@ -98,10 +98,10 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 | API-04 | Phase 22 | Complete |
 | API-05 | Phase 22 | Complete |
 | API-06 | Phase 22 | Complete |
-| MCP-01 | Phase 23 | Pending |
-| MCP-02 | Phase 23 | Pending |
-| MCP-03 | Phase 23 | Pending |
-| MCP-04 | Phase 23 | Pending |
+| MCP-01 | Phase 23 | Complete |
+| MCP-02 | Phase 23 | Complete |
+| MCP-03 | Phase 23 | Complete |
+| MCP-04 | Phase 23 | Complete |
 | E2E-01 | Phase 24 | Pending |
 | E2E-02 | Phase 24 | Pending |
 
@@ -112,4 +112,4 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-01 after phase 22 completion*
+*Last updated: 2026-02-02 after phase 23 completion*
