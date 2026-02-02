@@ -675,3 +675,120 @@ class TestMixedContent:
         pdf_doc = next(d for d in docs if d.metadata.get("format") == "pdf")
         assert pdf_doc.metadata["source"] == "advantage"
         assert "PDF extracted content" in pdf_doc.content
+
+
+# ---------------------------------------------------------------------------
+# Content-Type-based PDF detection tests
+# ---------------------------------------------------------------------------
+
+_ADV_REDIRECT = "https://basis.cloud/advantage/some-redirect/"
+
+
+class TestContentTypePdfDetection:
+    """Tests for URLs that redirect to PDFs (no .pdf extension)."""
+
+    @patch("bbj_rag.parsers.wordpress.pymupdf4llm")
+    @patch("bbj_rag.parsers.wordpress.pymupdf")
+    @patch("bbj_rag.parsers.wordpress.time.sleep")
+    def test_redirect_url_detected_as_pdf_via_content_type(
+        self, _mock_sleep, mock_pymupdf, mock_pymupdf4llm
+    ):
+        """URL without .pdf extension but Content-Type PDF is parsed as PDF."""
+        index_html = textwrap.dedent(f"""\
+            <html><body>
+            <a href="{_ADV_REDIRECT}">Redirected PDF</a>
+            </body></html>
+        """)
+
+        url_map: dict[str, str | bytes | tuple[str | bytes, str]] = {
+            INDEX_URL_ADV: index_html,
+            _ADV_REDIRECT: (b"fake-pdf-bytes", "application/pdf"),
+        }
+
+        mock_pymupdf4llm.to_markdown.return_value = [
+            {"text": "Content from redirected PDF."},
+        ]
+
+        with patch("httpx.Client") as MockClient:
+            instance = MockClient.return_value.__enter__.return_value
+            instance.get.side_effect = _mock_get(url_map)
+
+            parser = AdvantageParser(index_url=INDEX_URL_ADV, rate_limit=0.0)
+            docs = list(parser.parse())
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc.metadata.get("format") == "pdf"
+        assert doc.doc_type == "article"
+        assert "Content from redirected PDF" in doc.content
+
+    @patch("bbj_rag.parsers.wordpress.pymupdf4llm")
+    @patch("bbj_rag.parsers.wordpress.pymupdf")
+    @patch("bbj_rag.parsers.wordpress.time.sleep")
+    def test_content_type_with_params_detected(
+        self, _mock_sleep, mock_pymupdf, mock_pymupdf4llm
+    ):
+        """Content-Type 'application/pdf; charset=utf-8' is still detected as PDF."""
+        index_html = textwrap.dedent(f"""\
+            <html><body>
+            <a href="{_ADV_REDIRECT}">Redirected PDF</a>
+            </body></html>
+        """)
+
+        url_map: dict[str, str | bytes | tuple[str | bytes, str]] = {
+            INDEX_URL_ADV: index_html,
+            _ADV_REDIRECT: (b"fake-pdf-bytes", "application/pdf; charset=utf-8"),
+        }
+
+        mock_pymupdf4llm.to_markdown.return_value = [
+            {"text": "PDF with charset param."},
+        ]
+
+        with patch("httpx.Client") as MockClient:
+            instance = MockClient.return_value.__enter__.return_value
+            instance.get.side_effect = _mock_get(url_map)
+
+            parser = AdvantageParser(index_url=INDEX_URL_ADV, rate_limit=0.0)
+            docs = list(parser.parse())
+
+        assert len(docs) == 1
+        assert docs[0].metadata.get("format") == "pdf"
+
+    @patch("bbj_rag.parsers.wordpress.time.sleep")
+    def test_html_content_type_parsed_normally(self, _mock_sleep):
+        """URL without .pdf extension and text/html Content-Type is parsed as HTML."""
+        index_html = textwrap.dedent(f"""\
+            <html><body>
+            <a href="{_ADV_REDIRECT}">Normal Article</a>
+            </body></html>
+        """)
+
+        article_html = textwrap.dedent("""\
+            <html>
+            <head><title>Redirect Article - BASIS International</title></head>
+            <body>
+            <div class="entry-content">
+              <h1>Redirect Article</h1>
+              <p>This is a normal HTML article.</p>
+            </div>
+            </body>
+            </html>
+        """)
+
+        url_map: dict[str, str | bytes | tuple[str | bytes, str]] = {
+            INDEX_URL_ADV: index_html,
+            _ADV_REDIRECT: (article_html, "text/html; charset=utf-8"),
+        }
+
+        with patch("httpx.Client") as MockClient:
+            instance = MockClient.return_value.__enter__.return_value
+            instance.get.side_effect = _mock_get(url_map)
+
+            parser = AdvantageParser(index_url=INDEX_URL_ADV, rate_limit=0.0)
+            docs = list(parser.parse())
+
+        assert len(docs) == 1
+        doc = docs[0]
+        assert doc.title == "Redirect Article"
+        assert "format" not in doc.metadata or doc.metadata.get("format") != "pdf"
+        assert "normal HTML article" in doc.content
