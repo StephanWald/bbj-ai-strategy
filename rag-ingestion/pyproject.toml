@@ -18,6 +18,7 @@ dependencies = [
     "python-frontmatter>=1.1,<2",
     "fastapi>=0.115,<1",
     "uvicorn[standard]>=0.34,<1",
+    "mcp[cli]>=1.25,<2",
 ]
 
 [build-system]
@@ -65,6 +66,7 @@ markers = ["search_validation: requires database with embedded chunks"]
 [project.scripts]
 bbj-rag = "bbj_rag.cli:cli"
 bbj-ingest-all = "bbj_rag.ingest_all:ingest_all"
+bbj-mcp = "bbj_rag.mcp_server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/bbj_rag"]
