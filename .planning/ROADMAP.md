@@ -2,7 +2,7 @@
 
 **Status:** IN PROGRESS
 **Phases:** 20-24 (+23.1)
-**Total Plans:** 13
+**Total Plans:** 14
 
 ## Overview
 
@@ -104,7 +104,7 @@ Plans:
 **Goal**: The complete system is proven to work -- a user query enters through either REST API or MCP, hits real ingested BBj documentation, and returns relevant results
 **Depends on**: Phases 22 and 23 (both interfaces operational)
 **Requirements**: E2E-01, E2E-02
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 **Success Criteria** (what must be TRUE):
 1. A REST API query about a known BBj topic (e.g., "How do I create a BBjGrid?") returns chunks from the real corpus that answer the question
@@ -112,7 +112,8 @@ Plans:
 3. Results from both interfaces include chunks from multiple sources (not just one parser's output)
 
 Plans:
-- [ ] 24-01-PLAN.md -- E2E validation script + report generation (REST API + MCP + cross-source)
+- [x] 24-01-PLAN.md -- E2E validation script + report generation (REST API + MCP + cross-source)
+- [ ] 24-02-PLAN.md -- Gap closure: Fix PDF volume mount, re-ingest, re-validate
 
 ---
 
@@ -156,7 +157,7 @@ Plans:
 | 22. REST Retrieval API | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 23. MCP Server | v1.4 | 1/1 | Complete | 2026-02-02 |
 | 23.1. WordPress Parser Fix | v1.4 | 4/4 | Complete | 2026-02-02 |
-| 24. End-to-End Validation | v1.4 | 0/1 | Not started | - |
+| 24. End-to-End Validation | v1.4 | 1/2 | In progress | - |
 
 ---
 
