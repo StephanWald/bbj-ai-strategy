@@ -1,6 +1,6 @@
 # Milestone v1.4: RAG Deployment
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 **Phases:** 20-24 (+23.1)
 **Total Plans:** 14
 
@@ -15,7 +15,7 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 - [x] **Phase 22: REST Retrieval API** - FastAPI endpoints for search, health, and stats over the populated corpus
 - [x] **Phase 23: MCP Server** - `search_bbj_knowledge` tool via stdio transport for Claude Desktop
 - [x] **Phase 23.1: WordPress Parser Fix** - PDF handling fix, batch embeddings, full re-ingest, README update (INSERTED)
-- [ ] **Phase 24: End-to-End Validation** - Prove the full pipeline works: query in, relevant BBj docs out, through both interfaces
+- [x] **Phase 24: End-to-End Validation** - Prove the full pipeline works: query in, relevant BBj docs out, through both interfaces
 
 ## Phase Details
 
@@ -113,7 +113,7 @@ Plans:
 
 Plans:
 - [x] 24-01-PLAN.md -- E2E validation script + report generation (REST API + MCP + cross-source)
-- [ ] 24-02-PLAN.md -- Gap closure: Fix PDF volume mount, re-ingest, re-validate
+- [x] 24-02-PLAN.md -- Gap closure: Diagnose PDF ingestion failure, fix root cause, re-validate
 
 ---
 
@@ -157,9 +157,9 @@ Plans:
 | 22. REST Retrieval API | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 23. MCP Server | v1.4 | 1/1 | Complete | 2026-02-02 |
 | 23.1. WordPress Parser Fix | v1.4 | 4/4 | Complete | 2026-02-02 |
-| 24. End-to-End Validation | v1.4 | 1/2 | In progress | - |
+| 24. End-to-End Validation | v1.4 | 2/2 | Complete | 2026-02-02 |
 
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-02 (Phase 23.1 complete with gap closure)_
+_Last updated: 2026-02-02 (Phase 24 complete with gap closure — v1.4 MILESTONE COMPLETE)_

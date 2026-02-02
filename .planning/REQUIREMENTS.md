@@ -41,8 +41,8 @@
 
 ### End-to-End Validation
 
-- [ ] **E2E-01**: Query the running REST API and receive relevant BBj documentation chunks
-- [ ] **E2E-02**: Query via MCP server from Claude Desktop and receive relevant BBj documentation chunks
+- [x] **E2E-01**: Query the running REST API and receive relevant BBj documentation chunks
+- [x] **E2E-02**: Query via MCP server from Claude Desktop and receive relevant BBj documentation chunks
 
 ## Future Requirements
 
@@ -102,8 +102,8 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 | MCP-02 | Phase 23 | Complete |
 | MCP-03 | Phase 23 | Complete |
 | MCP-04 | Phase 23 | Complete |
-| E2E-01 | Phase 24 | Pending |
-| E2E-02 | Phase 24 | Pending |
+| E2E-01 | Phase 24 | Complete |
+| E2E-02 | Phase 24 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 24 total
@@ -112,4 +112,4 @@ Deferred to later milestones. Tracked but not in v1.4 roadmap.
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-02 after phase 23 completion*
+*Last updated: 2026-02-02 after phase 24 completion — all v1.4 requirements complete*
