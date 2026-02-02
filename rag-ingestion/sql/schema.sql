@@ -52,7 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_chunks_generations_gin
 -- Combines dense vector and BM25 keyword rankings using RRF formula.
 -- rrf_k=50 is the standard constant that prevents division by zero
 -- and controls the influence of high-ranked results.
-CREATE OR REPLACE FUNCTION rrf_score(rank int, rrf_k int DEFAULT 50)
+CREATE OR REPLACE FUNCTION rrf_score(rank bigint, rrf_k bigint DEFAULT 50)
 RETURNS numeric AS $$
     SELECT COALESCE(1.0 / ($1 + $2), 0.0);
 $$ LANGUAGE sql IMMUTABLE;
