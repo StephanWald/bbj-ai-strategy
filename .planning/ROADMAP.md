@@ -94,9 +94,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 23.1-01-PLAN.md -- WordPress parser Content-Type PDF detection fix + tests
-- [ ] 23.1-02-PLAN.md -- README Docker/API/MCP documentation update
-- [ ] 23.1-03-PLAN.md -- Full clean re-ingest via Docker with verification
+- [x] 23.1-01-PLAN.md -- WordPress parser Content-Type PDF detection fix + tests
+- [x] 23.1-02-PLAN.md -- README Docker/API/MCP documentation update
+- [x] 23.1-03-PLAN.md -- Full clean re-ingest via Docker with verification
 
 ### Phase 24: End-to-End Validation
 
@@ -154,7 +154,7 @@ Plans:
 | 21. Data Configuration + Ingestion | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 22. REST Retrieval API | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 23. MCP Server | v1.4 | 1/1 | Complete | 2026-02-02 |
-| 23.1. WordPress Parser Fix | v1.4 | 0/3 | Not started | - |
+| 23.1. WordPress Parser Fix | v1.4 | 3/3 | Complete | 2026-02-02 |
 | 24. End-to-End Validation | v1.4 | 0/1 | Not started | - |
 
 ---

@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** A running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via REST API and MCP server.
-**Current focus:** Phase 23.1 -- WordPress Parser Fix (INSERTED)
+**Current focus:** Phase 24 -- End-to-End Validation
 
 ## Current Position
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
-Phase: 23.1 (WordPress Parser Fix -- INSERTED)
-Plan: 2 of 3 in current phase
-Status: In progress (Plan 01 complete, Plan 02 complete)
-Last activity: 2026-02-02 -- Completed 23.1-01-PLAN.md (WordPress parser fix + Content-Type PDF detection)
+Phase: 23.1 (WordPress Parser Fix -- INSERTED) -- COMPLETE
+Plan: 3 of 3 in current phase (all complete)
+Status: Phase 23.1 complete. Ready for Phase 24.
+Last activity: 2026-02-02 -- Completed 23.1-03-PLAN.md (clean re-ingest + verification)
 
-Progress: [█████████░] 82%
+Progress: [█████████░] 98%
 
 ## Performance Metrics
 
@@ -25,7 +25,7 @@ Progress: [█████████░] 82%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 6 phases, 9 plans (RAG deployment -- in progress, +23.1 inserted)
-- **Total: 25 phases, 57 plans (55 complete)**
+- **Total: 25 phases, 57 plans (56 complete)**
 
 ## Accumulated Context
 
@@ -79,6 +79,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Completed 23.1-01-PLAN.md (WordPress parser fix + Content-Type PDF detection)
+Stopped at: Completed 23.1-03-PLAN.md (clean re-ingest + verification) -- Phase 23.1 COMPLETE
 Resume file: None
-Next action: Execute 23.1-03-PLAN.md (re-ingestion)
+Next action: Phase 24 -- End-to-End Validation (final phase of v1.4)
