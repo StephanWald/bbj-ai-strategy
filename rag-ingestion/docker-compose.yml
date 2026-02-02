@@ -41,10 +41,16 @@ services:
     environment:
       - BBJ_RAG_DB_HOST=db
       - OLLAMA_HOST=http://host.docker.internal:11434
+      - DATA_DIR=/data
     ports:
       - "${APP_PORT_EXTERNAL:-10800}:8000"
     volumes:
-      - ${INGESTION_DATA_PATH:-./_data}:/data:ro
+      # Source data -- each repo mounted individually at the path sources.toml expects
+      - ${BBJDOCS_PATH:-/Users/beff/bbjdocs}:/data/bbjdocs:ro
+      - ${BBJ_AI_STRATEGY_PATH:-/Users/beff/_workspace/bbj-ai-strategy}:/data/bbj-ai-strategy:ro
+      - ${BBJ_DWC_TUTORIAL_PATH:-/Users/beff/_workspace/bbj-dwc-tutorial}:/data/bbj-dwc-tutorial:ro
+      - ${BBJ_BEGINNER_TUTORIAL_PATH:-/Users/beff/_workspace/bbj-beginner-tutorial}:/data/bbj-beginner-tutorial:ro
+      - ${BBJ_DB_MODERNIZATION_PATH:-/Users/beff/_workspace/bbj-db-modernization-tutorial}:/data/bbj-db-modernization-tutorial:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
