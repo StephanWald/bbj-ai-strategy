@@ -1,26 +1,26 @@
 # End-to-End Validation Report
 
-**Generated:** 2026-02-02 21:37 UTC
+**Generated:** 2026-02-02 22:14 UTC
 **Status:** FAIL (13/17 queries passed)
 
 ## Corpus Stats
 
 | Metric | Value |
 |--------|-------|
-| Total chunks | 50,392 |
+| Total chunks | 50,439 |
 | doc_type: flare | 44,587 |
-| doc_type: concept | 2,950 |
+| doc_type: concept | 2,960 |
 | doc_type: article | 1,798 |
-| doc_type: tutorial | 951 |
-| doc_type: example | 106 |
+| doc_type: tutorial | 954 |
+| doc_type: example | 140 |
 | generation: bbj | 48,263 |
 | generation: dwc | 984 |
 | generation: deprecated | 893 |
 | generation: superseded | 166 |
 | generation: not_implemented | 102 |
+| generation: bbj_gui | 74 |
 | generation: em | 64 |
-| generation: bbj_gui | 43 |
-| generation: all | 30 |
+| generation: all | 46 |
 | generation: bdt | 2 |
 
 ## Source-Targeted Queries
@@ -73,11 +73,11 @@
 ### Query 6: documentation.basis.cloud BBj reference
 
 - **Result:** FAIL
-- **Reason:** top result source_url 'flare://Content/util/autolic_util_auto_register_and_install_licenses_bbj.htm' does not start with 'https://documentation.basis.cloud/'
-- **Source:** `flare://Content/util/autolic_util_auto_register_and_install_licenses_bbj.htm`
-- **Title:** autolic Utility - Automatically Register and Install Licenses BBj
+- **Reason:** top result source_url 'mdx-beginner://10-event-handling/02-events.md' does not start with 'https://documentation.basis.cloud/'
+- **Source:** `mdx-beginner://10-event-handling/02-events.md`
+- **Title:** Event Types and Objects
 - **Score:** 0.0196
-- **Snippet:** util > autolic Utility - Automatically Register and Install Licenses BBj > BBj-Specific Information ## BBj-Specific Information
+- **Snippet:** Event Types and Objects > Live Validation on Text Change ### Live Validation on Text Change Use ON_EDIT_MODIFY for real-time input validation as...
 
 ## Topic-Based Queries
 
@@ -130,10 +130,10 @@
 
 - **Result:** PASS
 - **Reason:** keyword match in top result
-- **Source:** `mdx-beginner://07-file-io/index.md`
-- **Title:** File I/O and Record Access
+- **Source:** `flare://Content/commands/bbj-commands/open_verb_open_file_bbj.htm`
+- **Title:** OPEN Verb - Open File BBj
 - **Score:** 0.0196
-- **Snippet:** File I/O and Record Access > Practical Example: Customer File Operations ## Practical Example: Customer File Operations ```bbj REM ===== Customer...
+- **Snippet:** commands > bbj-commands > OPEN Verb - Open File BBj > BBj-Specific Information ## BBj-Specific Information
 
 ### Query 7: Migration from Visual PRO/5 to BBj
 
@@ -190,7 +190,7 @@
 - **customer information program BBj GUI example** (source-targeted): top result source_url 'https://documentation.basis.cloud/advantage/v12-2008/clientobject.pdf' does not start with 'pdf://'
 - **BBj sample source code PROCESS_EVENTS** (source-targeted): top result source_url 'https://documentation.basis.cloud/advantage/v11-2007/dragdrop.pdf' does not start with 'file://'
 - **Advantage magazine BBj article** (source-targeted): top result source_url 'flare://Content/util/autolic_util_auto_register_and_install_licenses_bbj.htm' does not start with 'https://basis.cloud/'
-- **documentation.basis.cloud BBj reference** (source-targeted): top result source_url 'flare://Content/util/autolic_util_auto_register_and_install_licenses_bbj.htm' does not start with 'https://documentation.basis.cloud/'
+- **documentation.basis.cloud BBj reference** (source-targeted): top result source_url 'mdx-beginner://10-event-handling/02-events.md' does not start with 'https://documentation.basis.cloud/'
 
 ### Missing Source Groups
 
