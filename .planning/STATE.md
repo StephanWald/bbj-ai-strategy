@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
 Phase: 23.1 (WordPress Parser Fix -- INSERTED)
-Plan: 0 of ? in current phase
-Status: Phase 23 complete, Phase 23.1 not planned yet
-Last activity: 2026-02-02 -- Phase 23.1 inserted after Phase 23
+Plan: 2 of 3 in current phase
+Status: In progress
+Last activity: 2026-02-02 -- Completed 23.1-02-PLAN.md (README documentation)
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 82%
 
 ## Performance Metrics
 
@@ -25,7 +25,7 @@ Progress: [████████░░] 80%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 6 phases, 9 plans (RAG deployment -- in progress, +23.1 inserted)
-- **Total: 25 phases, 54 plans (52 complete)**
+- **Total: 25 phases, 57 plans (54 complete)**
 
 ## Accumulated Context
 
@@ -56,6 +56,7 @@ Recent decisions affecting current work:
 - MCP SDK v1.x (mcp>=1.25,<2) with FastMCP for single-tool server
 - Individual volume mounts per source repo (symlinks don't resolve across Docker boundaries)
 - rrf_score function uses bigint to match rank() return type
+- Document Docker as primary deployment path with local as secondary in README
 
 ### Pending Todos
 
@@ -76,6 +77,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Phase 23.1 inserted (WordPress Parser Fix)
+Stopped at: Completed 23.1-02-PLAN.md (README documentation)
 Resume file: None
-Next action: `/gsd:plan-phase 23.1` or `/gsd:discuss-phase 23.1`
+Next action: Execute 23.1-03-PLAN.md
