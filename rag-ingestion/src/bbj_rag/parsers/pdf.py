@@ -74,6 +74,11 @@ def _classify_doc_type(title: str, content: str) -> str:
     return "concept"
 
 
+def _strip_bold(text: str) -> str:
+    """Remove markdown bold markers (``**...**``) from heading text."""
+    return re.sub(r"\*\*(.+?)\*\*", r"\1", text).strip()
+
+
 def _slugify(text: str) -> str:
     """Convert heading text to a URL-safe slug."""
     slug = text.lower().strip()
@@ -138,51 +143,34 @@ class PdfParser:
 
         doc = pymupdf.open(str(self._pdf_path))
 
-        # Try TOC-based header detection first
-        hdr_info = None
-        try:
-            hdr_info = pymupdf4llm.TocHeaders(doc)
-        except Exception:
-            logger.debug("TocHeaders failed, falling back to IdentifyHeaders")
-
-        if hdr_info is None or (hasattr(hdr_info, "__len__") and len(hdr_info) == 0):
-            try:
-                hdr_info = pymupdf4llm.IdentifyHeaders(doc, max_levels=3)
-            except Exception:
-                logger.warning("IdentifyHeaders also failed; using default headers")
-                hdr_info = None
-
-        # Convert to markdown with page chunks
-        kwargs: dict[str, object] = {
-            "page_chunks": True,
-            "write_images": False,
-        }
-        if hdr_info is not None:
-            kwargs["hdr_info"] = hdr_info
-
-        data: list[dict[str, object]] = pymupdf4llm.to_markdown(doc, **kwargs)
-
-        # Concatenate all page markdown, skipping the first page (TOC)
-        page_texts: list[str] = []
-        for i, page_data in enumerate(data):
-            if i == 0:
-                continue  # skip TOC page
-            text = page_data.get("text", "")
-            if isinstance(text, str) and text.strip():
-                page_texts.append(text)
-
-        full_markdown = "\n\n".join(page_texts)
+        # Convert to a single markdown string (not page_chunks).
+        # page_chunks=True suppresses heading detection in pymupdf4llm,
+        # producing bold text instead of # headings.  A single-string
+        # conversion preserves heading markers that _split_sections needs.
+        full_markdown: str = pymupdf4llm.to_markdown(doc, write_images=False)
 
         # Split at heading boundaries
         sections = _split_sections(full_markdown)
+
+        # Fallback: if no heading-delimited sections were found, treat the
+        # entire document as a single section so content is never silently
+        # dropped.
+        if not sections:
+            logger.warning(
+                "PDF %s: no heading sections found, using full text as single doc",
+                pdf_filename,
+            )
+            sections = [(pdf_filename.replace(".pdf", ""), full_markdown)]
+
         logger.info(
             "PDF %s: extracted %d sections from %d pages",
             pdf_filename,
             len(sections),
-            len(data),
+            len(doc),
         )
 
         for heading, body in sections:
+            heading = _strip_bold(heading)
             slug = _slugify(heading)
             generations = _classify_generation(body)
             doc_type = _classify_doc_type(heading, body)
