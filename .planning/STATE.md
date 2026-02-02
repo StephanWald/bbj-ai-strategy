@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** A running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via REST API and MCP server.
-**Current focus:** Phase 24 -- End-to-End Validation (next)
+**Current focus:** Phase 23.1 -- WordPress Parser Fix (INSERTED, next)
 
 ## Current Position
 
 Milestone: v1.4 RAG Deployment -- IN PROGRESS
-Phase: 24 of 24 (End-to-End Validation)
-Plan: 0 of 1 in current phase
-Status: Phase 23 complete, Phase 24 not started
-Last activity: 2026-02-02 -- Phase 23 verified and complete
+Phase: 23.1 (WordPress Parser Fix -- INSERTED)
+Plan: 0 of ? in current phase
+Status: Phase 23 complete, Phase 23.1 not planned yet
+Last activity: 2026-02-02 -- Phase 23.1 inserted after Phase 23
 
 Progress: [████████░░] 80%
 
@@ -24,8 +24,8 @@ Progress: [████████░░] 80%
 - v1.1: 2 phases, 5 plans (code corrections + branding)
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
-- v1.4: 5 phases, 9 plans (RAG deployment -- in progress)
-- **Total: 24 phases, 54 plans (52 complete)**
+- v1.4: 6 phases, 9 plans (RAG deployment -- in progress, +23.1 inserted)
+- **Total: 25 phases, 54 plans (52 complete)**
 
 ## Accumulated Context
 
@@ -64,6 +64,10 @@ Recent decisions affecting current work:
 - Persistent HTTP connection reuse for Ollama embedding calls during ingestion
 - Map source_url to clickable HTTP links (e.g., flare:// → https://documentation.basis.cloud/...) — high value for chat users who want to read the full doc
 
+### Roadmap Evolution
+
+- Phase 23.1 inserted after Phase 23: WordPress Parser Fix (URGENT)
+
 ### Blockers/Concerns
 
 - Ollama must be running on host with `OLLAMA_HOST=0.0.0.0:11434` for Docker connectivity
@@ -72,6 +76,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Phase 23 verified and complete (MCP Server)
+Stopped at: Phase 23.1 inserted (WordPress Parser Fix)
 Resume file: None
-Next action: `/gsd:plan-phase 24` or `/gsd:discuss-phase 24`
+Next action: `/gsd:plan-phase 23.1` or `/gsd:discuss-phase 23.1`

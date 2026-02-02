@@ -1,7 +1,7 @@
 # Milestone v1.4: RAG Deployment
 
 **Status:** IN PROGRESS
-**Phases:** 20-24
+**Phases:** 20-24 (+23.1)
 **Total Plans:** 10
 
 ## Overview
@@ -14,6 +14,7 @@ Transform the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid
 - [x] **Phase 21: Data Configuration + Ingestion** - All 6 real sources wired and ingested into pgvector via Docker
 - [x] **Phase 22: REST Retrieval API** - FastAPI endpoints for search, health, and stats over the populated corpus
 - [x] **Phase 23: MCP Server** - `search_bbj_knowledge` tool via stdio transport for Claude Desktop
+- [ ] **Phase 23.1: WordPress Parser Fix** - PDF handling fix, batch embeddings, full re-ingest, README update (INSERTED)
 - [ ] **Phase 24: End-to-End Validation** - Prove the full pipeline works: query in, relevant BBj docs out, through both interfaces
 
 ## Phase Details
@@ -86,6 +87,15 @@ Plans:
 Plans:
 - [x] 23-01-PLAN.md -- MCP server module + stdio transport + Claude Desktop config
 
+### Phase 23.1: WordPress Parser Fix (INSERTED)
+
+**Goal**: Fix WordPress parser PDF handling (binary garbage bug), add Content-Type detection, batch Ollama embedding requests, full re-ingest all sources, and update README with Docker + API + MCP documentation
+**Depends on**: Phase 23
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 23.1 to break down)
+
 ### Phase 24: End-to-End Validation
 
 **Goal**: The complete system is proven to work -- a user query enters through either REST API or MCP, hits real ingested BBj documentation, and returns relevant results
@@ -142,9 +152,10 @@ Plans:
 | 21. Data Configuration + Ingestion | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 22. REST Retrieval API | v1.4 | 2/2 | Complete | 2026-02-01 |
 | 23. MCP Server | v1.4 | 1/1 | Complete | 2026-02-02 |
+| 23.1. WordPress Parser Fix | v1.4 | 0/? | Not started | - |
 | 24. End-to-End Validation | v1.4 | 0/1 | Not started | - |
 
 ---
 
 _Created: 2026-02-01_
-_Last updated: 2026-02-02 (Phase 23 complete)_
+_Last updated: 2026-02-02 (Phase 23.1 inserted)_
