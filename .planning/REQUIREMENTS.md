@@ -80,30 +80,30 @@ Deferred to later milestones. Tracked but not in v1.5 roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PERF-01 | TBD | Pending |
-| PERF-02 | TBD | Pending |
-| PERF-03 | TBD | Pending |
-| QUAL-01 | TBD | Pending |
-| QUAL-02 | TBD | Pending |
-| QUAL-03 | TBD | Pending |
-| CHAT-01 | TBD | Pending |
-| CHAT-02 | TBD | Pending |
-| CHAT-03 | TBD | Pending |
-| CHAT-04 | TBD | Pending |
-| CHAT-05 | TBD | Pending |
-| COMP-01 | TBD | Pending |
-| COMP-02 | TBD | Pending |
-| COMP-03 | TBD | Pending |
-| COMP-04 | TBD | Pending |
-| REMOTE-01 | TBD | Pending |
-| REMOTE-02 | TBD | Pending |
-| REMOTE-03 | TBD | Pending |
+| QUAL-01 | Phase 25 | Pending |
+| QUAL-02 | Phase 25 | Pending |
+| QUAL-03 | Phase 25 | Pending |
+| CHAT-01 | Phase 26 | Pending |
+| CHAT-02 | Phase 26 | Pending |
+| CHAT-03 | Phase 26 | Pending |
+| CHAT-04 | Phase 26 | Pending |
+| CHAT-05 | Phase 26 | Pending |
+| REMOTE-01 | Phase 27 | Pending |
+| REMOTE-02 | Phase 27 | Pending |
+| REMOTE-03 | Phase 27 | Pending |
+| COMP-01 | Phase 28 | Pending |
+| COMP-02 | Phase 28 | Pending |
+| COMP-03 | Phase 28 | Pending |
+| COMP-04 | Phase 28 | Pending |
+| PERF-01 | Phase 29 | Pending |
+| PERF-02 | Phase 29 | Pending |
+| PERF-03 | Phase 29 | Pending |
 
 **Coverage:**
 - v1.5 requirements: 18 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 18
+- Mapped to phases: 18/18
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 after initial definition*
+*Last updated: 2026-02-03 after roadmap creation (phase assignments)*

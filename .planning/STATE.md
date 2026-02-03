@@ -5,15 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** v1.5 Alpha-Ready RAG System
+**Current focus:** v1.5 Alpha-Ready RAG System — Phase 25 (Result Quality Foundation)
 
 ## Current Position
 
-Milestone: v1.5 Alpha-Ready RAG System -- DEFINING REQUIREMENTS
-Phase: Not started (defining requirements)
+Milestone: v1.5 Alpha-Ready RAG System
+Phase: 25 of 29 (Result Quality Foundation) — ready to plan
 Plan: --
-Status: Defining requirements for v1.5
-Last activity: 2026-02-03 -- Milestone v1.5 started
+Status: Roadmap created, ready to plan Phase 25
+Last activity: 2026-02-03 — Roadmap created (5 phases, 18 requirements mapped)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -35,22 +35,30 @@ See .planning/PROJECT.md Key Decisions table for full log (33 decisions, all val
 
 ### Pending Todos (Carried Forward into v1.5)
 
-- Concurrent ingestion workers (parallel embedding calls to keep GPU saturated)
-- Persistent HTTP connection reuse for Ollama embedding calls during ingestion
-- Map source_url to clickable HTTP links (e.g., flare:// -> https://documentation.basis.cloud/...)
-- Source-balanced ranking (boosting minority sources like PDF, BBj Source for more diverse top-k)
+All carried-forward items now mapped to roadmap phases:
+- Concurrent ingestion workers → Phase 29 (PERF-01, PERF-02, PERF-03)
+- Persistent HTTP connection reuse → Phase 29 (PERF-02)
+- Map source_url to clickable HTTP links → Phase 25 (QUAL-02, QUAL-03)
+- Source-balanced ranking → Phase 25 (QUAL-01)
 
 ### Known Operational Notes
 
 - Ollama must be running on host with `OLLAMA_HOST=0.0.0.0:11434` for Docker connectivity
 - shm_size required for pgvector HNSW index builds (256mb minimum)
-- PDF and BBj Source source-targeted queries rank below Flare's 88% corpus dominance (corpus imbalance, not pipeline issue)
-- Engineers have BBj (and bbjcpl) installed locally — distribution not needed in Docker
+- PDF and BBj Source source-targeted queries rank below Flare's 88% corpus dominance (addressed by Phase 25 balanced ranking)
+- Engineers have BBj (and bbjcpl) installed locally — bbjcpl validation runs host-side, not in Docker
 - Alpha deployment targets shared server on local network + local per-engineer option
+- ANTHROPIC_API_KEY needed for Phase 26 (Claude API) — set spending alerts
+
+### Research Flags
+
+- Phase 26 (Chat Interface): NEEDS research — SSE encoding for multi-line content, HTMX chat patterns
+- Phase 27 (Remote Access): NEEDS research — MCP SDK mounting issues, Streamable HTTP fallback patterns
+- Phases 25, 28, 29: Standard patterns, skip research
 
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Defining v1.5 requirements
+Stopped at: Roadmap created for v1.5
 Resume file: None
-Next action: Complete requirements definition and roadmap creation
+Next action: `/gsd:plan-phase 25` (Result Quality Foundation)
