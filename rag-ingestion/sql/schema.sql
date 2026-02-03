@@ -46,6 +46,12 @@ CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hnsw
 CREATE INDEX IF NOT EXISTS idx_chunks_search_vector_gin
     ON chunks USING GIN (search_vector);
 
+-- Add columns introduced in Phase 25 to existing tables.
+-- CREATE TABLE IF NOT EXISTS skips entirely when the table exists,
+-- so these ALTER statements ensure columns are present on older DBs.
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS source_type TEXT NOT NULL DEFAULT '';
+ALTER TABLE chunks ADD COLUMN IF NOT EXISTS display_url TEXT NOT NULL DEFAULT '';
+
 -- Btree index for source_type filtering and diversity queries.
 CREATE INDEX IF NOT EXISTS idx_chunks_source_type
     ON chunks (source_type);
