@@ -52,12 +52,12 @@ Plans:
   3. Source citations in the response are clickable links that open the correct documentation page on documentation.basis.cloud or the original source site
   4. Multi-line content including BBj code blocks renders correctly in the streamed response (no broken formatting from SSE newline handling)
   5. The chat page loads without requiring any login or authentication
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 26-01: TBD
-- [ ] 26-02: TBD
-- [ ] 26-03: TBD
+- [ ] 26-01-PLAN.md -- Backend chat module: dependencies, config, prompt construction, Claude API streaming, SSE endpoint
+- [ ] 26-02-PLAN.md -- Chat page frontend: HTML template, CSS styling, vanilla JS SSE client with markdown rendering
+- [ ] 26-03-PLAN.md -- Docker integration and end-to-end verification checkpoint
 
 ### Phase 27: Remote Access
 **Goal**: Engineers on the local network can access both the chat UI and MCP server from their own machines without running Docker locally
@@ -111,7 +111,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 25. Result Quality Foundation | v1.5 | 3/3 | Complete | 2026-02-03 |
-| 26. Chat Interface | v1.5 | 0/TBD | Not started | - |
+| 26. Chat Interface | v1.5 | 0/3 | Not started | - |
 | 27. Remote Access | v1.5 | 0/TBD | Not started | - |
 | 28. Compiler Validation | v1.5 | 0/TBD | Not started | - |
 | 29. Ingestion Performance | v1.5 | 0/TBD | Not started | - |
