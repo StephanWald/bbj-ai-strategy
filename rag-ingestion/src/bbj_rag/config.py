@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     chunk_size: int = Field(default=400)
     chunk_overlap: int = Field(default=50)
 
+    # -- Chat (Claude API) --
+    chat_model: str = Field(default="claude-sonnet-4-5-20250514")
+    chat_max_tokens: int = Field(default=2048)
+    chat_max_history: int = Field(default=20)
+    chat_confidence_min_results: int = Field(default=2)
+    chat_confidence_min_score: float = Field(default=0.3)
+
     # -- Source paths --
     flare_source_path: str = Field(default="")
     crawl_source_urls: list[str] = Field(default_factory=list)
