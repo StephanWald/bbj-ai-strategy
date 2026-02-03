@@ -147,7 +147,9 @@ body {
   overflow-x: auto;
   position: relative;
   margin: 12px 0;
-  font-size: 0.9em;
+  font-size: 0.875em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .message.assistant pre code {
@@ -158,8 +160,10 @@ body {
 }
 
 .message.assistant code {
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
-  font-size: 0.9em;
+  font-family: ui-monospace, 'SF Mono', SFMono-Regular, 'Menlo', 'Consolas', 'Liberation Mono', monospace;
+  font-size: 0.875em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .message.assistant :not(pre) > code {
@@ -414,7 +418,6 @@ body {
   font-weight: 500;
   font-size: 0.95rem;
   font-family: inherit;
-  display: none;
   transition: background 0.2s;
 }
 

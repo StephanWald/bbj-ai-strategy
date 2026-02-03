@@ -82,6 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
     enableInput();
   });
 
+  // Hide stop button initially
+  stopBtn.style.display = 'none';
+
   // Suggestion chips
   document.querySelectorAll('.suggestion-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -431,13 +434,13 @@ function disableInput() {
   inputEl.disabled = true;
   sendBtn.disabled = true;
   sendBtn.style.display = 'none';
-  stopBtn.style.display = '';
+  stopBtn.style.display = 'inline-block';
 }
 
 function enableInput() {
   inputEl.disabled = false;
   sendBtn.disabled = false;
-  sendBtn.style.display = '';
+  sendBtn.style.display = 'inline-block';
   stopBtn.style.display = 'none';
   inputEl.focus();
 }

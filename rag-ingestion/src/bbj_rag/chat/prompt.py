@@ -66,9 +66,11 @@ def build_rag_system_prompt(
     if results:
         context_blocks: list[str] = []
         for i, r in enumerate(results, 1):
+            url = r.display_url or r.source_url
+            source_type = r.source_type or "Documentation"
             block = f"[Source {i}: {r.title}]\n"
-            block += f"URL: {r.display_url}\n"
-            block += f"Type: {r.source_type}\n"
+            block += f"URL: {url}\n"
+            block += f"Type: {source_type}\n"
             if r.context_header:
                 block += f"Context: {r.context_header}\n"
             block += f"\n{r.content}"

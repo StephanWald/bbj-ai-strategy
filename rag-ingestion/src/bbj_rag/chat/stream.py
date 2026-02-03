@@ -63,8 +63,8 @@ async def stream_chat_response(
         {
             "index": i,
             "title": r.title,
-            "url": r.display_url,
-            "source_type": r.source_type,
+            "url": r.display_url or r.source_url,
+            "source_type": r.source_type or "",
             "low_confidence": low_confidence,
         }
         for i, r in enumerate(search_results, 1)
