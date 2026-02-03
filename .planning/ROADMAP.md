@@ -35,11 +35,12 @@ v1.5 transforms the working v1.4 RAG system into an alpha product engineers can 
   1. A search result from Flare source includes a clickable HTTPS link to documentation.basis.cloud that opens the correct page in a browser
   2. A top-10 search query that previously returned only Flare results now includes at least one result from a minority source (PDF, BBj Source, or MDX) when relevant content exists
   3. Every search result returned by the API includes both a `source_url` (internal) and a `display_url` (clickable HTTPS link) field
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 25-01: TBD
-- [ ] 25-02: TBD
+- [ ] 25-01-PLAN.md -- URL mapping module, schema migration, models/DB, backfill script
+- [ ] 25-02-PLAN.md -- Search/API/MCP response enrichment with diversity reranking
+- [ ] 25-03-PLAN.md -- Pipeline/chunker integration and E2E validation updates
 
 ### Phase 26: Chat Interface
 **Goal**: Engineers can ask BBj questions in a browser and get Claude-generated answers grounded in RAG results with source citations
@@ -109,7 +110,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 25. Result Quality Foundation | v1.5 | 0/TBD | Not started | - |
+| 25. Result Quality Foundation | v1.5 | 0/3 | Planned | - |
 | 26. Chat Interface | v1.5 | 0/TBD | Not started | - |
 | 27. Remote Access | v1.5 | 0/TBD | Not started | - |
 | 28. Compiler Validation | v1.5 | 0/TBD | Not started | - |
