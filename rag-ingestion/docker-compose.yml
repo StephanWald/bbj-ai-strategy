@@ -42,6 +42,9 @@ services:
       - BBJ_RAG_DB_HOST=db
       - OLLAMA_HOST=http://host.docker.internal:11434
       - DATA_DIR=/data
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY must be set}
+      - BBJ_RAG_CHAT_MODEL=${BBJ_RAG_CHAT_MODEL:-claude-sonnet-4-5-20250514}
+      - BBJ_RAG_CHAT_MAX_TOKENS=${BBJ_RAG_CHAT_MAX_TOKENS:-2048}
     ports:
       - "${APP_PORT_EXTERNAL:-10800}:8000"
     volumes:
