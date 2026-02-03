@@ -13,9 +13,9 @@
 
 ### Result Quality
 
-- [ ] **QUAL-01**: Source-balanced ranking reserves slots in top-k results for minority sources (PDF, BBj Source, MDX)
-- [ ] **QUAL-02**: source_url mapped to clickable HTTP links (flare:// → https://documentation.basis.cloud/..., WordPress and Web Crawl already HTTP)
-- [ ] **QUAL-03**: Search results include clickable `display_url` field alongside internal `source_url`
+- [x] **QUAL-01**: Source-balanced ranking reserves slots in top-k results for minority sources (PDF, BBj Source, MDX)
+- [x] **QUAL-02**: source_url mapped to clickable HTTP links (flare:// → https://documentation.basis.cloud/..., WordPress and Web Crawl already HTTP)
+- [x] **QUAL-03**: Search results include clickable `display_url` field alongside internal `source_url`
 
 ### Chat Interface
 
@@ -80,9 +80,9 @@ Deferred to later milestones. Tracked but not in v1.5 roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| QUAL-01 | Phase 25 | Pending |
-| QUAL-02 | Phase 25 | Pending |
-| QUAL-03 | Phase 25 | Pending |
+| QUAL-01 | Phase 25 | Complete |
+| QUAL-02 | Phase 25 | Complete |
+| QUAL-03 | Phase 25 | Complete |
 | CHAT-01 | Phase 26 | Pending |
 | CHAT-02 | Phase 26 | Pending |
 | CHAT-03 | Phase 26 | Pending |

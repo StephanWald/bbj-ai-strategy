@@ -19,7 +19,7 @@ v1.5 transforms the working v1.4 RAG system into an alpha product engineers can 
 - Integer phases (25, 26, 27...): Planned milestone work
 - Decimal phases (25.1, 25.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 25: Result Quality Foundation** — Clickable source links and source-balanced ranking
+- [x] **Phase 25: Result Quality Foundation** — Clickable source links and source-balanced ranking
 - [ ] **Phase 26: Chat Interface** — Web chat with Claude API, streaming responses, and source citations
 - [ ] **Phase 27: Remote Access** — Streamable HTTP MCP and network-accessible deployment
 - [ ] **Phase 28: Compiler Validation** — bbjcpl integration for BBj code syntax checking in chat responses
@@ -38,9 +38,9 @@ v1.5 transforms the working v1.4 RAG system into an alpha product engineers can 
 **Plans**: 3 plans
 
 Plans:
-- [ ] 25-01-PLAN.md -- URL mapping module, schema migration, models/DB, backfill script
-- [ ] 25-02-PLAN.md -- Search/API/MCP response enrichment with diversity reranking
-- [ ] 25-03-PLAN.md -- Pipeline/chunker integration and E2E validation updates
+- [x] 25-01-PLAN.md -- URL mapping module, schema migration, models/DB, backfill script
+- [x] 25-02-PLAN.md -- Search/API/MCP response enrichment with diversity reranking
+- [x] 25-03-PLAN.md -- Pipeline/chunker integration and E2E validation updates
 
 ### Phase 26: Chat Interface
 **Goal**: Engineers can ask BBj questions in a browser and get Claude-generated answers grounded in RAG results with source citations
@@ -110,7 +110,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 25. Result Quality Foundation | v1.5 | 0/3 | Planned | - |
+| 25. Result Quality Foundation | v1.5 | 3/3 | Complete | 2026-02-03 |
 | 26. Chat Interface | v1.5 | 0/TBD | Not started | - |
 | 27. Remote Access | v1.5 | 0/TBD | Not started | - |
 | 28. Compiler Validation | v1.5 | 0/TBD | Not started | - |
