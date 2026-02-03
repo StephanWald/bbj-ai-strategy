@@ -21,6 +21,7 @@ from bbj_rag.intelligence import (
     tag_generation,
 )
 from bbj_rag.models import Chunk
+from bbj_rag.url_mapping import classify_source_type, map_display_url
 
 if TYPE_CHECKING:
     from bbj_rag.embedder import Embedder
@@ -144,6 +145,16 @@ def run_pipeline(
                     "doc_type": doc_type,
                 }
             )
+
+        # Compute source_type and display_url for URL mapping.
+        source_type = classify_source_type(doc.source_url)
+        display_url = map_display_url(doc.source_url)
+        doc = doc.model_copy(
+            update={
+                "source_type": source_type,
+                "display_url": display_url,
+            }
+        )
 
         # Chunk the document.
         doc_chunks = chunk_document(doc, max_tokens, overlap_tokens)

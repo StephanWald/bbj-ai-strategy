@@ -242,6 +242,8 @@ def chunk_document(
                 generations=doc.generations,
                 context_header=header,
                 deprecated=doc.deprecated,
+                source_type=doc.source_type,
+                display_url=doc.display_url,
                 metadata=doc.metadata,
             )
             chunks.append(chunk)
