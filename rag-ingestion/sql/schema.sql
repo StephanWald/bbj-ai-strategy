@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     context_header  TEXT            NOT NULL DEFAULT '',
     generations     TEXT[]          NOT NULL DEFAULT '{}',
     deprecated      BOOLEAN         NOT NULL DEFAULT false,
+    source_type     TEXT            NOT NULL DEFAULT '',
+    display_url     TEXT            NOT NULL DEFAULT '',
     -- 1024 dimensions matches Qwen3-Embedding-0.6B default output.
     embedding       vector(1024),
     search_vector   tsvector        GENERATED ALWAYS AS (
@@ -43,6 +45,10 @@ CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hnsw
 -- GIN index for full-text search on the generated tsvector column.
 CREATE INDEX IF NOT EXISTS idx_chunks_search_vector_gin
     ON chunks USING GIN (search_vector);
+
+-- Btree index for source_type filtering and diversity queries.
+CREATE INDEX IF NOT EXISTS idx_chunks_source_type
+    ON chunks (source_type);
 
 -- GIN index for array containment queries on the generations column.
 CREATE INDEX IF NOT EXISTS idx_chunks_generations_gin

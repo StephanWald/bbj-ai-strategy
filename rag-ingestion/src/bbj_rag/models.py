@@ -23,6 +23,8 @@ class Document(BaseModel):
     generations: list[str]
     context_header: str = ""
     deprecated: bool = False
+    source_type: str = ""
+    display_url: str = ""
     metadata: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("content")
@@ -53,6 +55,8 @@ class Chunk(BaseModel):
     generations: list[str]
     context_header: str = ""
     deprecated: bool = False
+    source_type: str = ""
+    display_url: str = ""
     metadata: dict[str, str] = Field(default_factory=dict)
     embedding: list[float] | None = None
 
@@ -81,6 +85,8 @@ class Chunk(BaseModel):
         metadata: dict[str, str] | None = None,
         context_header: str = "",
         deprecated: bool = False,
+        source_type: str = "",
+        display_url: str = "",
     ) -> Chunk:
         """Create a Chunk with auto-computed SHA-256 content hash.
 
@@ -99,5 +105,7 @@ class Chunk(BaseModel):
             generations=generations,
             context_header=context_header,
             deprecated=deprecated,
+            source_type=source_type,
+            display_url=display_url,
             metadata=metadata or {},
         )

@@ -22,9 +22,10 @@ if TYPE_CHECKING:
 _INSERT_CHUNK_SQL = """
 INSERT INTO chunks (
     source_url, title, doc_type, content, content_hash,
-    context_header, generations, deprecated, embedding, metadata
+    context_header, generations, deprecated,
+    source_type, display_url, embedding, metadata
 )
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON CONFLICT (content_hash) DO NOTHING
 RETURNING id
 """
@@ -89,6 +90,8 @@ def _chunk_to_params(chunk: Chunk) -> tuple[object, ...]:
         chunk.context_header,
         chunk.generations,
         chunk.deprecated,
+        chunk.source_type,
+        chunk.display_url,
         chunk.embedding,
         Json(chunk.metadata),
     )
@@ -143,7 +146,8 @@ def bulk_insert_chunks(conn: psycopg.Connection[object], chunks: list[Chunk]) ->
         with cur.copy(
             "COPY _chunks_staging ("
             "source_url, title, doc_type, content, content_hash, "
-            "context_header, generations, deprecated, embedding, metadata"
+            "context_header, generations, deprecated, "
+            "source_type, display_url, embedding, metadata"
             ") FROM STDIN WITH (FORMAT BINARY)"
         ) as copy:
             copy.set_types(
@@ -156,6 +160,8 @@ def bulk_insert_chunks(conn: psycopg.Connection[object], chunks: list[Chunk]) ->
                     "text",
                     "text[]",
                     "bool",
+                    "text",
+                    "text",
                     "vector",
                     "jsonb",
                 ]
@@ -171,6 +177,8 @@ def bulk_insert_chunks(conn: psycopg.Connection[object], chunks: list[Chunk]) ->
                         chunk.context_header,
                         chunk.generations,
                         chunk.deprecated,
+                        chunk.source_type,
+                        chunk.display_url,
                         chunk.embedding,
                         Json(chunk.metadata),
                     ]
@@ -179,10 +187,12 @@ def bulk_insert_chunks(conn: psycopg.Connection[object], chunks: list[Chunk]) ->
         cur.execute(
             "INSERT INTO chunks ("
             "source_url, title, doc_type, content, content_hash, "
-            "context_header, generations, deprecated, embedding, metadata"
+            "context_header, generations, deprecated, "
+            "source_type, display_url, embedding, metadata"
             ") SELECT "
             "source_url, title, doc_type, content, content_hash, "
-            "context_header, generations, deprecated, embedding, metadata "
+            "context_header, generations, deprecated, "
+            "source_type, display_url, embedding, metadata "
             "FROM _chunks_staging "
             "ON CONFLICT (content_hash) DO NOTHING"
         )
