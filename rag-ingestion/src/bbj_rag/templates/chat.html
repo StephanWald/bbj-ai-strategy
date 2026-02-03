@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBj Documentation Chat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism.min.css">
+  <link rel="stylesheet" href="/static/chat.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-left">
+      <h1>BBj Documentation Chat</h1>
+      <span class="header-subtitle">Powered by Claude</span>
+    </div>
+    <button class="new-chat-btn" id="new-chat-btn">New Chat</button>
+  </header>
+
+  <div id="conversation">
+    <div id="empty-state">
+      <div class="empty-icon">?</div>
+      <h2>Ask me anything about BBj programming</h2>
+      <p class="empty-description">Get answers grounded in the official BBj documentation, source code, and guides.</p>
+      <div class="suggestions">
+        <button class="suggestion-chip" data-query="How do I create a BBj window with DWC?">How do I create a BBj window with DWC?</button>
+        <button class="suggestion-chip" data-query="What is the difference between BBj GUI and DWC?">What is the difference between BBj GUI and DWC?</button>
+        <button class="suggestion-chip" data-query="How do I read a file in BBj?">How do I read a file in BBj?</button>
+        <button class="suggestion-chip" data-query="Explain BBj string templates">Explain BBj string templates</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-wrapper">
+    <div id="input-bar">
+      <input type="text" id="chat-input" placeholder="Ask a BBj question..." autocomplete="off">
+      <button class="send-btn" id="send-btn">Send</button>
+      <button class="stop-btn" id="stop-btn">Stop</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script type="module" src="/static/chat.js"></script>
+</body>
+</html>
