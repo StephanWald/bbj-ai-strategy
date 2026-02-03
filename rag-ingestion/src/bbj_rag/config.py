@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = Field(default=50)
 
     # -- Chat (Claude API) --
-    chat_model: str = Field(default="claude-sonnet-4-5-20250514")
+    chat_model: str = Field(default="claude-sonnet-4-5-20250929")
     chat_max_tokens: int = Field(default=2048)
     chat_max_history: int = Field(default=20)
     chat_confidence_min_results: int = Field(default=2)
