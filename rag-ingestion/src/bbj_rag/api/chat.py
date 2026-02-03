@@ -7,10 +7,12 @@ streams Claude's response as JSON-encoded SSE events.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from ollama import AsyncClient as OllamaAsyncClient
 from psycopg import AsyncConnection
 from pydantic import BaseModel
@@ -20,6 +22,9 @@ from bbj_rag.api.deps import get_conn, get_ollama_client, get_settings
 from bbj_rag.chat.stream import stream_chat_response
 from bbj_rag.config import Settings
 from bbj_rag.search import async_hybrid_search, rerank_for_diversity
+
+_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -43,11 +48,9 @@ class ChatRequest(BaseModel):
 
 
 @router.get("", response_class=HTMLResponse)
-async def chat_page() -> HTMLResponse:
-    """Serve the chat HTML page (placeholder until Plan 02)."""
-    return HTMLResponse(
-        content="<html><body><p>Chat page coming in Plan 02</p></body></html>"
-    )
+async def chat_page(request: Request) -> HTMLResponse:
+    """Serve the chat HTML page."""
+    return templates.TemplateResponse("chat.html", {"request": request})
 
 
 @router.post("/stream")

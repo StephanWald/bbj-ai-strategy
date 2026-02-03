@@ -11,12 +11,16 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from bbj_rag.api.chat import router as chat_router
 from bbj_rag.api.routes import router as api_router
 from bbj_rag.health import router as health_router
+
+_STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
@@ -88,3 +92,6 @@ app = FastAPI(title="BBJ RAG", lifespan=lifespan)
 app.include_router(health_router)
 app.include_router(api_router)
 app.include_router(chat_router)
+
+# Static files mount MUST come after router includes (catch-all pattern)
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
