@@ -1,289 +1,291 @@
 # Project Research Summary
 
-**Project:** BBj AI Strategy — RAG Deployment Service (v1.4)
-**Domain:** RAG pipeline Docker deployment with REST API and MCP server
-**Researched:** 2026-02-01
+**Project:** BBj AI Strategy v1.5 Alpha-Ready RAG System
+**Domain:** RAG-enhanced documentation chat with compiler validation
+**Researched:** 2026-02-03
 **Confidence:** HIGH
 
 ## Executive Summary
 
-v1.4 transforms the battle-tested RAG ingestion pipeline (310 tests, 6 parsers, hybrid search) into a deployable service. The architecture is straightforward: Docker Compose orchestrates a pgvector container and a Python app container, with Ollama remaining on the host macOS machine for Metal GPU acceleration. A thin FastAPI layer exposes the existing `search.py` hybrid search over HTTP, while an MCP server provides the `search_bbj_knowledge` tool for Claude Desktop integration via stdio transport.
+v1.5 transforms the working v1.4 Docker-based RAG system into an alpha-ready product that engineers will trust and use. The core insight driving feature priorities: engineers must TRUST the system before they adopt it. Three features directly address trust: source citations prove answers come from real documentation (not hallucination), compiler validation proves BBj code is syntactically correct, and clickable source links let engineers verify claims against the original docs. Everything else (remote access, ingestion speed, ranking) is infrastructure that makes these trust-building features accessible.
 
-The recommended approach leverages the project's existing strengths. The codebase already has clean abstraction boundaries — `search.py` accepts a connection and returns dataclasses, `embedder.py` is protocol-based, `config.py` uses pydantic-settings with env var overrides. The deployment stack adds only 4 new dependencies (FastAPI, uvicorn, psycopg-pool, mcp) and two presentation-layer modules (`api.py` and `mcp_server.py`). Both wrap the same search functions, differing only in response format (JSON for REST, formatted text for MCP).
+The recommended approach builds on v1.4's validated foundation without replacement. Add a web chat UI served from the existing FastAPI app using HTMX + Jinja2 (zero build pipeline), integrate Claude API for answer generation with Citations API (search result content blocks), and mount the MCP server via Streamable HTTP for remote access. The critical architectural decision: bbjcpl compiler validation runs host-side (where BBj is installed), not in Docker. The MCP server must be refactored from REST proxy to direct database access when mounted in FastAPI to avoid self-referential deadlock.
 
-The key risks are configuration fragility (TOML file expectations vs 12-factor env vars), Ollama network connectivity from Docker (`host.docker.internal` requires explicit setup), and MCP transport selection (stdio for local use, not Streamable HTTP). All are well-documented pitfalls with proven mitigations. The implementation path is incremental: Docker foundation first, REST API second (validates search integration), MCP server third (adds only protocol wiring).
+The most critical risks are SSE newline corruption destroying code blocks in streaming responses (first-impression killer), Claude API context window stuffing degrading answer quality through "lost in the middle" effect, and MCP mounting issues in FastAPI requiring fallback to standalone process. All three have proven mitigations: base64-encode SSE payloads, hard-cap context at 8-10 chunks with token budget, and test MCP mounting early with standalone fallback ready.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack builds on the project's existing Python 3.12 ecosystem (psycopg3, pgvector, Ollama, Pydantic) with minimal additions for deployment. Docker is the delivery mechanism, not a fundamental architecture change.
+v1.5 adds ONE new direct dependency: `anthropic>=0.77,<1` for Claude API integration. Everything else reuses existing dependencies or standard library. Jinja2 and sse-starlette are already transitive dependencies of FastAPI/MCP SDK. HTMX loads via CDN (14KB, no build step). Concurrent ingestion uses asyncio stdlib with the existing ollama AsyncClient.
 
-**Core technologies:**
+**Core technology additions:**
+- **Claude Haiku 4.5** (`claude-haiku-4-5-20251001`) — answer generation at $1/M input, $5/M output (3x cheaper than Sonnet, 4-5x faster, sufficient quality for RAG Q&A)
+- **Citations API** (stable, not beta) — search result content blocks with `citations.enabled=True` eliminate prompt-engineering citations
+- **HTMX 2.0.8 + Jinja2** — zero-build chat UI served from FastAPI, SSE streaming via `hx-ext="sse"`, no Node.js/React overhead
+- **MCP Streamable HTTP** — existing SDK supports mounting at `/mcp` path (known issues with path doubling, fallback to standalone process)
+- **asyncio.Semaphore** — concurrent ingestion with semaphore=2 limit prevents Ollama GPU saturation
 
-- **pgvector/pgvector:0.8.0-pg17** — PostgreSQL 17 with pgvector extension. Version-pinned Docker image. Fresh deployment, no migration concerns. PG17 improvements (incremental JSON, better VACUUM, improved planner) are free upgrades.
+**Critical version constraint:** anthropic SDK v0.77.0 (Jan 2026) confirmed on PyPI. Citations API is GA (not beta). Claude Haiku 4.5 model ID verified in migration guide.
 
-- **FastAPI + uvicorn[standard]** — REST API framework with async support and automatic Pydantic integration. The project already depends on Pydantic v2 — FastAPI uses it natively for request/response validation. One endpoint (`/search`) wraps existing `hybrid_search()` function.
-
-- **MCP Python SDK (v1.x, `mcp` package)** — Official SDK with `FastMCP` class and `@mcp.tool()` decorator. Pin `>=1.25,<2` for stability (v2 coming Q1 2026). Supports both stdio (for Claude Desktop) and Streamable HTTP (future remote access).
-
-- **psycopg-pool** — Connection pooling for psycopg3. The existing code uses bare `psycopg.connect()` per operation, which works for the CLI but is inadequate for an API server. `psycopg_pool.ConnectionPool` is the official pool with a `configure` callback for pgvector type registration.
-
-- **python:3.12-slim-bookworm** — Base Docker image matching `requires-python = ">=3.12"`. Slim variant (~150MB vs ~1GB full) with glibc for binary wheels. NOT Alpine (musl breaks psycopg[binary], lxml, and PyMuPDF wheels).
-
-- **Docker Compose** — Service orchestration with auto-initialized schema (`/docker-entrypoint-initdb.d/` mounts `schema.sql`), health checks, and environment-based configuration. Two services: `db` (pgvector) and `app` (Python). Ollama on host accessed via `host.docker.internal:11434`.
-
-**What NOT to add:** SQLAlchemy (the raw SQL is clean and pgvector-specific), Alembic (single-table schema, `IF NOT EXISTS` idempotency), Redis caching (premature — search is already <100ms), async ingestion API (CLI sufficient), nginx (uvicorn direct serving is fine for local/internal use).
+**What NOT to add:** LangChain (unnecessary abstraction over 10-line SDK call), React/Vue (build pipeline overkill for alpha), Tailwind CSS (requires build step), WebSockets (SSE handles unidirectional streaming better), Celery (asyncio.Semaphore handles concurrency), separate frontend container (CORS overhead).
 
 ### Expected Features
 
-The feature set is tightly scoped: wrap existing search capabilities in two interfaces (REST and MCP), deploy via Docker, orchestrate ingestion for all 6 sources.
+**Must ship for alpha (table stakes):**
+- Web chat interface — browser-based, zero-setup access for engineers
+- Claude API integration — turn chunks into coherent cited answers
+- Source citations displayed — primary trust mechanism, inline or footnotes
+- Streaming response display — 3-10s wait feels broken without streaming
+- Clickable source links — verification loop (flare:// → documentation.basis.cloud)
+- Remote server access — shared deployment, no per-engineer Docker setup
 
-**Must have (table stakes):**
+**Should ship for alpha (differentiators):**
+- bbjcpl compiler validation — unique value, no other tool validates BBj syntax
+- Source-balanced ranking — surface minority sources (PDF/BBj Source never appear in top-5 without boost)
+- Remote MCP via Streamable HTTP — Claude Desktop integration for team
 
-- **`POST /search` endpoint** — HTTP layer over `hybrid_search()`. Takes query text (embedded on-the-fly via Ollama), optional `generation` filter (all/character/vpro5/bbj_gui/dwc), optional `limit` (default 5). Returns JSON with structured `SearchResult` fields: content, source_url, title, doc_type, generations, score.
+**Can defer to post-alpha:**
+- Concurrent ingestion — nice for rebuilds but not needed for alpha testing
+- Chat history persistence — alpha evaluates retrieval quality, not chat UX
+- User accounts/auth — trusted network, shared API key with rate limiting
+- Answer rating/feedback — collect verbally, not via formal system
 
-- **`search_bbj_knowledge` MCP tool** — Matches Ch2's exact JSON schema (query string required, generation enum optional, limit integer default 5). Returns formatted text optimized for LLM consumption (not raw JSON). Implemented with `@mcp.tool()` decorator — type annotations auto-generate MCP tool schema.
-
-- **Docker Compose with `docker compose up` simplicity** — Single command starts pgvector + app containers. Schema auto-applied on first startup. Persistent volume for database. Source data bind-mounted read-only. Environment variable configuration (no TOML file in container).
-
-- **Ingestion orchestration** — Run all 6 parsers (Flare, PDF, MDX, BBj source, WordPress, web crawl) against real data paths. Either a shell script or new CLI command `bbj-rag ingest-all` that sequences the 6 `ingest --source X` calls. Idempotent (content-hash dedup) with progress logging.
-
-- **Health endpoint** — `GET /health` checks database connectivity, Ollama reachability, and chunks table row count. Returns 200 or 503 with component status JSON.
-
-**Should have (differentiators):**
-
-- **Generation filtering across all search modes** — BBj's multi-generation model is unique. The existing `search.py` already supports `generation_filter` on dense, BM25, and hybrid search with GIN-indexed `generations` array. This is a table-stakes requirement for BBj but a differentiator in the RAG ecosystem.
-
-- **`context_header` in results** — Currently stored in DB but omitted from `SearchResult`. Provides section path (e.g., "BBj Objects > BBjWindow > Methods > addButton"). High value for LLM prompt assembly — adds context beyond raw chunk content.
-
-- **Search mode selection** — Expose `mode` parameter (dense/bm25/hybrid) on REST API. Different queries benefit from different modes: API name lookups favor BM25, conceptual questions favor dense. Hybrid (default) uses RRF fusion.
-
-- **Stats endpoint** — `GET /stats` returns chunk counts by source, generation, doc_type. Reuses existing `intelligence/report.py` query functions. Lets operators verify ingestion completeness.
-
-**Defer (v2+):**
-
-- **`generate_bbj_code` MCP tool** — Requires fine-tuned model (not yet ready). Out of scope per PROJECT.md.
-
-- **`validate_bbj_syntax` MCP tool** — Requires BBj compiler integration in Docker (licensing, runtime distribution). Separate milestone.
-
-- **Authentication, rate limiting, HTTPS** — v1.4 is local Docker deployment, single user. No external access requirements.
-
-- **Agentic RAG (query rewriting, multi-step retrieval, answer generation)** — Explicitly out of scope. Retrieval only. The consuming LLM (Claude, Cursor) handles prompt assembly and generation.
+**Anti-features (explicitly exclude):**
+- Conversation memory — stateless queries only, no multi-turn context
+- Agentic RAG — single-step retrieval reveals quality issues
+- Custom embedding fine-tuning — alpha will generate training data
+- Production infrastructure (HTTPS, monitoring, cloud) — local network only
 
 ### Architecture Approach
 
-The architecture is presentation-layer-only. The existing codebase provides all business logic — Docker wraps it, FastAPI exposes it, MCP formalizes it. Both `api.py` and `mcp_server.py` are thin wrappers (~30-50 lines each) that initialize embedder, get DB connection, call `hybrid_search()`, and format results.
+v1.5 is additive. The v1.4 system (pgvector + FastAPI at :10800, MCP stdio on host, Ollama on host) continues to work unchanged. New features mount onto the existing app container with zero new containers, zero new ports, zero schema changes.
 
 **Major components:**
+1. **Chat UI module** (`bbj_rag/chat/`) — FastAPI router for `GET /chat` (HTML page) and `POST /chat/send` (SSE stream), Jinja2 templates, HTMX frontend
+2. **Claude API wrapper** (`chat/claude.py`) — assembles RAG context from search results, streams via `client.messages.stream()`, formats citations
+3. **MCP Streamable HTTP** — refactor `mcp_server.py` from httpx proxy to direct `async_hybrid_search()` calls, mount via `app.mount("/mcp", mcp.streamable_http_app())`
+4. **bbjcpl validation** (`validation.py`) — subprocess wrapper for `bbjcpl -N`, MCP tool on host (where BBj installed), optional validation proxy for chat UI
+5. **Source-balanced reranker** — Python post-processing in `search.py`, not SQL modification, round-robin by source with max-per-source limit
+6. **URL mapping** (`url_mapping.py`) — configuration-based string transformation, `flare://Content/` → `https://documentation.basis.cloud/BASISHelp/WebHelp/`
 
-1. **Docker Compose network** — `db` service (pgvector/pgvector:0.8.0-pg17) and `app` service (custom Python 3.12 image). App container connects to `db:5432` via Docker DNS, to Ollama via `host.docker.internal:11434` (requires `extra_hosts: host-gateway` for Linux portability). Persistent named volume for PostgreSQL data. Bind mounts for source data (Flare XHTML, PDFs, MDX, BBj code).
+**Critical refactoring:** MCP server currently proxies to REST API via httpx. When mounted in FastAPI, this creates self-referential loop (app calls itself, deadlocks under single-worker uvicorn). Must call `async_hybrid_search()` directly using `app.state.pool`.
 
-2. **REST API (api.py)** — FastAPI with `/search`, `/health`, and `/stats` endpoints. Connection pool via `psycopg_pool.ConnectionPool` (the existing `get_connection()` creates single connections, inadequate for API). Singleton embedder initialized at startup. Search logic delegated to existing `search.py` functions. Pydantic response models map `SearchResult` fields to JSON.
-
-3. **MCP server (mcp_server.py)** — FastMCP with `@mcp.tool()` decorated function. stdio transport (spawned by Claude Desktop as subprocess). NOT in Docker (stdio cannot cross container boundaries). Runs on host, connects to pgvector via exposed port (localhost:5432) and Ollama at localhost:11434. Returns formatted text blocks (title, source, doc_type, content) for LLM consumption.
-
-4. **Configuration layer** — Existing `Settings(BaseSettings)` with `BBJ_RAG_` env var prefix works perfectly with Docker Compose `environment:` blocks. No new config system needed. Critical change: make TOML source conditional (file may not exist in container). Docker overrides: `BBJ_RAG_DATABASE_URL=postgresql://bbj:bbj@db:5432/bbj_rag`, `OLLAMA_HOST=http://host.docker.internal:11434`.
-
-5. **Database initialization** — Mount `sql/schema.sql` to `/docker-entrypoint-initdb.d/01-schema.sql` in pgvector container. PostgreSQL auto-executes on first startup. Schema uses `IF NOT EXISTS` throughout (idempotent). Critical: set `shm_size: '256mb'` in docker-compose for HNSW parallel builds (default 64MB too small for `maintenance_work_mem`).
-
-**Dependency graph:**
-```
-config.py (Settings) --> embedder.py, db.py, parsers/
-                     --> api.py (NEW) --> search.py
-                     --> mcp_server.py (NEW) --> search.py
-```
-
-Both new modules are **presentation layers**. The existing `search.py` is the abstraction boundary. No business logic changes.
+**Data flow for chat query:** Browser → POST /chat/send → embed query (Ollama) → async_hybrid_search (pgvector HNSW + BM25) → source_balanced_rerank (10 results from 30) → map URLs → Claude API stream → SSE to browser. Latency: ~700-1700ms to first token.
 
 ### Critical Pitfalls
 
-These are deployment-killers that must be addressed proactively:
+1. **SSE newline corruption destroys markdown** — Multi-line content (code blocks, paragraphs) splits across SSE frames because `data:` fields are newline-delimited. BBj code examples render as garbled single-line fragments. Engineers see broken output on first query and lose confidence. Prevention: base64-encode each SSE payload and decode client-side, or JSON-encode with escaped newlines. Test with BBj code block BEFORE building full UI. (BLOCKER — first-impression killer)
 
-1. **TOML config missing in container crashes Settings** — `TomlConfigSettingsSource` raises `FileNotFoundError` when `config.toml` is absent. The Settings class requires TOML file to exist even when all values come from env vars. Fix: modify `settings_customise_sources` to conditionally include TOML source only if file exists. Test Settings construction with no TOML file present. Do NOT copy config.toml into Docker image (bakes dev defaults).
+2. **Claude API context window stuffing degrades quality** — Sending 30 results (to ensure diversity) uses 15-20K tokens. Claude's attention dilutes ("lost in the middle" effect) and answers become vague despite highly relevant chunks. Anthropic research confirms mechanically stuffing lengthy text scatters model attention. Prevention: hard cap at 8-10 results with token budget (~4K tokens), place most relevant results FIRST, log input_tokens for every query. (BLOCKER — fails at primary purpose)
 
-2. **Ollama unreachable from Docker container on macOS** — Inside container, `127.0.0.1:11434` refers to container itself, not host. Fix: (a) Set `OLLAMA_HOST=0.0.0.0:11434` on macOS host (Ollama listens on all interfaces), (b) Set `OLLAMA_ORIGINS="*"` on host (allows cross-origin requests), (c) Pass `OLLAMA_HOST=http://host.docker.internal:11434` env var to container, (d) Include `extra_hosts: ["host.docker.internal:host-gateway"]` in docker-compose.yml (Linux compatibility). Add health check that verifies Ollama connectivity before pipeline starts.
+3. **MCP self-referential loop deadlocks** — Current `mcp_server.py` calls `POST /search` via httpx. When mounted in FastAPI, this is self-referential. Under single-worker uvicorn, deadlock: inbound MCP request holds worker, outbound HTTP call needs worker. Prevention: refactor to call `async_hybrid_search()` directly with `app.state.pool`. Test remote MCP early. (BLOCKER — remote MCP non-functional)
 
-3. **Docker `--shm-size` too small for parallel HNSW index build** — pgvector's parallel HNSW builder uses `/dev/shm` for shared memory. Docker default is 64MB. For 20K-40K chunks at 1024 dimensions, HNSW needs ~100-200MB `maintenance_work_mem`. Fix: Set `shm_size: '256mb'` in docker-compose.yml for the `db` service. Configure PostgreSQL: `maintenance_work_mem = '128MB'`, `max_parallel_maintenance_workers = 4`.
+4. **ANTHROPIC_API_KEY exposed in shared deployment** — No per-user auth, shared key in Docker env var, no rate limiting, no spending alerts. Runaway script exhausts monthly budget in hours. Prevention: set `max_tokens=2048` per call, add 30 req/min global rate limit, set Anthropic spending alerts ($50/day), use Haiku 4.5 (3x cheaper than Sonnet), log input/output tokens. (BLOCKER — operational incident)
 
-4. **psycopg[binary] wheels fail on Alpine-based images** — `psycopg-binary` ships manylinux wheels (glibc). Alpine uses musl libc. Wheels fail to install or produce runtime errors. Fix: Use `python:3.12-slim` (Debian-based, glibc) as base image, NOT Alpine. Slim image is ~45MB larger but supports manylinux wheels natively. Also resolves issues with lxml and PyMuPDF (both require glibc).
-
-5. **Synchronous database connections under async API cause deadlocks** — Current `db.py` uses sync `psycopg.connect()`. If FastAPI endpoints are `async def`, sync DB calls block the event loop. Under concurrent load: deadlock, connection pool exhaustion, catastrophic latency. Fix: Use `psycopg_pool.AsyncConnectionPool` for API endpoints OR use `def` (non-async) endpoints which FastAPI runs in threadpool automatically. Test under concurrent load (10 requests) early.
+5. **bbjcpl exit code always 0** — Unlike most compilers, bbjcpl exits 0 regardless of success/failure. Errors are on stderr only. Standard pattern (`if result.returncode != 0`) never detects errors. All code blocks marked "validated" including syntax errors. Prevention: parse stderr content (not exit code), test with known-bad code, port stderr parsing from bbjcpltool PoC. (DEGRADED — validation feature produces false positives)
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure follows the critical path: foundation (Docker + DB) → retrieval (API) → protocol (MCP).
+Based on research, suggested 5-phase structure aligned with feature dependencies and risk mitigation:
 
-### Phase 1: Docker Compose + pgvector Foundation
-
-**Rationale:** Everything depends on containerized database and networking. Validate Docker build, schema initialization, Ollama connectivity, and ingestion pipeline before adding API layers.
+### Phase 1: Foundation (Source Mapping + Balanced Ranking)
+**Rationale:** Zero-risk additions that improve quality for all consumers (API, MCP, chat). No new dependencies, no containers, no API keys. Build confidence in codebase changes before major integrations.
 
 **Delivers:**
-- `docker-compose.yml` with `db` (pgvector) and `app` services
-- Dockerfile for Python 3.12 app image (multi-stage build with uv)
-- Schema auto-applied on DB container startup
-- Ollama reachable from app container via `host.docker.internal`
-- Source data bind mounts for all 6 parsers
-- Full ingestion run via `docker compose run app bbj-rag ingest --source flare` (and other sources)
+- `url_mapping.py` — clickable source links for 97.8% of corpus (Flare + WordPress + Web Crawl)
+- `source_balanced_rerank()` in `search.py` — minority sources surface in results
+- Configuration-based (sources.toml), no schema changes, no re-ingestion
+
+**Avoids:** Regression in working v1.4 system. These are pure additions, opt-in via parameters.
+
+**Research flags:** Standard patterns, skip `/gsd:research-phase`. Well-documented string manipulation and list reranking.
+
+---
+
+### Phase 2: Chat UI + Claude API Integration
+**Rationale:** The marquee v1.5 feature. Depends on Phase 1 (URL mapping for citation links, balanced ranking for quality results). This is the make-or-break alpha feature — engineers evaluate whether RAG provides useful BBj answers.
+
+**Delivers:**
+- `chat/routes.py` — `GET /chat` (HTML page), `POST /chat/send` (SSE stream)
+- `chat/claude.py` — Claude API wrapper with search result content blocks
+- `chat/templates/chat.html` — HTMX + SSE chat interface
+- Anthropic API key configuration, rate limiting, spending alerts
 
 **Addresses:**
-- TOML config fix (make source conditional on file existence)
-- Database URL configuration (`db:5432` in container vs `localhost:5432` on host)
-- `shm_size` configuration for HNSW builds
-- Base image selection (`python:3.12-slim` not Alpine)
+- TS-1: Web chat interface (zero-setup access)
+- TS-2: Claude API integration (Citations API with search results)
+- TS-3: Source citations (citation links with mapped URLs)
+- TS-4: Streaming response display (SSE via HTMX)
+- D-2: Clickable source links (uses Phase 1 URL mapping)
 
 **Avoids:**
-- Pitfall #1 (TOML missing)
-- Pitfall #2 (Ollama unreachable)
-- Pitfall #3 (shm-size)
-- Pitfall #4 (Alpine wheels)
-- Pitfall #10 (localhost in database URL)
+- C-1: SSE newline corruption (base64-encode SSE payloads, test code blocks first)
+- C-2: Context window stuffing (hard cap 8-10 results, token budget)
+- C-4: API key cost exposure (rate limiting, spending alerts, Haiku 4.5)
+- I-1: SSE error handling (error events, client-side timeout)
 
-**Validates:** End-to-end ingestion through Docker produces searchable chunks in pgvector.
+**Research flags:** NEEDS `/gsd:research-phase` for SSE encoding patterns and HTMX chat implementation. Critical UX details (newline handling) not obvious from documentation.
 
-### Phase 2: REST Retrieval API
+---
 
-**Rationale:** API is simpler than MCP (no SDK, no transport complexity) and provides immediate interactive testing via Swagger UI. Validates the connection pooling and embedder initialization patterns before MCP reuses them.
+### Phase 3: Remote MCP (Streamable HTTP)
+**Rationale:** Enables shared server deployment. Low code change (mounting pattern designed in v1.4 STACK.md). Main risks are SDK mounting issues and MCP refactoring. Independent of chat UI — can be built in parallel.
 
 **Delivers:**
-- `src/bbj_rag/api.py` with FastAPI app
-- `/search` endpoint (POST with query, generation, limit parameters)
-- `/health` endpoint (DB + Ollama connectivity check)
-- `/stats` endpoint (chunk counts by source/generation/doc_type)
-- Connection pool via `psycopg_pool.ConnectionPool`
-- Singleton embedder with Ollama host from config
-- Pydantic response models mapping `SearchResult` to JSON
-- OpenAPI docs at `/docs` for interactive testing
+- Refactored `mcp_server.py` — direct `async_hybrid_search()` calls, not httpx proxy
+- `app.mount("/mcp", mcp.streamable_http_app())` — HTTP transport alongside stdio
+- Dual transport support — stdio for local dev, HTTP for shared server
+- Claude Desktop configuration for remote MCP
 
-**Uses:**
-- FastAPI (already selected)
-- uvicorn[standard] (ASGI server)
-- psycopg-pool (connection pooling)
-- Existing search.py functions (no changes)
-
-**Implements:**
-- Presentation layer over existing search module
-- Environment-based configuration (no code-level config)
+**Addresses:**
+- D-4: Remote/shared server access (MCP via Streamable HTTP)
 
 **Avoids:**
-- Pitfall #5 (sync DB under async API) — use `def` endpoints with threadpool OR async pool
-- Pitfall #17 (no connection pooling) — psycopg_pool with min=2, max=10
+- C-3: Self-referential httpx loop (refactor to direct search)
+- C-5: MCP SDK mounting issues (test early, standalone fallback ready)
+- I-7: AsyncConnectionPool exhaustion (increase max_size=15, release connections before streaming)
 
-**Validates:** `curl http://localhost:8000/search -d '{"query": "BBjGrid", "limit": 5}'` returns relevant chunks.
+**Research flags:** NEEDS `/gsd:research-phase` for MCP SDK mounting issues. GitHub issues (#1367) report path doubling and task group conflicts. Fallback patterns need validation.
 
-### Phase 3: MCP Server
+---
 
-**Rationale:** MCP server reuses search infrastructure from Phase 2 (same embedder, same DB connection logic, same search functions). Adds only MCP SDK dependency and stdio transport wiring. Simplest to implement after API validates the integration patterns.
+### Phase 4: bbjcpl Compiler Validation
+**Rationale:** The unique differentiator (D-1). Requires Phase 3 (MCP HTTP transport) to proxy validation from Docker to host. Standalone addition — does not block other features. Existing bbjcpltool PoC proves pattern.
 
 **Delivers:**
-- `src/bbj_rag/mcp_server.py` with FastMCP
-- `@mcp.tool()` decorated `search_bbj_knowledge` function
-- stdio transport (for Claude Desktop spawning)
-- Formatted text response (not JSON) optimized for LLM consumption
-- Claude Desktop configuration JSON (`claude_desktop_config.json`)
-- Generation value normalization (Ch2 uses `"bbj-gui"` hyphenated, DB uses `"bbj_gui"` underscored)
+- `validation.py` — subprocess wrapper for `bbjcpl -N`, stderr parsing
+- `validate_bbj_code` MCP tool — invokable by Claude
+- Optional: validation proxy endpoint for chat UI (requires host-side validation service)
 
-**Uses:**
-- MCP Python SDK (`mcp>=1.25,<2`)
-- Same embedder, db, search modules as API
-- stdio transport (runs on host, not in Docker)
-
-**Implements:**
-- MCP tool matching Ch2 JSON schema exactly
-- Protocol-specific formatting (text blocks with metadata headers)
+**Addresses:**
+- D-1: bbjcpl compiler validation (trust mechanism, unique value)
 
 **Avoids:**
-- Pitfall #8 (transport mismatch) — stdio for local Claude Desktop, not Streamable HTTP
-- Pitfall #9 (SDK version churn) — pin `>=1.25,<2`
-- Pitfall #16 (stdout corruption) — redirect logging to stderr
+- I-2: Subprocess hangs (10-second timeout, asyncio.wait_for)
+- I-3: Exit code always 0 (parse stderr, test with known-bad code)
 
-**Validates:** Ask Claude Desktop "What is BBjGrid?" triggers `search_bbj_knowledge` tool, returns relevant documentation.
+**Research flags:** Standard patterns, skip `/gsd:research-phase`. bbjcpltool PoC documents exact behavior. Subprocess timeout + stderr parsing well-established.
+
+---
+
+### Phase 5: Concurrent Ingestion
+**Rationale:** Performance optimization, not user-facing. Can be done independently. Biggest code change (async pipeline wrapper) but well-understood pattern. Defer to last to avoid blocking alpha.
+
+**Delivers:**
+- `asyncio.gather()` + semaphore in `ingest_all.py` — parallel source processing
+- Implement `--parallel` flag (currently stub)
+- Resume state file locking (prevent JSON corruption)
+
+**Addresses:**
+- D-5: Concurrent ingestion workers (faster corpus rebuilds)
+
+**Avoids:**
+- I-5: Resume state race condition (asyncio.Lock for file writes)
+- I-6: Ollama GPU saturation (semaphore=2, monitor throughput)
+
+**Research flags:** Standard patterns, skip `/gsd:research-phase`. asyncio.Semaphore + gather() well-documented. Main uncertainty is speedup magnitude (expect 1.5-2x).
+
+---
 
 ### Phase Ordering Rationale
 
-- **Docker first** because both API and MCP depend on pgvector and Ollama connectivity. No value in building presentation layers before the foundation works.
+- **Phase 1 first:** Zero-risk infrastructure improvements that benefit all phases. No API keys, no containers, no complex integrations.
+- **Phase 2 as core:** Chat UI + Claude API is the alpha milestone. Everything else enhances this core feature.
+- **Phase 3 parallel to Phase 2:** Remote MCP independent of chat — can be built by separate developer.
+- **Phase 4 after Phase 3:** bbjcpl validation needs MCP HTTP (for chat UI proxy) or standalone validation service.
+- **Phase 5 last:** Ingestion performance does not block alpha testing. Chat users don't run ingestion.
 
-- **API before MCP** because it provides faster feedback (Swagger UI for manual testing, no client-side MCP setup needed) and validates the embedder + connection pool patterns that MCP will reuse. MCP adds protocol complexity without new business logic.
-
-- **MCP separate from API** despite code similarity because the deployment models differ (stdio subprocess on host vs HTTP server in Docker). Attempting to combine them into a single endpoint with transport auto-detection adds complexity for marginal benefit.
-
-- **Ingestion folded into Phase 1** (not separate) because Docker validation requires running the full pipeline. Can't declare success on "database works" without proving the parsers, chunker, embedder, and bulk insert all function in the containerized environment.
+**Dependency graph:**
+```
+Phase 1 (URL mapping + balanced ranking)
+    ├── Phase 2 (Chat UI + Claude) — DEPENDS on Phase 1 for citations
+    ├── Phase 3 (Remote MCP) — INDEPENDENT, parallel to Phase 2
+    │       └── Phase 4 (bbjcpl validation) — DEPENDS on Phase 3 for HTTP validation proxy
+    └── Phase 5 (Concurrent ingestion) — INDEPENDENT, can be deferred
+```
 
 ### Research Flags
 
-**Phases with standard patterns (skip `/gsd:research-phase`):**
+**Phases needing `/gsd:research-phase` during planning:**
+- **Phase 2 (Chat UI + Claude):** SSE encoding patterns for multi-line content, HTMX chat implementation details, citation rendering. The SSE newline corruption pitfall is critical and not obvious from docs.
+- **Phase 3 (Remote MCP):** MCP SDK mounting issues (#1367), path doubling workarounds, lifespan integration. GitHub issues report problems with FastAPI mounting.
 
-- **Phase 1 (Docker):** Well-documented Docker Compose + PostgreSQL + Python patterns. All critical decisions resolved in STACK.md (base image, Ollama connectivity, shm-size, schema initialization). No unknowns.
-
-- **Phase 2 (API):** FastAPI + psycopg3 is a standard stack with extensive documentation. The existing `search.py` is already tested and clean. Presentation-layer only.
-
-- **Phase 3 (MCP):** MCP Python SDK docs are comprehensive. The transport choice (stdio) is resolved. Ch2 schema defines the contract. Only integration work, no research needed.
-
-**No phases need deeper research.** The existing codebase provides battle-tested business logic, and the deployment stack uses proven patterns.
+**Phases with standard patterns (skip research-phase):**
+- **Phase 1 (URL mapping + ranking):** Configuration-based string transformation and list reranking. No ambiguity.
+- **Phase 4 (bbjcpl validation):** subprocess.run with timeout, stderr parsing. Proven by bbjcpltool PoC.
+- **Phase 5 (Concurrent ingestion):** asyncio.Semaphore + gather(). Well-documented stdlib pattern.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All package versions verified on PyPI (2026-02-01). Docker images verified on Docker Hub. Ollama connectivity pattern documented in official Ollama FAQ. |
-| Features | HIGH | Existing codebase analyzed directly. Ch2 MCP schema is source of truth. Feature set is tightly scoped (wrap, deploy, orchestrate — no new algorithms). |
-| Architecture | HIGH | Service topology is standard Docker Compose. Integration points with existing modules are clean (config, embedder, db, search all have correct abstraction boundaries). |
-| Pitfalls | HIGH | All critical pitfalls sourced from official docs (pgvector README, Docker docs, MCP SDK docs) or multiple independent reports (psycopg binary on Alpine, Ollama Docker connectivity). |
+| Stack | HIGH | anthropic SDK v0.77.0 verified on PyPI (Jan 2026). Citations API confirmed GA. Jinja2/sse-starlette already transitive deps. HTMX 2.0.8 verified on GitHub releases. |
+| Features | HIGH | Claude API Citations with search result blocks verified against official docs. HTMX SSE patterns confirmed across multiple tutorials. bbjcpl behavior documented in bbjcpltool PoC. |
+| Architecture | HIGH | FastAPI + Jinja2 + HTMX is well-established pattern. MCP mounting issues documented with fallback. asyncio.Semaphore standard for concurrent I/O. |
+| Pitfalls | HIGH | SSE newline corruption confirmed in HTMX chatbot article. "Lost in the middle" confirmed by Anthropic research. bbjcpl exit code 0 documented in bbjcpltool PROJECT.md. |
 
 **Overall confidence:** HIGH
 
-The research covers deployment of existing code, not new feature development. The codebase is mature (310 tests, 4,906 lines) with clean module boundaries. The deployment stack (Docker, FastAPI, MCP SDK) uses well-established patterns. Critical pitfalls have proven mitigations.
+v1.5 builds on a working v1.4 foundation with minimal new dependencies and well-documented integration patterns. The critical risks (SSE encoding, context stuffing, MCP deadlock) have proven mitigations from community experience and official SDK docs.
 
 ### Gaps to Address
 
-- **Volume mount performance on macOS** — Bind mounts incur ~3x overhead for 7,087 Flare files. Accept the performance hit for v1.4 (15 minutes for full ingestion is tolerable). If ingestion time becomes a problem, migrate source data to Docker volumes or use OrbStack. Not a blocker.
+**SSE encoding for multi-line content:** The base64 approach is documented but implementation details (client-side decoding in HTMX, performance impact of 33% payload increase) need validation during Phase 2 planning. Alternative: JSON-encode with escaped newlines. Both approaches tested in community projects but choice depends on HTMX version compatibility.
 
-- **Multi-MDX source support** — Current config has `mdx_source_path: str` (singular). Three MDX tutorial sites (DWC, beginner, DB modernization) require either (a) config change to `mdx_source_dirs: list[str]` or (b) run `ingest --source mdx` three times with different env var overrides. Low complexity, handle in Phase 1 during config testing.
+**MCP SDK mounting stability:** The official SDK's `streamable_http_app()` has reported issues (RuntimeError with task groups, path doubling). The standalone `fastmcp` package (v2.3+) has better FastAPI integration but is a different package. Decision between official SDK + fallback vs standalone package needs evaluation at Phase 3 start.
 
-- **MCP SDK v2 timeline** — v2 anticipated Q1 2026 with potential breaking changes. Pin to `mcp>=1.25,<2` for stability. Monitor SDK changelog. Plan v2 migration as separate task (not mid-feature). Not a v1.4 concern.
+**Source-balanced ranking calibration:** The `min_score_ratio=0.5` threshold prevents boosting irrelevant minority sources, but this is a guess. Alpha tester feedback will calibrate. Make configurable from start. No need for upfront research — tune based on usage.
 
-- **PyMuPDF ARM64 wheel availability** — Intermittent across versions. Mitigate by targeting `linux/amd64` explicitly in docker-compose (`platform: linux/amd64`). Adds small runtime overhead on Apple Silicon via Rosetta but guarantees wheel availability. Verify at build time.
+**Ollama concurrent embedding speedup:** Expected 1.5-2x speedup with semaphore=2 based on I/O overlap, but actual speedup depends on GPU saturation and model load time. Profile baseline before implementing to set realistic expectations. If speedup is marginal, defer this phase entirely.
 
 ## Sources
 
 ### Primary (HIGH confidence)
 
-- **Existing codebase** — All modules in `rag-ingestion/src/bbj_rag/` analyzed directly (search.py, db.py, embedder.py, config.py, pipeline.py, intelligence/, parsers/). 310 tests, 4,906 lines of tested code.
+**Stack:**
+- [Anthropic Python SDK — PyPI](https://pypi.org/project/anthropic/) — v0.77.0 (2026-01-29), MIT license
+- [Anthropic Python SDK — GitHub](https://github.com/anthropics/anthropic-sdk-python) — Streaming, Citations API examples
+- [Anthropic Citations API](https://platform.claude.com/docs/en/build-with-claude/citations) — Stable (not beta), search result content blocks
+- [Claude Haiku 4.5 Announcement](https://www.anthropic.com/news/claude-haiku-4-5) — Pricing, performance benchmarks
+- [MCP Python SDK — PyPI](https://pypi.org/project/mcp/) — v1.26.0 (2026-01-24)
+- [MCP SDK GitHub Issues](https://github.com/modelcontextprotocol/python-sdk/issues/1367) — Streamable HTTP mounting issues
+- [htmx — GitHub Releases](https://github.com/bigskysoftware/htmx/releases) — v2.0.8, SSE extension
+- [FastAPI Templates](https://fastapi.tiangolo.com/advanced/templates/) — Jinja2Templates, StaticFiles
+- [sse-starlette — PyPI](https://pypi.org/project/sse-starlette/) — v3.2.0 (2026-01-17)
 
-- **Ch2 Strategic Architecture** — `/Users/beff/_workspace/bbj-ai-strategy/docs/02-strategic-architecture/index.md` lines 166-180. Defines `search_bbj_knowledge` MCP tool JSON schema (source of truth).
+**Features:**
+- [Claude API Search Results](https://platform.claude.com/docs/en/build-with-claude/search-results) — GA, `SearchResultBlockParam` format
+- [Claude API Streaming](https://platform.claude.com/docs/en/build-with-claude/streaming) — SSE with `text_delta` events
+- [MCP Remote Servers](https://support.claude.com/en/articles/11503834-building-custom-connectors-via-remote-mcp-servers) — Streamable HTTP support
+- [Ollama Python SDK](https://github.com/ollama/ollama-python) — AsyncClient, embed() API
+- [Ollama Concurrency](https://github.com/ollama/ollama/issues/8778) — OLLAMA_NUM_PARALLEL default 4
 
-- **PROJECT.md** — `/Users/beff/_workspace/bbj-ai-strategy/.planning/PROJECT.md`. v1.4 target features and explicit out-of-scope items.
+**Architecture:**
+- [FastMCP HTTP Deployment](https://gofastmcp.com/deployment/http) — Mount pattern, lifespan integration
+- [FastAPI + HTMX Chat Pattern](https://karl-sparks.github.io/ks-personal-blog/posts/fastapi-htmx-docker-tutorial/) — SSE streaming
+- [bbjcpltool PROJECT.md](/Users/beff/bbjcpltool/.planning/PROJECT.md) — Compiler behavior: stderr parsing, -N flag
 
-- **pgvector GitHub README** — [github.com/pgvector/pgvector](https://github.com/pgvector/pgvector). HNSW index creation, parallel builds, shm-size requirements, maintenance_work_mem guidance.
-
-- **Docker Hub** — pgvector/pgvector:0.8.0-pg17 tag verified, python:3.12-slim-bookworm verified.
-
-- **PyPI** — FastAPI 0.128.0, uvicorn 0.40.0, psycopg-pool 3.3.0, mcp 1.26.0 verified (2026-02-01).
-
-- **MCP Python SDK** — [github.com/modelcontextprotocol/python-sdk](https://github.com/modelcontextprotocol/python-sdk). FastMCP API, stdio transport, `@mcp.tool()` decorator pattern.
-
-- **Ollama FAQ** — [docs.ollama.com/faq](https://docs.ollama.com/faq). Docker connectivity (`OLLAMA_HOST=0.0.0.0`), `host.docker.internal` pattern.
-
-- **uv Docker Guide** — [docs.astral.sh/uv/guides/integration/docker/](https://docs.astral.sh/uv/guides/integration/docker/). Multi-stage build, `--frozen` flag, cache mount patterns.
+**Pitfalls:**
+- [HTMX SSE Newline Corruption](https://towardsdatascience.com/javascript-fatigue-you-dont-need-js-to-build-chatgpt-part-2/) — base64 encoding workaround
+- [HTMX SSE Error Handling Issue #134](https://github.com/bigskysoftware/htmx-extensions/issues/134) — SSE extension doesn't handle errors
+- [Anthropic Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval) — "Lost in the middle" effect
+- [Ollama Per-Model Concurrency Issue #5693](https://github.com/ollama/ollama/issues/5693) — Parallelism vs memory pressure
+- [psycopg3 Pool Documentation](https://www.psycopg.org/psycopg3/docs/advanced/pool.html) — Exhaustion behavior
 
 ### Secondary (MEDIUM confidence)
 
-- **FastAPI + psycopg3 connection pooling** — [spwoodcock.dev FastAPI psycopg3 article](https://spwoodcock.dev/blog/2024-10-fastapi-pydantic-psycopg/). Lifespan pattern for pool lifecycle.
+- [FastAPI + HTMX Modern Approach](https://dev.to/jaydevm/fastapi-and-htmx-a-modern-approach-to-full-stack-bma) — Stack validation
+- [ReFaRAG paper](https://homepages.tuni.fi/konstantinos.stefanidis/docs/FEHDA2025.pdf) — Re-ranking for diversity
+- [LLMLOOP (ICSME 2025)](https://valerio-terragni.github.io/assets/pdf/ravi-icsme-2025.pdf) — Compilation checking for LLM code
+- [Converting STDIO to Remote MCP](https://portkey.ai/docs/guides/converting-stdio-to-streamable-http) — Migration guide
+- [How Ollama Handles Parallel Requests](https://www.glukhov.org/post/2025/05/how-ollama-handles-parallel-requests/) — Queuing behavior
 
-- **MCP transport comparison** — [mcpcat.io transport guide](https://mcpcat.io/guides/comparing-stdio-sse-streamablehttp/). stdio vs Streamable HTTP use cases.
+### Tertiary (LOW confidence)
 
-- **Docker macOS performance (2025)** — Paolo Mainardi benchmarks. VirtioFS ~3x overhead for many small files. OrbStack improvements noted.
-
-- **Ollama embedding timeouts** — Multiple GitHub issues: LightRAG #2300, Roo-Code #5733, RAGFlow #4934. Batch size reduction (8-16) and retry logic recommended.
-
-- **pgvector HNSW shm-size issues** — GitHub issues #800 (Neon), #409 (pgvector). shm_size must be >= maintenance_work_mem for parallel builds.
-
-### Tertiary (LOW confidence, needs validation)
-
-- **MCP SDK v2 timeline Q1 2026** — Mentioned in SDK README and blog post (December 2025). Actual release date unconfirmed. Mitigation: pin to v1.x regardless.
-
-- **Pydantic-settings nested override regression** — GitHub issue #714. Affects v2.12+ when nested TOML sections override via env vars. Current project uses flat settings (not affected). Monitor for future changes.
+- [Ollama Async Client Issue #197](https://github.com/ollama/ollama-python/issues/197) — Concurrent request limits (may be resolved)
+- [FastAPI SSE in Docker Discussion #11590](https://github.com/fastapi/fastapi/discussions/11590) — Environment-specific issues
 
 ---
-*Research completed: 2026-02-01*
+*Research completed: 2026-02-03*
 *Ready for roadmap: yes*

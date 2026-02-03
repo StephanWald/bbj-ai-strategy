@@ -1,675 +1,749 @@
-# Domain Pitfalls: RAG Pipeline Docker Deployment, Retrieval API, and MCP Server
+# Domain Pitfalls: v1.5 Alpha-Ready Feature Integration
 
-**Domain:** Deploying an existing Python RAG ingestion pipeline as Docker-based services with retrieval API and MCP server
-**Researched:** 2026-02-01
-**Focus:** Common mistakes when moving from "tested components" (310 tests, 4,906 lines) to "running service" with Docker, pgvector, Ollama-from-container, and MCP transport
+**Domain:** Adding chat UI, Claude API, compiler validation, remote MCP, concurrent ingestion, and source-balanced ranking to a working Docker-based RAG system
+**Researched:** 2026-02-03
+**Focus:** Common mistakes when adding these specific features to the existing v1.4 system. Not generic advice -- every pitfall references existing files, functions, and architectural decisions.
+**Supersedes:** Previous PITFALLS.md covered v1.4 Docker deployment pitfalls (config.toml, Ollama connectivity, shm-size, etc.). Those issues are resolved in the shipped v1.4 system. This document covers NEW pitfalls specific to v1.5 feature additions.
 
 ---
 
-## Critical Pitfalls
+## Critical Pitfalls (Blockers)
 
-Mistakes that cause deployment failure, data corruption, or require architectural rework.
+Mistakes that break the system, corrupt data, or require architectural rework. These block alpha testing.
 
-### 1. TOML Config File Missing in Docker Container Crashes Settings
+### C-1: SSE Newline Corruption Destroys Markdown in Streamed Chat Responses
 
-**What goes wrong:** The existing `Settings` class (in `config.py`) hardcodes `toml_file="config.toml"` in `SettingsConfigDict`. When the container starts without a `config.toml` file at its working directory, `TomlConfigSettingsSource` raises a `FileNotFoundError` during `Settings()` construction. The entire application fails to start, even though every setting has a sensible default or could be provided via `BBJ_RAG_` environment variables.
+**What goes wrong:** The chat UI uses HTMX's SSE extension to stream Claude API responses to the browser. SSE data frames are newline-delimited -- each `data:` line is a separate event payload. When Claude's response contains multi-line content (Markdown paragraphs, code blocks, BBj examples), the newlines within the content split a single logical message across multiple SSE frames. The HTMX SSE extension treats each frame as a complete HTML fragment, producing garbled output where every line of a code block appears as a separate swap operation.
 
 **Why it happens:**
-- The `settings_customise_sources` method correctly includes both `env_settings` and `TomlConfigSettingsSource`, but `TomlConfigSettingsSource` does not have a built-in "file optional" mode -- unlike `.env` files, missing TOML files raise hard errors
-- In development, `config.toml` always exists in the project root where commands are run
-- In Docker, the working directory is typically `/app` and only the Python package is installed -- no config files unless explicitly `COPY`'d
-- The 12-factor app pattern says "use env vars in containers," but the current implementation requires the TOML file to exist even if all values come from env vars
+- The SSE protocol spec requires `data:` fields to be single-line. Multi-line data requires sending each line as a separate `data:` field within the same event (the browser concatenates them with `\n`).
+- Most SSE tutorials show simple single-line messages. Streaming Claude API responses produces multi-line content including code blocks, lists, and paragraphs.
+- The HTMX SSE extension subscribes to named events and swaps the event data into the DOM. If the data contains raw newlines, the browser's EventSource parser may fragment it.
+- The Towards Data Science article on HTMX chatbots explicitly warns: "The Event Source that HTMX SSE wraps uses a format of data messages that are new line delimited. This means for streaming markdown, the markdown gets corrupted and cannot be formatted."
 
 **Consequences:**
-- Container crashes on startup with a confusing `FileNotFoundError` traceback
-- Developers waste time debugging why env vars "aren't working" when the real issue is a missing file
-- If the workaround is to always COPY config.toml into the image, you bake dev-specific defaults (like `postgresql://localhost:5432/bbj_rag`) into the production image
+- BBj code examples (the primary value of this system) render as garbled single-line fragments
+- Engineers see broken output on their first interaction and lose confidence
+- Markdown formatting (headers, lists, code fences) is destroyed
+- The chat appears fundamentally broken, not just cosmetically imperfect
+
+**Warning signs:**
+- Single-line responses stream correctly, but any response with code blocks or lists renders incorrectly
+- Code blocks appear as separate disconnected lines instead of a formatted block
+- Newlines within `data:` payloads visible in browser DevTools Network tab
 
 **Prevention:**
-- Modify `settings_customise_sources` to conditionally include `TomlConfigSettingsSource` only when the TOML file exists:
+- Base64-encode each SSE data payload, decode on the client. This is the approach documented in the HTMX chatbot article. The tradeoff is ~33% larger payloads, which is negligible for text.
+- Alternatively, use JSON encoding: `data: {"html": "<escaped html>"}` where newlines are escaped as `\n` in JSON. Parse on the client with a small JS handler.
+- Do NOT use raw `hx-swap` with SSE for multi-line content. Instead, use a custom `htmx:sseMessage` event handler that processes the decoded content.
+- Test with a response that includes a multi-line BBj code block BEFORE building the full chat UI. This is the first thing to validate.
+
+**Severity:** BLOCKER -- First-impression killer. If the first query returns garbled code, alpha testers will not trust the system.
+
+**Phase:** Chat UI implementation (validate SSE + multi-line content encoding FIRST, before building templates)
+
+**Confidence:** HIGH -- Confirmed by multiple HTMX SSE implementations and explicitly documented as a known issue.
+
+---
+
+### C-2: Claude API Context Window Stuffing Degrades Answer Quality
+
+**What goes wrong:** The chat endpoint retrieves RAG results and sends them to Claude as context. If too many results are included (or results are too long), several problems emerge: Claude's attention dilutes across irrelevant chunks ("lost in the middle" effect), costs increase non-linearly, and the system prompt instructions get crowded out by context volume. With 10 results at ~400 tokens each, you use ~4K context tokens -- manageable. But if the source-balanced reranker requests 30 results from SQL (to ensure diversity), or if chunk sizes vary widely, context can balloon to 15-20K tokens.
+
+**Why it happens:**
+- The architecture calls for `async_hybrid_search()` to over-fetch (e.g., `limit * 3` = 30 results) for the source-balanced reranker to select from. If the reranker passes all 30 to Claude instead of filtering to 10, context is 3x larger than intended.
+- The current chunks table has no `token_count` column. Chunk sizes nominally target 400 tokens but vary from 50 to 800+ tokens depending on heading-aware splitting boundaries.
+- Anthropic's research confirms that "mechanically stuffing lengthy text into an LLM's context window scatters the model's attention, significantly degrading answer quality through the 'Lost in the Middle' or 'information flooding' effect."
+- The temptation is to include MORE context "just in case" -- but research shows diminishing and even negative returns beyond 5-8 focused chunks.
+
+**Consequences:**
+- Answers become vague, generic, or fail to cite the most relevant source
+- Claude may hallucinate connections between unrelated chunks
+- Per-query costs increase (token pricing is linear, but attention computation is quadratic)
+- Response latency increases (more input tokens = slower time-to-first-token)
+
+**Warning signs:**
+- Answers cite the first and last sources but ignore middle sources
+- Generic answers despite highly relevant chunks being in the context
+- Increasing response latency as more results are included
+- Per-query costs exceeding $0.05 (expected: $0.02-0.04 at Haiku pricing)
+
+**Prevention:**
+- Hard cap: Send at most 8-10 search results to Claude, regardless of how many the reranker considers.
+- Implement the source-balanced reranker as a FILTER (selects 8-10 from 30), not a pass-through.
+- Add a token budget: sum approximate token counts of selected results, stop adding results when budget (~4K tokens) is reached.
+- Place the most relevant results FIRST in the context (Claude attends better to early context).
+- Monitor actual context sizes during alpha. Log `input_tokens` from the Claude API response metadata for every query.
+- Consider using Anthropic's Citations API with `citations.enabled=True` on search result content blocks, which enables Claude to cite specific passages without needing the entire chunk to be in its active attention.
+
+**Severity:** BLOCKER -- Degraded answer quality means the system fails at its primary purpose. Engineers get vague answers and conclude the RAG approach does not work.
+
+**Phase:** Claude API integration (enforce context budget from the start)
+
+**Confidence:** HIGH -- "Lost in the middle" is well-documented (Liu et al. 2023, confirmed by Anthropic's contextual retrieval paper). The token budget approach is standard RAG practice.
+
+---
+
+### C-3: MCP Refactoring Creates Self-Referential Loop When Mounted in FastAPI
+
+**What goes wrong:** The current `mcp_server.py` (line 91) calls the REST API via `httpx.AsyncClient().post(f"{API_BASE}/search", json=payload)`. When this MCP server is mounted inside the FastAPI app via `app.mount("/mcp", mcp.streamable_http_app())`, the MCP tool function calls the app's own `/search` endpoint via HTTP -- a self-referential loop. Under uvicorn's single-worker default, this deadlocks: the inbound MCP request holds the only worker thread, which then makes an outbound HTTP request that needs a worker thread to handle.
+
+**Why it happens:**
+- The v1.4 architecture intentionally made the MCP server a thin REST proxy. This was correct for stdio transport (MCP runs as a separate process on the host).
+- The v1.5 architecture mounts the MCP server inside the FastAPI app for Streamable HTTP. The httpx proxy pattern no longer works because the server is calling itself.
+- Even with multiple uvicorn workers, this is fragile: it wastes a worker on internal HTTP overhead and creates a circular dependency.
+- The ARCHITECTURE.md (Section 2.4) correctly identifies this: "The tool function must be refactored to call `async_hybrid_search()` directly."
+
+**Consequences:**
+- MCP requests hang indefinitely (deadlock under single worker)
+- With multiple workers, MCP requests are 2x slower than necessary (HTTP round-trip to self)
+- If the internal HTTP call times out (httpx default 30s), the MCP tool returns an error
+- Difficult to debug: the request appears to enter the MCP handler but never returns
+
+**Warning signs:**
+- MCP tool invocations hang when the server is running as mounted Streamable HTTP
+- MCP tools work fine when running as standalone stdio process
+- uvicorn logs show the MCP handler receiving the request but no corresponding /search access log entry (because the worker is blocked)
+
+**Prevention:**
+- Refactor `mcp_server.py` to call `async_hybrid_search()` directly, not via HTTP. This requires:
+  1. The MCP tool function to access the same `app.state.pool` and `app.state.ollama_client` as the REST routes
+  2. A dependency injection mechanism that works for both stdio (standalone) and HTTP (mounted) modes
+  3. For stdio mode, the MCP server can continue using httpx (separate process, no deadlock)
+- Pattern: Create a `SearchService` class that encapsulates embedding + search. Both REST routes and MCP tools use it. In FastAPI, inject via `app.state`. In stdio, inject a version that uses httpx.
+- Test: Verify that a remote Claude Desktop can call `search_bbj_knowledge` via Streamable HTTP and get results within 2 seconds (embedding + search, no HTTP round-trip overhead).
+
+**Severity:** BLOCKER -- Remote MCP is non-functional if this is not addressed. Engineers on the shared server cannot use Claude Desktop with the RAG system.
+
+**Phase:** Remote MCP implementation (must be addressed as part of the MCP refactoring, not as an afterthought)
+
+**Confidence:** HIGH -- The deadlock under single-worker uvicorn is deterministic. The httpx self-referential call pattern is a known anti-pattern in ASGI applications.
+
+---
+
+### C-4: ANTHROPIC_API_KEY Exposed in Shared Deployment
+
+**What goes wrong:** The chat UI runs on a shared server. The `ANTHROPIC_API_KEY` is passed as an environment variable to the Docker container. Every chat query uses this key. There is no per-user authentication (alpha on trusted network). If ANY engineer or script makes excessive requests (accidental infinite loop, load testing, copy-paste automation), the API key accumulates charges against the organization's Anthropic account. There is no rate limiting, no per-user quotas, and no spending alerts within the application.
+
+**Why it happens:**
+- The alpha explicitly excludes authentication (PROJECT.md: "No auth needed")
+- The Anthropic API key is a shared secret for the entire deployment
+- There is no application-level rate limiting in the FastAPI app
+- The Anthropic SDK's built-in retry logic (2 retries with backoff) means a 429 from Anthropic is silently retried, masking rate limit signals
+- Engineers testing the system may run automated scripts against the chat endpoint
+
+**Consequences:**
+- Unexpected API bill (uncapped, Anthropic charges per-token)
+- If the key hits the organization's rate limit, ALL users are affected simultaneously
+- A runaway script could exhaust the monthly budget in hours
+- If the key is leaked (shared server, environment variable), unauthorized usage
+
+**Warning signs:**
+- Rising costs in Anthropic dashboard without corresponding alpha usage
+- 429 errors in server logs indicating rate limiting
+- API key visible in `docker inspect` output or Docker Compose environment
+
+**Prevention:**
+- Set `max_tokens=2048` on every Claude API call (caps per-response cost)
+- Add application-level rate limiting: max 30 requests per minute globally, implemented via a simple in-memory counter in FastAPI middleware
+- Log every Claude API call with `input_tokens` and `output_tokens` to estimate running costs
+- Set up Anthropic workspace spending alerts ($50/day, $200/month) via the Anthropic console BEFORE deploying
+- Store the API key in a `.env` file that is NOT committed to git (already the case with `.env.example`)
+- Consider using Claude Haiku 4.5 ($1/M input, $5/M output) instead of Sonnet ($3/$15) for alpha -- 3x cost reduction with acceptable quality for RAG Q&A
+
+**Severity:** BLOCKER -- Not a technical failure, but an operational one. Uncapped API costs on a shared key with no rate limiting is a production incident waiting to happen.
+
+**Phase:** Claude API integration (set rate limits and spending alerts BEFORE deploying to shared server)
+
+**Confidence:** HIGH -- This is a well-known operational pitfall for any shared LLM API deployment. The Anthropic SDK does not enforce any client-side spending limits.
+
+---
+
+### C-5: MCP SDK Mounting Issues Break Streamable HTTP in FastAPI
+
+**What goes wrong:** The official MCP Python SDK's `streamable_http_app()` method has reported issues when mounted as a sub-application in FastAPI. Known problems include: RuntimeError with task groups during concurrent requests, GET requests hanging indefinitely for SSE notifications, and path doubling where the endpoint becomes `/mcp/mcp` instead of `/mcp`.
+
+**Why it happens:**
+- The MCP SDK's Streamable HTTP implementation uses `anyio` task groups internally, which can conflict with FastAPI's own ASGI lifecycle management
+- Path doubling occurs because `streamable_http_app()` returns an ASGI app with an internal `/mcp` path. Mounting it at `/mcp` in FastAPI produces `/mcp/mcp` (GitHub issue #1367)
+- Session management via `Mcp-Session-Id` header may conflict with FastAPI middleware
+- The ARCHITECTURE.md notes this risk at MEDIUM confidence: "The official MCP SDK has reported issues with mounting in FastAPI"
+
+**Consequences:**
+- Remote MCP via Streamable HTTP is non-functional
+- Engineers cannot configure Claude Desktop to connect to the shared server
+- Fallback to standalone MCP process requires a separate port and process management
+
+**Warning signs:**
+- HTTP POST to `/mcp` returns 404 (path doubling -- try `/mcp/mcp`)
+- GET request to the MCP endpoint hangs (SSE notification stream issue)
+- RuntimeError in server logs referencing task groups or cancelled scopes
+- Session initialization succeeds but subsequent tool calls fail
+
+**Prevention:**
+- Test MCP mounting EARLY in the development process (before building the chat UI)
+- Try mounting at root first: `app.mount("/", mcp.streamable_http_app())` -- MCP endpoint at `/mcp`, avoids path doubling. Verify this does not conflict with FastAPI's own routes.
+- If root mounting conflicts, try `mcp.streamable_http_app(streamable_http_path="/")` and mount at `/mcp`
+- If SDK mounting fails entirely, fall back to running the MCP server as a standalone process: `mcp.run(transport="streamable-http", host="0.0.0.0", port=10801)`. This means a second port (10801) but works reliably.
+- Consider using the standalone `fastmcp` package (v2.3+) which has `http_app()` and `combine_lifespans()` specifically designed for FastAPI integration. However, this is a different package from the official `mcp` SDK and may introduce its own issues.
+- Pin `mcp>=1.25,<2` and check the changelog for mounting fixes before upgrading
+
+**Severity:** BLOCKER for remote MCP access. The chat UI works independently, so the system is not entirely broken, but the MCP use case (Claude Desktop integration for the team) is blocked.
+
+**Phase:** Remote MCP implementation (test mounting approach as the FIRST task in this phase, before refactoring tool functions)
+
+**Confidence:** MEDIUM -- The mounting issues are reported in GitHub issues but may be fixed in newer SDK versions. The standalone fallback is reliable.
+
+---
+
+## Integration Pitfalls (Degraded)
+
+Mistakes that leave the system functional but with degraded quality, performance, or user experience. Engineers can use it but results are suboptimal.
+
+### I-1: HTMX SSE Extension Error Handling Silently Retries on Failure
+
+**What goes wrong:** The HTMX SSE extension (`hx-ext="sse"`) does not gracefully handle HTTP error responses. If the Claude API returns a 500, 429 (rate limit), or 529 (overloaded), the SSE endpoint returns a non-200 status. The standard HTMX request lifecycle respects error status codes, but the SSE extension tries to reconnect indefinitely. The user sees the chat "working" (spinner spinning) but never receives a response or error message.
+
+**Why it happens:**
+- The browser EventSource API automatically reconnects on connection loss -- this is by design for long-running SSE streams
+- HTMX's SSE extension inherits this reconnection behavior
+- A documented HTMX GitHub issue (#134) states: "HTMX SSE extension doesn't know how to handle errors"
+- The Claude API can return mid-stream errors (the stream starts with HTTP 200, but an error event arrives later). These bypass HTTP status code error handling entirely.
+
+**Consequences:**
+- User waits indefinitely for a response that will never arrive
+- No error message displayed in the UI
+- Browser DevTools shows repeated connection attempts in the Network tab
+- The experience feels buggy and unreliable
+
+**Warning signs:**
+- Chat appears to be "thinking" forever after Claude API errors
+- Browser console shows EventSource reconnection attempts
+- Server logs show Claude API errors but the UI shows nothing
+
+**Prevention:**
+- Use `sse-close="complete"` to send a termination event that closes the EventSource when the response is done. Without this, the connection stays open.
+- Implement error events: send `event: error\ndata: {"message": "API error"}\n\n` from the server when the Claude API fails. Handle this event on the client to display an error message.
+- Set a client-side timeout: if no SSE event arrives within 30 seconds, display "Response timed out. Please try again."
+- For mid-stream Claude API errors, catch `anthropic.APIError` in the streaming generator and yield an error SSE event before closing the stream.
+- Test: Temporarily set an invalid API key and verify the UI displays an error message (not infinite spinner).
+
+**Severity:** DEGRADED -- System works for successful requests but fails silently on errors. Alpha testers will encounter this during rate limiting or API outages.
+
+**Phase:** Chat UI implementation (implement error handling in the SSE streaming endpoint)
+
+**Confidence:** HIGH -- Confirmed via HTMX GitHub issues and SSE extension documentation.
+
+---
+
+### I-2: bbjcpl Subprocess Hangs on Malformed Input Without Timeout
+
+**What goes wrong:** The `validate_bbj_syntax` MCP tool runs `bbjcpl` as a subprocess. If bbjcpl encounters certain malformed inputs (incomplete programs, binary data, extremely long lines), it may hang waiting for input on stdin or enter an infinite processing loop. Without a subprocess timeout, the MCP tool call never returns, blocking the Claude conversation.
+
+**Why it happens:**
+- The bbjcpltool PoC uses `subprocess.run()` with `capture_output=True` but the timeout configuration needs to be explicit
+- bbjcpl is designed for well-formed BBj source files. Claude-generated code may include partial programs, pseudocode mixed with BBj, or code fragments without proper program structure
+- If bbjcpl reads from stdin (pipe mode fallback), it blocks waiting for EOF
+- The ARCHITECTURE.md specifies a 10-second timeout, but this must be enforced at the subprocess level AND at the MCP tool level
+
+**Consequences:**
+- A single malformed code block hangs the entire MCP server (if using stdio, the Claude Desktop session is frozen)
+- For Streamable HTTP with `stateless_http=True`, the specific request hangs but the server can handle other requests
+- Engineers perceive the tool as unreliable and stop using it
+
+**Warning signs:**
+- MCP tool call for `validate_bbj_syntax` never returns
+- bbjcpl process visible in `ps aux` consuming 0% CPU (waiting for input)
+- Server memory gradually increases if hung processes accumulate
+
+**Prevention:**
+- Always pass `timeout=10` to `subprocess.run()`:
   ```python
-  from pathlib import Path
-
-  @classmethod
-  def settings_customise_sources(cls, settings_cls, init_settings, env_settings, dotenv_settings, file_secret_settings):
-      sources = [init_settings, env_settings]
-      if Path("config.toml").exists():
-          sources.append(TomlConfigSettingsSource(settings_cls))
-      return tuple(sources)
+  result = subprocess.run(
+      [bbjcpl_path, "-N", temp_file],
+      capture_output=True, text=True, timeout=10,
+  )
   ```
-- Alternatively, make the TOML path configurable via an env var: `BBJ_RAG_CONFIG_FILE=/app/config.toml`
-- Test the Settings class with no TOML file present as a unit test before Dockerizing
-
-**Detection:** Application fails on first `Settings()` call in the container. Stack trace points to `TomlConfigSettingsSource.__init__`.
-
-**Confidence:** HIGH -- verified against the actual `config.py` source code and pydantic-settings documentation. TomlConfigSettingsSource does not silently skip missing files.
-
-**Phase:** Docker containerization (address during Dockerfile and config refactoring)
-
----
-
-### 2. Ollama Unreachable from Docker Container on macOS
-
-**What goes wrong:** The `OllamaEmbedder` uses `ollama_client.embed()` which defaults to `http://127.0.0.1:11434`. Inside a Docker container on macOS, `127.0.0.1` refers to the container itself, not the host where Ollama is running. Every embedding call fails with a connection refused error. The entire ingestion pipeline is dead.
-
-**Why it happens:**
-- Docker on macOS runs containers inside a Linux VM -- containers have their own network namespace
-- The `ollama` Python library reads `OLLAMA_HOST` env var for its default, falling back to `http://127.0.0.1:11434`
-- The current `OllamaEmbedder.__init__` accepts `model` and `dimensions` but has no `host` parameter -- it relies entirely on library defaults
-- Ollama on macOS binds to `127.0.0.1:11434` by default, which is only accessible from the host, not from Docker containers
-- Even `host.docker.internal` may fail if Ollama is not configured to accept connections from non-localhost origins
-
-**Consequences:**
-- Pipeline hangs or errors on the first `embed_batch()` call
-- Error messages from httpx/ollama may be confusing (timeouts vs connection refused depend on timing)
-- If not caught early, you discover this only after the parse + chunk phases complete for 7,087 files, wasting significant processing time
-
-**Prevention:**
-1. Set `OLLAMA_HOST=0.0.0.0:11434` on the macOS host so Ollama listens on all interfaces
-2. Set `OLLAMA_ORIGINS="*"` on the host to allow cross-origin requests from Docker
-3. Pass `OLLAMA_HOST=http://host.docker.internal:11434` as an env var to the Docker container
-4. Add a health check that verifies Ollama connectivity before starting the pipeline:
-   ```python
-   import httpx
-   resp = httpx.get(f"{ollama_host}")
-   assert resp.text == "Ollama is running"
-   ```
-5. Consider adding an `ollama_host` field to `Settings` (with `BBJ_RAG_OLLAMA_HOST` env var override) rather than relying on the library's own env var mechanism
-
-**Detection:** Connection refused or timeout on first `ollama_client.embed()` call. Verify with `curl http://host.docker.internal:11434` from inside the container.
-
-**Confidence:** HIGH -- well-documented across Ollama GitHub issues, Open-WebUI discussions, and Docker documentation. The `0.0.0.0` binding requirement is confirmed in Ollama's official FAQ.
-
-**Phase:** Docker containerization (must be validated in the very first container smoke test)
-
----
-
-### 3. Docker `--shm-size` Too Small for Parallel HNSW Index Build
-
-**What goes wrong:** pgvector's parallel HNSW index builder allocates shared memory under `/dev/shm` proportional to `maintenance_work_mem`. Docker's default `--shm-size` is 64MB. If `maintenance_work_mem` is set higher (to make the index build faster), the index creation fails with: `could not resize shared memory segment "/PostgreSQL.xxx" to N bytes: No space left on device`.
-
-**Why it happens:**
-- pgvector v0.6+ uses dynamic shared memory for parallel HNSW builds
-- PostgreSQL creates files under `/dev/shm` for shared memory, and Docker limits this to 64MB by default
-- The `schema.sql` creates HNSW with `m = 16, ef_construction = 64` on `vector(1024)` -- this is the default configuration but at 1024 dimensions, the per-vector storage is ~4KB
-- For the expected corpus (~7,087 Flare files producing an estimated 20,000-40,000 chunks), the HNSW graph needs roughly 100-200MB of `maintenance_work_mem` for an efficient in-memory build
-- Without raising `--shm-size`, parallel index builds fail at the PostgreSQL level with a cryptic "No space left on device" error on a filesystem most developers have never heard of
-
-**Consequences:**
-- Index creation fails partway through, leaving the database without a working HNSW index
-- Error message ("No space left on device") is misleading -- it looks like a disk space issue when it is actually a shared memory issue
-- Fallback to non-parallel build works but is dramatically slower
-- If the error occurs during the initial data load, you may need to DROP and recreate the index
-
-**Prevention:**
-- In `docker-compose.yml`, set `shm_size: '256mb'` (or higher) for the PostgreSQL/pgvector container
-- Or use `docker run --shm-size=256m` for manual runs
-- Configure PostgreSQL with: `maintenance_work_mem = '128MB'` and `max_parallel_maintenance_workers = 4`
-- Verify the relationship: `--shm-size` must be >= `maintenance_work_mem`
-- Add a comment in the docker-compose.yml explaining why `shm_size` is set
-
-**Detection:** PostgreSQL error log: `could not resize shared memory segment`. The `NOTICE: hnsw graph no longer fits into maintenance_work_mem` message is a warning but not a failure -- the "No space left" error is the failure.
-
-**Confidence:** HIGH -- this is explicitly documented in the pgvector README and confirmed by multiple GitHub issues (#800, #409). The relationship between `--shm-size` and `maintenance_work_mem` is a well-established Docker + PostgreSQL pattern.
-
-**Phase:** Docker containerization (PostgreSQL container configuration)
-
----
-
-### 4. psycopg[binary] Wheels Fail on Alpine-Based Docker Images
-
-**What goes wrong:** The project depends on `psycopg[binary]>=3.3,<4`. The `[binary]` extra installs `psycopg-binary`, which ships precompiled `manylinux` wheels built against glibc. Alpine Linux uses musl libc, not glibc. The wheels silently fail to install or produce runtime errors.
-
-**Why it happens:**
-- Alpine is a common choice for "small Docker images" and many Dockerfiles start with `python:3.12-alpine`
-- `manylinux` wheels (the standard binary distribution format) assume glibc, which Alpine does not have
-- pip may fall back to compiling from source, which requires `libpq-dev`, `gcc`, and `musl-dev` -- none present in the base Alpine image
-- The error messages vary: sometimes "no matching distribution," sometimes compilation errors about missing headers
-
-**Consequences:**
-- Docker build fails during `pip install` / `uv sync`
-- If you install build tools to fix it, the image bloats from ~50MB to ~300MB, defeating the purpose of Alpine
-- Developers may switch to `psycopg[c]` (compile from source) which works on Alpine but requires maintaining C build toolchain in the image
-
-**Prevention:**
-- Use `python:3.12-slim` (Debian-based) as the base image, not Alpine
-- `python:3.12-slim` supports manylinux wheels natively -- `psycopg[binary]`, `lxml`, and `pymupdf` all install without compilation
-- The slim image is ~45MB larger than Alpine but avoids hours of troubleshooting C compilation issues
-- This also resolves identical issues with `lxml` (requires `libxml2`, `libxslt`) and PyMuPDF (requires glibc-based MuPDF binaries)
-
-**Detection:** Build failure with `ERROR: Could not find a version that satisfies the requirement psycopg-binary` or compilation errors mentioning `pg_config`, `libpq-fe.h`, or `Python.h`.
-
-**Confidence:** HIGH -- this is one of the most documented Docker + Python pitfalls. Confirmed by Docker docs issue #904, psycopg issues, and PyMuPDF issue #4841.
-
-**Phase:** Docker containerization (base image selection -- decide this first, before writing any Dockerfile)
-
----
-
-### 5. Synchronous Database Connections Under Async API Cause Deadlocks
-
-**What goes wrong:** The current `db.py` uses synchronous `psycopg.connect()` and `psycopg.Connection`. If the retrieval API is built with FastAPI (async by default), calling synchronous database operations from async endpoints blocks the event loop. Under concurrent load, the application deadlocks or becomes extremely slow.
-
-**Why it happens:**
-- FastAPI runs `async def` endpoints on the asyncio event loop
-- Synchronous `psycopg.connect()` and `cursor.execute()` block the calling thread
-- With async endpoints, this blocks the entire event loop -- no other requests can be processed
-- The existing code works perfectly in the CLI pipeline (single-threaded, synchronous) but breaks under concurrent API load
-- FastAPI does run `def` (non-async) endpoints in a thread pool, but mixing sync DB calls with async code paths creates subtle deadlock scenarios
-
-**Consequences:**
-- API appears to work under single-request testing but degrades catastrophically under concurrent load
-- Response times spike from milliseconds to seconds
-- Connection pool exhaustion when many requests queue up waiting for blocked sync operations
-- Difficult to diagnose because the API "works" in development (low concurrency) but fails in any realistic usage
-
-**Prevention:**
-- For the retrieval API, create a separate async database layer using `psycopg.AsyncConnection` and `psycopg.AsyncConnectionPool`
-- Keep the synchronous pipeline code as-is (it runs as a batch job, not under an event loop)
-- Use dependency injection to provide the async connection pool to FastAPI endpoints
-- Alternatively, use FastAPI's `def` endpoints (not `async def`) for database operations -- FastAPI runs these in a thread pool automatically. This is the simpler approach for an initial deployment
-- Test under concurrent load early (even 10 concurrent requests reveals the problem)
-
-**Detection:** API latency increases linearly with concurrent requests. `asyncio` warnings about slow callbacks. Connection pool timeout errors under load.
-
-**Confidence:** HIGH -- this is the single most common FastAPI + database pitfall. Well-documented in FastAPI discussions (#9097, #1800) and psycopg3 pool documentation.
-
-**Phase:** Retrieval API (address during API design, before writing endpoints)
-
----
-
-## Moderate Pitfalls
-
-Mistakes that cause significant delays, data quality issues, or technical debt.
-
-### 6. Batch Embedding Timeouts Kill Long-Running Ingestion
-
-**What goes wrong:** The `OllamaEmbedder.embed_batch()` sends an entire batch of texts to Ollama in a single HTTP request. For large batches (the default `embedding_batch_size=64`), this can take 30-60+ seconds on consumer hardware. The `ollama` Python library or its underlying `httpx` client may timeout before the response arrives, causing the entire batch to fail with no retry.
-
-**Why it happens:**
-- Ollama processes embeddings sequentially within a single request (it is not a high-throughput embedding server)
-- The `embed()` function in the ollama Python library uses httpx with a default timeout
-- 64 chunks x ~400 tokens each = ~25,600 tokens per batch -- on a CPU-only macOS host, this can take 30-60 seconds
-- Network latency is added when going through `host.docker.internal` vs localhost
-- There is no retry logic in the current `_embed_and_store()` function
-- If one batch fails, the pipeline has no way to resume from the failed batch
-
-**Consequences:**
-- Ingestion fails partway through the 7,087-file corpus
-- All work for the failed batch (parsing, chunking, intelligence) is lost
-- No checkpoint mechanism means restarting processes everything from scratch (though `resume=True` skips already-stored chunks)
-- Intermittent failures make it impossible to complete a full ingestion run
-
-**Prevention:**
-- Reduce `embedding_batch_size` to 8-16 for Ollama (lower latency per request, faster failure detection)
-- Add retry logic with exponential backoff to `_embed_and_store()`:
+- Catch `subprocess.TimeoutExpired` and return a clear error: "Compiler timed out (code may be malformed)"
+- Write code to a temp FILE, not stdin (bbjcpl -N <file> does not read from stdin)
+- Validate input before passing to bbjcpl: reject empty strings, strings longer than 100KB, and strings containing null bytes
+- Use `asyncio.create_subprocess_exec()` for the async variant (MCP tools are async) with `asyncio.wait_for()` as a belt-and-suspenders timeout:
   ```python
-  for attempt in range(max_retries):
-      try:
-          vectors = embedder.embed_batch(texts)
-          break
-      except Exception:
-          if attempt == max_retries - 1:
-              raise
-          time.sleep(2 ** attempt)
+  proc = await asyncio.create_subprocess_exec(...)
+  try:
+      stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=10)
+  except asyncio.TimeoutError:
+      proc.kill()
+      return "Compiler timed out"
   ```
-- Configure explicit timeouts on the Ollama client: `ollama.Client(host=..., timeout=120.0)`
-- Add per-batch progress logging so you know where failures occur
-- Consider processing one document at a time for the initial full ingestion (slower but more resilient)
-- The existing `resume=True` flag is critical -- always enable it for large corpus runs
 
-**Detection:** `httpx.ReadTimeout` or `ollama._types.ResponseError: EOF` during `embed_batch()`. Monitor batch completion rate during ingestion.
+**Severity:** DEGRADED -- Hangs one tool invocation. With `stateless_http=True`, other requests are unaffected. With stdio, the entire Claude Desktop session is blocked.
 
-**Confidence:** HIGH -- confirmed by multiple RAG framework issues (LightRAG #2300, Roo-Code #5733, RAGFlow #4934). Ollama embedding timeouts are a widely reported problem with large batch sizes.
+**Phase:** bbjcpl MCP tool implementation (enforce timeout from the first line of code)
 
-**Phase:** Ingestion service (address before first real data run)
+**Confidence:** HIGH -- subprocess timeout behavior is well-documented in Python stdlib. The bbjcpltool PoC already handles this pattern.
 
 ---
 
-### 7. Volume Mount Performance Degrades Ingestion with 7,087 Files on macOS
+### I-3: bbjcpl Exit Code Is Always 0 -- Error Detection Requires Stderr Parsing
 
-**What goes wrong:** Mounting the local Flare source directory (7,087 XML files) into the Docker container via bind mount on macOS incurs a ~3x performance penalty compared to native filesystem access. For a corpus this size, what would take 5 minutes natively could take 15+ minutes through a bind mount. File-heavy operations like directory listing, stat calls, and reading many small files are disproportionately affected.
-
-**Why it happens:**
-- Docker on macOS runs inside a Linux VM (Docker Desktop uses Apple Virtualization Framework or QEMU)
-- Bind mounts go through VirtioFS, which translates macOS filesystem calls to the Linux guest -- each file operation crosses the VM boundary
-- The Flare parser iterates 7,087 files, each requiring open/read/close syscalls through VirtioFS
-- `lxml` parsing of XML files involves multiple read calls per file
-- VirtioFS is ~3x slower than native in current Docker Desktop (down from 5-6x in earlier versions, but still meaningful for thousands of files)
-
-**Consequences:**
-- Parse phase takes 3x longer than expected
-- Developer feedback loop is slow (20+ minutes for a full ingestion run)
-- May cause confusion about whether the parser or the filesystem is the bottleneck
-- Particularly bad for iterative development and debugging
-
-**Prevention:**
-- Accept the performance hit for development -- 15 minutes for 7,087 files is tolerable for a batch process
-- Use Docker volumes (not bind mounts) for any data that does not need live editing from the host:
-  ```yaml
-  volumes:
-    - flare-data:/app/data/flare  # Docker volume, faster
-  ```
-  Pre-populate the volume with `docker cp` or a one-time init container
-- If using Docker Desktop, enable VirtioFS (Settings > General > "Use VirtioFS for file sharing") -- it may not be the default on older installations
-- Consider OrbStack as an alternative Docker runtime on macOS -- it has additional VirtioFS tuning
-- Profile the parse phase separately to establish a baseline before optimizing
-
-**Detection:** Ingestion progress logs showing the parse phase taking disproportionately long compared to embedding/storage phases. Compare parse times with `--network=host` vs bind-mounted source.
-
-**Confidence:** MEDIUM -- the 3x overhead figure is from January 2025 benchmarks by Paolo Mainardi. Actual impact depends on file sizes, access patterns, and Docker Desktop version. The Flare files are XML (small, many files), which is the worst case for VirtioFS.
-
-**Phase:** Docker containerization (acceptable for initial deployment, optimize later if ingestion time is a problem)
-
----
-
-### 8. MCP Server Transport Mismatch Blocks Client Integration
-
-**What goes wrong:** The MCP Python SDK supports two official transports: stdio (for local/desktop tools) and Streamable HTTP (for remote/network access). Choosing the wrong transport means your MCP server is unreachable from the intended client. stdio servers cannot be accessed over the network. Streamable HTTP servers cannot be spawned as subprocesses by Claude Desktop.
+**What goes wrong:** Unlike most compilers, bbjcpl always exits with code 0 regardless of whether compilation succeeded or failed. The existing bbjcpltool PoC documents this: errors are reported on stderr, but the exit code is not meaningful. If the validation code checks `result.returncode != 0` as the error indicator (the standard pattern for subprocess validation), it will never detect compilation errors. Every code block will be marked as "validated" even if it contains syntax errors.
 
 **Why it happens:**
-- The MCP specification supports only these two transports; SSE is deprecated as of protocol version 2025-03-26
-- Claude Desktop and similar desktop tools expect stdio transport (they spawn the server as a child process)
-- Docker-based deployments naturally favor Streamable HTTP (the server runs as a network service)
-- The MCP Python SDK (latest: v1.26.0, Jan 2026) defaults to stdio when you call `run()` without arguments
-- Many tutorials and examples show stdio because it is simpler -- developers may not realize it cannot be accessed remotely
-- If you build a Docker image with a stdio MCP server, it is useless unless the client spawns containers (which most do not)
+- bbjcpl's exit code behavior is a legacy design choice from the BBj toolchain
+- Most Python subprocess documentation shows `if result.returncode != 0: error()` as the standard pattern
+- Developers naturally follow this pattern without verifying against the specific tool
+- The bbjcpltool PoC at `/Users/beff/bbjcpltool/` correctly parses stderr, but this knowledge must be carried forward
 
 **Consequences:**
-- MCP server built but unreachable from the intended client
-- Requires architectural rework to switch transports (not just a config change -- the deployment model differs)
-- stdio in Docker requires the client to manage container lifecycle (spawn, attach stdin/stdout, terminate)
-- Streamable HTTP requires handling authentication, session management, CORS headers
+- All BBj code blocks are marked "Compiler validated" including those with syntax errors
+- Engineers see incorrect code with a green checkmark, destroying trust in the validation feature
+- The unique differentiator (D-1 from FEATURES.md) is useless because it reports false positives
+
+**Warning signs:**
+- Every code block shows "validated" regardless of content
+- Deliberately invalid BBj code (e.g., `PRINT SYNTAX ERROR HERE`) shows as passing
+- `result.returncode` is always 0 in subprocess calls
 
 **Prevention:**
-- Decide the transport based on the deployment target BEFORE writing any MCP code:
-  - **If the MCP server runs in Docker alongside the RAG services:** Use Streamable HTTP with `stateless_http=True`
-  - **If Claude Desktop needs to access it locally:** Use stdio, run outside Docker
-  - **If both:** Consider two entry points or use `mcpo` (MCP-to-OpenAPI proxy) to bridge stdio servers to HTTP
-- For this project (Docker-based deployment), Streamable HTTP is the correct choice:
+- Parse stderr content, not exit code. If stderr is non-empty, treat as error:
   ```python
-  from mcp.server.fastmcp import FastMCP
-  mcp = FastMCP("bbj-rag", stateless_http=True)
-  mcp.run(transport="streamable-http", host="0.0.0.0", port=8080)
+  result = subprocess.run([bbjcpl_path, "-N", temp_file], capture_output=True, text=True, timeout=10)
+  if result.stderr.strip():
+      return ValidationResult(valid=False, errors=parse_bbjcpl_errors(result.stderr))
+  return ValidationResult(valid=True, errors=[])
   ```
-- Pin MCP SDK version: `mcp>=1.25,<2` (v2 is expected Q1 2026 with potential breaking changes)
-- Be aware that the MCP SDK is evolving rapidly (25+ releases in 2025 alone) -- expect API surface changes
+- Write a test that validates known-bad BBj code and asserts the validation returns errors
+- Port the stderr parsing logic from the bbjcpltool PoC directly
+- Document this behavior in a code comment: "bbjcpl always exits 0; errors are on stderr only"
 
-**Detection:** Client cannot connect to MCP server. stdio server shows no activity when HTTP requests arrive. Streamable HTTP server produces no output on stdio.
+**Severity:** DEGRADED -- The system works but the validation feature is silently broken, producing false "valid" results that erode trust.
 
-**Confidence:** HIGH -- transport model is well-documented in MCP specification and SDK docs. The stdio vs HTTP distinction is the most fundamental architectural decision.
+**Phase:** bbjcpl MCP tool implementation (write test with known-bad code FIRST)
 
-**Phase:** MCP server implementation (decide transport in architecture phase, not during coding)
+**Confidence:** HIGH -- Confirmed from bbjcpltool PoC documentation and the ARCHITECTURE.md research notes.
 
 ---
 
-### 9. MCP SDK Rapid Version Churn Creates Upgrade Fragility
+### I-4: Source-Balanced Ranking Over-Boosts Irrelevant Minority Sources
 
-**What goes wrong:** The MCP Python SDK released 25+ versions in 2025 alone (from early 1.x through 1.26.0 in January 2026). A v2.0 release is planned for Q1 2026. Unpinned dependencies or pinning to a narrow range means builds break when new versions are released. The SDK's API surface has changed significantly between minor versions.
+**What goes wrong:** The source-balanced reranker forces minority sources (PDF: 47 chunks, BBj Source: 106 chunks) into the top results even when they are not relevant to the query. For a query about "BBjGrid column formatting," the system replaces a highly relevant Flare API reference (rank #4, score 0.85) with a marginally relevant PDF chunk about GUI programming basics (rank #18, score 0.35). The answer quality drops because Claude is given irrelevant context.
 
 **Why it happens:**
-- MCP is a new protocol (2024-2025) still finding its API shape
-- The Python SDK tracks the evolving specification closely
-- SSE transport was deprecated and replaced by Streamable HTTP in a minor version
-- Session management semantics changed between versions
-- The v2.0 release may have breaking changes (the maintainers explicitly recommend pinning to `mcp>=1.25,<2`)
+- The slot reservation approach (recommended in FEATURES.md D-3) guarantees at least 1-2 non-Flare results regardless of relevance
+- With only 47 PDF chunks and 106 BBj Source chunks, most queries will not have relevant minority-source results
+- The reranker forces diversity without a minimum relevance threshold
+- There is no ground truth to calibrate the diversity/relevance tradeoff
 
 **Consequences:**
-- Builds fail when a new MCP SDK version changes or removes an API you depend on
-- Debugging "it worked yesterday" failures caused by dependency drift
-- Difficulty finding documentation that matches your installed version
-- Potential incompatibility between MCP server SDK version and client expectations
+- Answers include irrelevant information from minority sources
+- Claude generates a response that mixes relevant Flare content with off-topic PDF content
+- Engineers notice the quality degradation and ask "why is it showing me this?"
+- The well-intentioned diversity feature actively harms answer quality
+
+**Warning signs:**
+- Non-Flare results in the top-5 have significantly lower RRF scores than the Flare results they replaced
+- Answers contain non-sequiturs or off-topic paragraphs traceable to the boosted minority source
+- Alpha testers report "the answer includes irrelevant sections"
 
 **Prevention:**
-- Pin aggressively in `pyproject.toml`: `mcp>=1.25,<2`
-- Lock versions via `uv.lock` (the project already uses uv)
-- Write integration tests that verify MCP tool registration and invocation
-- Monitor the MCP SDK changelog before upgrading
-- Plan for a v2 migration as a separate task (not mid-feature)
-
-**Detection:** Build failures after `uv sync` when new SDK versions are published. Runtime errors in MCP tool handlers that previously worked.
-
-**Confidence:** HIGH -- version history is publicly visible on PyPI. The v2 plan is documented in the official SDK blog post (December 2025).
-
-**Phase:** MCP server implementation (pin version on day one)
-
----
-
-### 10. Database URL Contains `localhost` Which Resolves Differently in Container
-
-**What goes wrong:** The default `database_url` in both `config.toml` and the `Settings` class is `postgresql://localhost:5432/bbj_rag`. Inside a Docker container, `localhost` resolves to the container itself, not the host machine where PostgreSQL may be running. If PostgreSQL is in a separate container (via docker-compose), the hostname should be the service name (e.g., `postgres` or `db`).
-
-**Why it happens:**
-- `localhost` is the correct default for local development (PostgreSQL on the host)
-- Docker containers have isolated network namespaces
-- In docker-compose, services communicate via service names on a shared bridge network
-- The config.toml value takes precedence over the field default (per `settings_customise_sources` priority)
-- Even if `BBJ_RAG_DATABASE_URL` is set as an env var, forgetting to remove `database_url` from a COPY'd config.toml means the TOML value wins (env vars have higher priority in the current implementation, but this is a common source of confusion)
-
-**Consequences:**
-- Container starts but cannot connect to database
-- Error message: `could not connect to server: Connection refused` pointing at `127.0.0.1:5432`
-- Developers may spend time debugging PostgreSQL when the issue is purely hostname resolution
-
-**Prevention:**
-- In docker-compose.yml, always set `BBJ_RAG_DATABASE_URL` explicitly:
-  ```yaml
-  environment:
-    BBJ_RAG_DATABASE_URL: "postgresql://user:pass@db:5432/bbj_rag"
-  ```
-- Do NOT copy `config.toml` into the Docker image (see Pitfall #1 -- make TOML optional)
-- Use the docker-compose service name (`db`) as the hostname, not `localhost` or `host.docker.internal`
-- Add a startup health check that verifies database connectivity before proceeding
-
-**Detection:** `psycopg.OperationalError: connection to server at "127.0.0.1", port 5432 failed: Connection refused`.
-
-**Confidence:** HIGH -- this is the most common Docker networking mistake. Specific to this project because `config.toml` has `localhost` baked in and the Settings class loads it by default.
-
-**Phase:** Docker containerization (docker-compose configuration)
-
----
-
-### 11. PyMuPDF ARM64 Wheel Missing Breaks M1/M2 Mac Docker Builds
-
-**What goes wrong:** When building Docker images on Apple Silicon Macs (M1/M2/M3), Docker defaults to `linux/arm64` platform. PyMuPDF intermittently lacks pre-built `linux/arm64` wheels on PyPI for certain versions. The build either fails outright or falls back to compiling MuPDF from source (which takes 10+ minutes and requires many system dependencies).
-
-**Why it happens:**
-- PyMuPDF wheel availability for `linux/arm64` is inconsistent across versions (documented in GitHub issues #3622, #4344)
-- Docker Desktop on Apple Silicon defaults to `linux/arm64` to match the host architecture
-- Building for `linux/amd64` on ARM requires QEMU emulation, which is 5-10x slower
-- The `pymupdf4llm>=0.2.9` constraint in `pyproject.toml` allows any recent version, but not all versions have ARM64 wheels
-- This is a recurring issue -- it gets fixed in one release and may regress in the next
-
-**Consequences:**
-- Docker build fails with "no matching distribution" or takes 15+ minutes compiling MuPDF from source
-- Developers on Intel Macs do not see the issue, creating "works on my machine" scenarios
-- CI/CD pipelines may use different architectures than developer machines
-
-**Prevention:**
-- Target `linux/amd64` explicitly in Docker builds: `docker build --platform linux/amd64 .`
-- Or in docker-compose.yml: `platform: linux/amd64`
-- This adds a small runtime overhead via Rosetta/QEMU on Apple Silicon but guarantees wheel availability
-- Pin PyMuPDF to a version known to have ARM64 wheels if targeting native ARM64
-- Test the Docker build on both architectures in CI
-- If PDF parsing is not needed in the Docker deployment (i.e., PDFs are parsed locally and only chunks are stored), consider making `pymupdf4llm` an optional dependency
-
-**Detection:** Docker build failure at `pip install pymupdf` step. Error varies: "no matching distribution" or compilation errors about missing MuPDF headers.
-
-**Confidence:** MEDIUM -- the issue is well-documented but version-specific. The latest pymupdf4llm (0.2.9, Jan 2026) may have ARM64 wheels, but this needs verification at build time.
-
-**Phase:** Docker containerization (decide target platform early)
-
----
-
-### 12. Pydantic Settings v2.12 Nested Override Regression
-
-**What goes wrong:** Pydantic-settings v2.12 introduced a regression where environment variables cannot override values that are set in nested objects within a TOML source. If the project later adds nested configuration (e.g., `[database]` and `[embedding]` sections in TOML), the `BBJ_RAG_DATABASE_URL` env var may silently fail to override the TOML value.
-
-**Why it happens:**
-- The project currently uses flat settings (no nested models), so this is not an immediate issue
-- The `pyproject.toml` dependency is `pydantic-settings>=2.12,<3` -- the floor is exactly the affected version
-- If nested configuration is added later (a natural evolution for complex settings), the regression bites
-- The regression is tracked in pydantic-settings GitHub issue #714
-
-**Consequences:**
-- Environment variables silently fail to override nested TOML values
-- Docker deployments using env vars get unexpected config values from the baked-in TOML file
-- Debugging is extremely difficult because the env var appears to be set correctly
-
-**Prevention:**
-- Keep settings flat (as they currently are) for as long as practical
-- If nesting is needed, test env var overrides explicitly for every nested field
-- Monitor pydantic-settings releases for a fix to issue #714
-- Consider pinning to a specific patch version if the regression is confirmed in your version
-
-**Detection:** Settings values do not match environment variables despite correct `BBJ_RAG_` prefix. Only visible when nested TOML sections are used.
-
-**Confidence:** MEDIUM -- the regression is reported in GitHub issue #714 but the exact affected versions and fix status need verification. Current flat settings are not affected.
-
-**Phase:** Configuration management (awareness for future changes)
-
----
-
-## Minor Pitfalls
-
-Mistakes that cause annoyance, wasted time, or minor technical debt but are straightforward to fix.
-
-### 13. uv.lock Not Committed or Mismatched Between Dev and Docker
-
-**What goes wrong:** The Docker build uses `uv sync --frozen` which requires `uv.lock` to be present and up-to-date. If `uv.lock` is in `.gitignore` or was generated with a different platform's Python, the Docker build fails or installs different versions than development.
-
-**Prevention:**
-- Always commit `uv.lock` to version control (it is 155KB in this project -- worth it)
-- Run `uv lock` on the same Python version used in Docker (3.12)
-- Use `COPY uv.lock pyproject.toml ./` before `RUN uv sync --frozen --no-dev` in the Dockerfile
-- The `--frozen` flag ensures reproducible builds by refusing to update the lockfile
-
-**Detection:** Docker build fails with "lockfile is not up to date" or "resolution failed."
-
-**Confidence:** HIGH -- standard uv Docker pattern documented in official uv docs.
-
-**Phase:** Docker containerization (Dockerfile setup)
-
----
-
-### 14. lxml Requires System Libraries at Runtime, Not Just Build Time
-
-**What goes wrong:** In a multi-stage Docker build, developers install `libxml2-dev` and `libxslt1-dev` in the build stage, compile lxml, then copy only the Python packages to the runtime stage. But lxml dynamically links to `libxml2.so` and `libxslt.so` -- without the runtime libraries in the final stage, lxml crashes with `ImportError: libxml2.so.2: cannot open shared object file`.
-
-**Prevention:**
-- In the runtime stage, install runtime libraries (not -dev packages):
-  ```dockerfile
-  RUN apt-get update && apt-get install -y --no-install-recommends \
-      libxml2 libxslt1.1 \
-      && rm -rf /var/lib/apt/lists/*
-  ```
-- Or use `python:3.12-slim` which includes these runtime libraries (lxml binary wheels on PyPI are linked against standard Debian library versions)
-- With `python:3.12-slim` and `psycopg[binary]`, most dependencies install from wheels and require no compilation at all -- the multi-stage build may be unnecessary
-
-**Detection:** `ImportError` at runtime when importing lxml. Only appears in the final Docker image, not during build.
-
-**Confidence:** HIGH -- standard shared library linking issue in multi-stage Docker builds.
-
-**Phase:** Docker containerization (Dockerfile, if using multi-stage)
-
----
-
-### 15. HNSW Index Created Before Data Load Is Inefficient
-
-**What goes wrong:** If `CREATE INDEX ... USING hnsw` runs before data is loaded (as part of schema initialization), the index is built on an empty table and then incrementally maintained as rows are inserted. Incremental HNSW inserts are significantly slower than building the index after all data is loaded.
-
-**Why it happens:**
-- The `schema.sql` file includes `CREATE INDEX IF NOT EXISTS idx_chunks_embedding_hnsw` alongside the table creation
-- Running `schema.sql` before ingestion creates the empty index
-- Each subsequent `INSERT` must update the HNSW graph incrementally
-- For 20,000-40,000 chunks, incremental inserts are measurably slower than a bulk load + single index build
-
-**Prevention:**
-- Split schema initialization: create the table and non-HNSW indexes first, load data, then create the HNSW index
-- Or DROP the HNSW index before bulk loading and recreate it after:
-  ```sql
-  DROP INDEX IF EXISTS idx_chunks_embedding_hnsw;
-  -- ... bulk load ...
-  CREATE INDEX idx_chunks_embedding_hnsw ON chunks USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
-  ```
-- Set `maintenance_work_mem = '128MB'` and `max_parallel_maintenance_workers = 4` before the index build
-- For the expected corpus size (~20K-40K chunks at 1024 dimensions), the in-memory graph needs ~100-200MB -- well within a reasonable `maintenance_work_mem` setting
-
-**Detection:** Ingestion takes hours instead of minutes. PostgreSQL shows continuous index maintenance activity during bulk insert.
-
-**Confidence:** HIGH -- documented pgvector best practice: "It's faster to create an index after loading your initial data."
-
-**Phase:** Ingestion service (schema initialization and data loading workflow)
-
----
-
-### 16. Stray stdout in MCP stdio Server Corrupts Protocol Stream
-
-**What goes wrong:** If the MCP server uses stdio transport and any code path writes to stdout (print statements, logging configured to stdout, library debug output), the stdout data mixes with the MCP protocol messages. The client receives malformed JSON and the session breaks.
-
-**Why it happens:**
-- MCP stdio transport uses stdin/stdout as the bidirectional communication channel
-- Python's default `logging.StreamHandler` writes to stderr (safe), but `print()` goes to stdout
-- Third-party libraries may write to stdout unexpectedly
-- This is invisible during development if you test with HTTP transport or direct function calls
-
-**Prevention:**
-- Redirect all logging to stderr explicitly:
+- Add a minimum score threshold: only boost minority sources if their RRF score exceeds a minimum (e.g., 50% of the top result's score). If no minority source meets this threshold, return all-Flare results.
   ```python
-  logging.basicConfig(stream=sys.stderr)
+  def source_balanced_rerank(results, limit, max_per_source=3, min_score_ratio=0.5):
+      top_score = results[0].score if results else 0
+      threshold = top_score * min_score_ratio
+      # Only consider minority sources above threshold
+      ...
   ```
-- Never use `print()` in MCP server code paths
-- If using stdio transport, test by reading raw stdout output and validating it is valid MCP protocol JSON
-- Consider using Streamable HTTP transport for Docker deployment (makes stdout a non-issue)
+- Make source balancing configurable: `balanced: bool = True` parameter on the /search and /chat endpoints. Alpha testers can toggle it off to compare.
+- Log the original rank and score of boosted results so you can measure the quality impact.
+- Start with `min_score_ratio=0.5` and tune based on alpha feedback. The parameter is easy to adjust without code changes if stored in configuration.
 
-**Detection:** MCP client reports "malformed message" or "unexpected data" errors. Messages appear to be valid JSON but contain extra text.
+**Severity:** DEGRADED -- Results are returned but quality is noticeably worse for some queries. This makes the system look less capable than it actually is.
 
-**Confidence:** HIGH -- documented in MCP specification and SDK docs. One of the most frequently reported MCP integration issues.
+**Phase:** Source-balanced ranking implementation (add minimum score threshold from the start)
 
-**Phase:** MCP server implementation (relevant only if stdio transport is chosen)
+**Confidence:** HIGH -- This is the classic precision-diversity tradeoff in information retrieval. Over-boosting is the most common calibration mistake in diversity-aware ranking.
 
 ---
 
-### 17. No Connection Pooling in Retrieval API Creates Per-Request Overhead
+### I-5: Concurrent Ingestion Race Condition in Resume State File
 
-**What goes wrong:** The current `db.py` uses `psycopg.connect()` which creates a new connection for each call. For a retrieval API handling multiple requests, this means connection setup (~5-50ms) on every request, plus risk of hitting PostgreSQL's `max_connections` limit.
+**What goes wrong:** The current `ingest_all.py` writes resume state to `_STATE_FILE` after each source completes (line 410-411). When sources run concurrently via `asyncio.gather()`, multiple coroutines may try to update the state file simultaneously. Without file locking, concurrent writes can corrupt the JSON state file, causing resume to fail or skip sources.
+
+**Why it happens:**
+- The sequential ingestion loop (v1.4) updates the state file after each source -- safe because only one source runs at a time
+- Converting to `asyncio.gather()` means multiple sources complete at unpredictable times
+- `_save_resume_state()` reads the entire file, modifies the dict, and writes it back -- a classic read-modify-write race
+- JSON file corruption (truncated writes, interleaved bytes) is silent -- the next resume attempt fails with a JSON parse error
+
+**Consequences:**
+- Resume state file corrupted: `json.JSONDecodeError` on next `--resume` invocation
+- Sources marked as completed when they actually failed (or vice versa)
+- A corrupted state file requires manual deletion and full re-ingestion
+- The resume feature -- critical for long-running ingestion on 50K chunks -- becomes unreliable
+
+**Warning signs:**
+- `JSONDecodeError` when invoking `bbj-ingest-all --resume`
+- State file contains partial JSON (truncated)
+- Sources appear in both `completed_sources` and `failed_sources` simultaneously
 
 **Prevention:**
-- Use `psycopg_pool.ConnectionPool` (sync) or `psycopg_pool.AsyncConnectionPool` (async) for the retrieval API
-- Configure pool with: `min_size=2, max_size=10` (appropriate for a local development service)
-- Use FastAPI lifespan to manage pool lifecycle:
+- Use a threading lock (or `asyncio.Lock`) to serialize state file writes:
   ```python
-  @asynccontextmanager
-  async def lifespan(app: FastAPI):
-      pool = AsyncConnectionPool(conninfo=database_url, open=False)
-      await pool.open()
-      app.state.pool = pool
-      yield
-      await pool.close()
+  state_lock = asyncio.Lock()
+
+  async def update_state(state, source_name, status):
+      async with state_lock:
+          state["completed_sources"].append(source_name)
+          _save_resume_state(_STATE_FILE, state)
   ```
-- Keep the existing `get_connection()` for the CLI pipeline (batch jobs do not need pooling)
+- Alternatively, use `fcntl.flock()` for file-level locking (POSIX systems only)
+- Write to a temp file and atomically rename (prevents partial writes):
+  ```python
+  with tempfile.NamedTemporaryFile(mode='w', dir=state_dir, delete=False) as f:
+      json.dump(state, f)
+      os.replace(f.name, _STATE_FILE)  # atomic on POSIX
+  ```
+- Consider using a database table for ingestion state instead of a JSON file (the pgvector database is already available)
 
-**Detection:** Slow first request (connection setup) and PostgreSQL showing many short-lived connections in `pg_stat_activity`.
+**Severity:** DEGRADED -- Ingestion completes but resume state may be wrong. Manual cleanup required. Not visible during alpha testing (testers use the chat UI, not the ingestion CLI), but blocks the developer who maintains the corpus.
 
-**Confidence:** HIGH -- standard production pattern for any database-backed API.
+**Phase:** Concurrent ingestion implementation (address state management before parallelizing the loop)
 
-**Phase:** Retrieval API (implement during API scaffold)
+**Confidence:** HIGH -- Read-modify-write race conditions are a fundamental concurrency bug. The sequential code is correct; concurrent execution requires explicit synchronization.
 
 ---
 
-### 18. Docker Build Cache Invalidated by Copying Source Before Dependencies
+### I-6: Ollama Concurrent Embedding Requests Saturate GPU Without Speedup
 
-**What goes wrong:** A naive Dockerfile copies the entire project before installing dependencies. Any source code change invalidates the dependency install layer, causing a full `uv sync` on every build (30+ seconds with many dependencies).
+**What goes wrong:** Setting the asyncio semaphore too high (e.g., 8-10 concurrent requests) does not produce proportional speedup. Ollama's `OLLAMA_NUM_PARALLEL` defaults to 4 (or 1, depending on available memory). Requests beyond the server's capacity are queued internally. Worse, on a Mac with a single GPU (Metal), Qwen3-Embedding-0.6B is already GPU-bound at 2-3 concurrent requests. Additional requests consume VRAM for context without meaningful throughput gain, potentially triggering model unloading.
+
+**Why it happens:**
+- Ollama does not have per-model concurrency limits (`OLLAMA_NUM_PARALLEL` is global). Setting it high for embeddings also affects any LLM models loaded simultaneously.
+- A GitHub issue (#5693) documents: "high parallelism forces the LLM model that will be mostly loaded into CPU, because it is also expecting to serve 20 parallel requests."
+- On Apple Silicon, the 0.6B embedding model uses ~1.2GB VRAM. Each additional parallel request allocates context buffers. With high parallelism, other models may be evicted from GPU memory.
+- If Ollama must evict the embedding model to make room (due to memory pressure from another model), each embedding batch triggers a model load (several seconds).
+
+**Consequences:**
+- No speedup despite more concurrent requests
+- If an LLM model is also loaded (e.g., for the chat UI), the LLM gets evicted from GPU, causing cold-start latency for chat queries
+- Ollama returns 503 if its internal queue (`OLLAMA_MAX_QUEUE=512`) overflows
+- Ingestion appears to run but is actually slower than sequential due to model thrashing
+
+**Warning signs:**
+- Embedding throughput does not increase with higher semaphore values
+- GPU utilization remains below 50% despite many concurrent requests (CPU-bound scheduling bottleneck)
+- Ollama logs show model load/unload cycles during ingestion
+- Chat queries become slow during ingestion (model eviction)
 
 **Prevention:**
-- Separate dependency installation from application code:
-  ```dockerfile
-  FROM python:3.12-slim
-  COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+- Default semaphore to 2 (conservative). The architecture has already recommended this.
+- Set `OLLAMA_MAX_LOADED_MODELS=2` on the Ollama host to ensure both the embedding model and any LLM remain loaded
+- If running ingestion on a shared server where the chat UI is also active, schedule ingestion during off-hours or use a separate Ollama instance for embeddings
+- Profile before tuning: time a baseline sequential run, then a semaphore=2 run, then semaphore=4. If 2 and 4 show similar performance, stick with 2.
+- Consider HTTP connection reuse (persistent `httpx.Client`) as a complementary optimization -- this eliminates TCP handshake overhead per batch and may provide 10-20% speedup independent of concurrency.
 
-  WORKDIR /app
-  ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+**Severity:** DEGRADED -- Ingestion works but is slower than expected. No data loss. The real risk is chat UI degradation during concurrent ingestion.
 
-  # Dependencies first (cached)
-  COPY uv.lock pyproject.toml ./
-  RUN uv sync --frozen --no-install-project --no-dev
+**Phase:** Concurrent ingestion implementation (start conservative, measure before increasing concurrency)
 
-  # Then application code
-  COPY src/ src/
-  RUN uv sync --frozen --no-dev
+**Confidence:** HIGH -- Ollama's internal queuing and model management behavior is documented. The GPU-bound nature of embeddings limits the benefit of additional concurrency.
+
+---
+
+### I-7: AsyncConnectionPool Exhaustion Under Concurrent Chat + MCP + Ingestion
+
+**What goes wrong:** The FastAPI app creates an `AsyncConnectionPool` with `min_size=2, max_size=5` (line 57-61 of `app.py`). When the chat UI, remote MCP, and concurrent ingestion all share the same pool, 5 connections can be exhausted: 2 chat requests + 2 MCP requests + 1 ingestion query = 5. The 6th concurrent request blocks until a connection is returned, causing a `PoolTimeout` after the configured timeout expires.
+
+**Why it happens:**
+- The pool size (max=5) was appropriate for v1.4 (REST API only, low concurrency)
+- v1.5 adds three new consumers of the pool: chat UI (query embedding + search per request), remote MCP (search per tool call), and potentially concurrent ingestion
+- Alpha testers will use the chat UI and Claude Desktop (MCP) simultaneously
+- Each chat request holds a connection for the duration of RAG search + Claude API streaming (potentially 3-10 seconds)
+- If concurrent ingestion is running via the API (not the CLI), it also consumes pool connections
+- The psycopg3 documentation warns: "Using several connections has an impact on the server's performance"
+
+**Consequences:**
+- Chat requests return 503 with "PoolTimeout" error
+- MCP tool calls timeout with no response
+- Intermittent failures that depend on concurrent load -- difficult to reproduce in development
+- Alpha testers experience "sometimes it works, sometimes it times out"
+
+**Warning signs:**
+- `psycopg_pool.PoolTimeout` exceptions in server logs
+- Pool stats (`pool.get_stats()`) show `pool_available=0` and `requests_queued > 0`
+- Response times spike under moderate concurrent usage (3+ simultaneous users)
+
+**Prevention:**
+- Increase pool size: `min_size=5, max_size=15` is appropriate for alpha (5-10 concurrent users)
+- Release connections quickly: do NOT hold a connection during Claude API streaming. Acquire a connection for search, fetch results, release the connection, THEN stream Claude's response. The connection is only needed for the ~100ms search query, not the 3-10s streaming.
+  ```python
+  # Bad: holds connection during entire streaming response
+  async with pool.connection() as conn:
+      results = await async_hybrid_search(conn, ...)
+      async for token in stream_claude(results):
+          yield token  # conn held for entire stream duration
+
+  # Good: releases connection before streaming
+  async with pool.connection() as conn:
+      results = await async_hybrid_search(conn, ...)
+  # Connection returned to pool
+  async for token in stream_claude(results):
+      yield token
   ```
-- Use `--mount=type=cache,target=/root/.cache/uv` for even faster rebuilds
-- This pattern ensures dependency installation is cached until `uv.lock` or `pyproject.toml` changes
+- Concurrent ingestion should use its own connection (from `get_connection_from_settings()`, not the pool). The existing `ingest_all.py` already creates per-source connections outside the pool. Ensure this pattern is preserved when adding concurrency.
+- Monitor pool health: add pool stats to the `/health` endpoint (e.g., `pool.get_stats()`)
 
-**Detection:** Every code change triggers a full dependency installation (visible in build output).
+**Severity:** DEGRADED -- Individual requests fail intermittently but the system remains available. Retrying usually works. This manifests as flakiness during the alpha, which erodes confidence.
 
-**Confidence:** HIGH -- documented in official uv Docker guide.
+**Phase:** Chat UI + Remote MCP (increase pool size and fix connection lifecycle before multi-user alpha testing)
 
-**Phase:** Docker containerization (Dockerfile optimization)
+**Confidence:** HIGH -- Connection pool exhaustion is the most documented psycopg3 + FastAPI issue. Pool stats confirm it.
+
+---
+
+## UX Pitfalls (Annoyance)
+
+Issues that do not break functionality but create a poor first impression for alpha testers.
+
+### U-1: Chat UI Serves at Root Path, Breaking Existing API Documentation
+
+**What goes wrong:** If the chat UI is mounted at `/` (the root path), it replaces FastAPI's default Swagger UI at `/docs`. Engineers who bookmarked `http://server:10800/docs` for API exploration get the chat UI instead. Similarly, mounting static files at `/static` may conflict with future API routes.
+
+**Prevention:**
+- Mount the chat UI at a specific path: `GET /chat` for the HTML page, `POST /chat/send` for the SSE stream
+- Keep FastAPI's default `/docs` and `/redoc` intact for API exploration
+- Use a clear URL scheme: `/chat/*` for the UI, `/search`, `/stats`, `/health` for the API, `/mcp` for MCP
+- Add a root redirect: `GET /` redirects to `/chat` (a one-liner `RedirectResponse`)
+
+**Severity:** ANNOYANCE -- Engineers lose access to the Swagger docs page but the system functions normally.
+
+**Phase:** Chat UI implementation (decide URL scheme before building routes)
+
+---
+
+### U-2: Flare Source URLs Not Clickable Because Mapping Is Wrong
+
+**What goes wrong:** The `flare://Content/path.htm` to `https://documentation.basis.cloud/...` mapping looks correct but the actual URL structure on the documentation site does not match. The Flare project structure uses internal paths that may differ from the published web hierarchy. A click on a "Source" link in the chat UI leads to a 404 page on documentation.basis.cloud.
+
+**Why it happens:**
+- The Flare project internal structure (`Content/bbjobjects/Window/bbjwindow.htm`) may differ from the published structure (`BASISHelp/WebHelp/bbjobjects/Window/bbjwindow.htm`)
+- The URL mapping in STACK.md shows `flare://Content/` -> `https://documentation.basis.cloud/BASISHelp/WebHelp/` but this mapping needs verification against the live site
+- The existing web_crawl parser already uses the real documentation.basis.cloud URLs. Comparing web_crawl source_urls with flare source_urls for the same pages would reveal the correct mapping.
+
+**Prevention:**
+- Sample 10 Flare source_urls from the database, manually construct the mapped URL, and verify each one opens in a browser
+- Cross-reference with the web_crawl source_urls in the database -- these are already real URLs. Find pages that exist in both Flare and web_crawl to validate the mapping.
+- If the mapping is wrong, check whether the path needs a prefix adjustment (e.g., `BASISHelp/WebHelp/` vs `BASISHelp/`)
+- Make the mapping configurable (already planned in STACK.md) so it can be corrected without code changes
+
+**Severity:** ANNOYANCE -- Links look clickable but lead to 404s. Engineers lose trust in the citation links.
+
+**Phase:** Source URL mapping (verify against live site before deploying)
+
+---
+
+### U-3: Code Blocks in Chat Not Identified as BBj (No Syntax Highlighting)
+
+**What goes wrong:** Claude returns code blocks fenced with triple backticks but may not always use the `bbj` language tag. It might use `basic`, `vb`, `text`, or no language tag at all. The chat UI renders these as plain monospace text without syntax highlighting. BBj code looks like a gray blob instead of a colorful, readable code block. For a tool specifically designed for BBj developers, this is a poor first impression.
+
+**Prevention:**
+- In the system prompt, instruct Claude to always use `bbj` as the code fence language: "When including BBj code examples, always use \`\`\`bbj as the code fence."
+- In the client-side markdown renderer, treat `basic`, `vb`, `visual-basic`, and untagged code blocks as BBj (BBj is a BASIC variant -- generic BASIC highlighting is reasonable)
+- Use a lightweight syntax highlighting library that supports custom language definitions (e.g., highlight.js with a custom BBj definition, or Prism.js)
+- For alpha, plain monospace with a colored background is acceptable. Syntax highlighting is an enhancement, not a blocker.
+
+**Severity:** ANNOYANCE -- Code is readable but not highlighted. BBj engineers are accustomed to syntax highlighting in their IDE.
+
+**Phase:** Chat UI implementation (system prompt instruction is trivial; syntax highlighting is a nice-to-have)
+
+---
+
+### U-4: First Chat Query Is Slow Due to Ollama Embedding Model Cold Start
+
+**What goes wrong:** The FastAPI app warms up the Ollama embedding model at startup (`app.py` line 69). However, Ollama may unload idle models after a configurable keep-alive period (default: 5 minutes). If no search queries are made for 5+ minutes, the first chat query triggers a model reload, adding 2-5 seconds to the response time. The user sees a long delay before anything happens.
+
+**Prevention:**
+- Set `OLLAMA_KEEP_ALIVE=-1` on the Ollama host to never unload models (appropriate for a dedicated RAG server)
+- Alternatively, add a periodic health check (every 2 minutes) that sends a dummy embedding to keep the model loaded: already partially implemented by the startup warm-up, but needs to be periodic
+- Display a "Searching documentation..." loading indicator in the chat UI while the embedding + search happens. This manages expectations even if the model needs to reload.
+- The cold-start delay is only 2-5 seconds for the 0.6B model, not catastrophic. But it feels broken if there is no loading indicator.
+
+**Severity:** ANNOYANCE -- First query is slow but subsequent queries are fast. Only affects the first user after an idle period.
+
+**Phase:** Chat UI + Ollama configuration (set OLLAMA_KEEP_ALIVE and add loading indicator)
+
+---
+
+### U-5: Multiple Chat Users See Each Other's Streaming Responses
+
+**What goes wrong:** If the SSE streaming endpoint uses a single shared event queue or channel, multiple concurrent users may receive events from each other's queries. User A asks about BBjGrid and sees tokens from User B's query about BBjProcess. This creates a confusing, unusable experience.
+
+**Why it happens:**
+- A naive implementation uses a single SSE endpoint that broadcasts events to all connected clients
+- Without per-session isolation, events from different Claude API streams mix
+- The alpha explicitly excludes user accounts, so there is no built-in user identity to route events
+
+**Prevention:**
+- Generate a unique session ID (UUID) for each chat query
+- The SSE endpoint includes the session ID in the URL: `GET /chat/stream/{session_id}`
+- Each session ID maps to its own streaming generator -- no shared state between sessions
+- The chat UI receives the session ID from the POST response and connects to the session-specific SSE endpoint
+- Use a dict (or asyncio.Queue per session) to isolate events:
+  ```python
+  active_streams: dict[str, asyncio.Queue] = {}
+  ```
+- Clean up completed session queues to prevent memory leaks
+
+**Severity:** ANNOYANCE to DEGRADED -- Confusing output but no data corruption. Easy to diagnose (responses do not match the question).
+
+**Phase:** Chat UI implementation (per-session SSE routing is a core architectural decision, not an afterthought)
+
+---
+
+## Regression Risk Assessment
+
+### What Could Break in the Working v1.4 System
+
+The v1.4 system is validated with a 17-query E2E test suite. These features are at risk during v1.5 development:
+
+| Existing Feature | Risk Source | Likelihood | Mitigation |
+|-----------------|-------------|------------|------------|
+| `POST /search` endpoint | Adding source-balanced reranking changes result order | MEDIUM | Make reranking opt-in (`balanced=true` parameter), default OFF for API |
+| `GET /stats` endpoint | No changes planned | NONE | -- |
+| `GET /health` endpoint | Adding MCP health check could mask existing checks | LOW | Add MCP as a third check, do not modify DB/Ollama checks |
+| MCP stdio server | Refactoring from httpx proxy to direct search | HIGH | Keep the httpx proxy as fallback. Test stdio mode explicitly. |
+| Database schema | No schema changes in v1.5 | NONE | Source URL mapping is runtime, not DB |
+| Ingestion pipeline | Concurrent ingestion modifies `ingest_all.py` only | LOW | Keep `run_pipeline()` unchanged; concurrent wrapper calls it |
+| 329+ passing tests | New dependencies may break imports | LOW | Run test suite after adding anthropic dependency |
+
+### First-Impression Risk for Alpha Testers
+
+The alpha test is a make-or-break moment. These are ordered by first-impression impact:
+
+| Scenario | Impact | Prevention |
+|----------|--------|------------|
+| First chat query returns garbled text (C-1) | Engineers close the tab and never return | Validate SSE + multi-line encoding before building UI |
+| First chat query returns vague/wrong answer (C-2) | Engineers conclude RAG does not work for BBj | Limit context to 8-10 focused results, test with known BBj queries |
+| Chat query hangs with no response (I-1) | Engineers assume the system is broken | Implement SSE error events and client-side timeout |
+| Compiler validation shows green check on bad code (I-3) | Engineers lose trust in the differentiating feature | Parse stderr, test with known-bad code |
+| Source links lead to 404 pages (U-2) | Engineers stop clicking sources, reducing trust loop | Verify URL mapping against live site |
+| Chat shows a 10-second blank screen before response starts (U-4) | Engineers assume it crashed | Add loading indicator, set OLLAMA_KEEP_ALIVE=-1 |
+| Multiple users see mixed responses (U-5) | Engineers cannot use the system concurrently | Per-session SSE routing from day one |
+
+---
+
+## Prevention Checklist
+
+Before deploying v1.5 to alpha testers, verify each item:
+
+### Chat UI + Claude API
+- [ ] SSE streaming preserves multi-line content (code blocks, markdown) -- test with a BBj code response
+- [ ] Claude API context limited to 8-10 search results (no unbounded context stuffing)
+- [ ] SSE error events display user-visible error messages on Claude API failure
+- [ ] Per-session SSE routing prevents cross-talk between concurrent users
+- [ ] Application-level rate limiting active (30 req/min)
+- [ ] `ANTHROPIC_API_KEY` not logged, not exposed in API responses
+- [ ] Spending alerts set in Anthropic console
+- [ ] Chat UI accessible at `/chat`, does not replace `/docs`
+
+### MCP Refactoring
+- [ ] MCP tool calls `async_hybrid_search()` directly (not via httpx self-referential loop)
+- [ ] Stdio transport still works for local Claude Desktop (backward compatible)
+- [ ] Streamable HTTP mounting tested and working (or standalone fallback deployed)
+- [ ] `Mcp-Session-Id` handling does not conflict with FastAPI middleware
+
+### bbjcpl Validation
+- [ ] `subprocess.run()` called with `timeout=10`
+- [ ] Errors detected by parsing stderr (not exit code)
+- [ ] Known-bad BBj code returns validation errors (unit test)
+- [ ] Known-good BBj code returns validation success (unit test)
+
+### Source-Balanced Ranking
+- [ ] Minimum score threshold prevents irrelevant minority sources from being boosted
+- [ ] Reranking is configurable (can be disabled per request)
+- [ ] Existing `/search` endpoint behavior unchanged by default (opt-in balancing)
+
+### Concurrent Ingestion
+- [ ] Resume state file writes are serialized (lock or atomic rename)
+- [ ] Semaphore defaults to 2 (not unbounded)
+- [ ] Chat UI performance unaffected during concurrent ingestion
+- [ ] Sequential mode (`--no-parallel`) still works as fallback
+
+### Connection Management
+- [ ] AsyncConnectionPool `max_size` increased to 15 for multi-user alpha
+- [ ] Chat endpoint releases connection before streaming Claude response
+- [ ] Pool stats visible in health endpoint
+
+### Source URL Mapping
+- [ ] Top 10 flare:// URLs verified against live documentation.basis.cloud
+- [ ] HTTP passthrough works for wordpress/web_crawl URLs
+- [ ] Non-mappable URLs (pdf://, file://) show descriptive text, not broken links
 
 ---
 
 ## Phase-Specific Warning Matrix
 
-| Phase | Likely Pitfall | Severity | Mitigation |
-|-------|---------------|----------|------------|
-| Docker containerization | #4: Alpine vs slim base image | Critical | Use `python:3.12-slim`, decide before writing any Dockerfile |
-| Docker containerization | #1: TOML config missing in container | Critical | Make TOML source conditional on file existence |
-| Docker containerization | #2: Ollama unreachable from container | Critical | Use `host.docker.internal`, set `OLLAMA_HOST=0.0.0.0` on host |
-| Docker containerization | #10: localhost in database URL | Critical | Override via env var, do not COPY config.toml |
-| Docker containerization | #3: shm-size for HNSW builds | Critical | Set `shm_size: '256mb'` in docker-compose |
-| Docker containerization | #11: PyMuPDF ARM64 wheels | Moderate | Target `linux/amd64` or pin version with known ARM64 wheel |
-| Docker containerization | #18: Build cache invalidation | Minor | Separate deps from source in Dockerfile |
-| Docker containerization | #13: uv.lock management | Minor | Commit uv.lock, use `--frozen` |
-| Docker containerization | #14: lxml runtime libraries | Minor | Install `libxml2 libxslt1.1` in runtime stage |
-| Ingestion service | #6: Embedding timeouts | Moderate | Reduce batch size, add retry logic |
-| Ingestion service | #7: Volume mount performance | Moderate | Accept or use Docker volumes |
-| Ingestion service | #15: HNSW before data load | Minor | Create HNSW index after bulk load |
-| Retrieval API | #5: Sync DB under async API | Critical | Use async connections or sync endpoints |
-| Retrieval API | #17: No connection pooling | Minor | Use `psycopg_pool` |
-| MCP server | #8: Transport mismatch | Moderate | Decide transport (Streamable HTTP) before coding |
-| MCP server | #9: SDK version churn | Moderate | Pin `mcp>=1.25,<2` |
-| MCP server | #16: stdout corruption | Minor | Use stderr for logging, or choose HTTP transport |
-| Configuration | #12: Nested override regression | Minor | Keep settings flat, monitor pydantic-settings issues |
-
----
-
-## Pitfalls NOT Applicable to This Corpus Size
-
-Some commonly cited pgvector pitfalls apply only at much larger scale:
-
-| Pitfall | Typical Threshold | This Project | Verdict |
-|---------|------------------|--------------|---------|
-| HNSW build takes hours | >1M vectors | ~20K-40K chunks | Not a concern. Build should take < 1 minute |
-| maintenance_work_mem exhausts RAM | >100K vectors at 1024d | ~40K at 1024d | Set 128MB, well within any dev machine |
-| Need for halfvec/quantization | >1M vectors | ~40K | Not needed at this scale |
-| PgBouncer as L2 pool | >1000 concurrent connections | Single-digit connections | Not needed |
-| Table partitioning | >10M rows | ~40K rows | Not needed |
+| Phase | Pitfall | Severity | Test First |
+|-------|---------|----------|------------|
+| Chat UI + Claude API | C-1: SSE newline corruption | BLOCKER | Stream a code block via SSE, verify rendering |
+| Chat UI + Claude API | C-2: Context window stuffing | BLOCKER | Log input_tokens, verify < 6K per query |
+| Chat UI + Claude API | C-4: API key cost exposure | BLOCKER | Set spending alerts, add rate limiting |
+| Chat UI + Claude API | I-1: SSE error handling | DEGRADED | Set invalid API key, verify error displayed |
+| Chat UI + Claude API | U-5: Cross-session contamination | DEGRADED | Open two browser tabs, send concurrent queries |
+| Remote MCP | C-3: Self-referential httpx loop | BLOCKER | Invoke MCP tool via HTTP, verify no deadlock |
+| Remote MCP | C-5: SDK mounting issues | BLOCKER | Mount and test POST to /mcp BEFORE refactoring tools |
+| Remote MCP | I-7: Pool exhaustion | DEGRADED | Run 5 concurrent requests, check for PoolTimeout |
+| bbjcpl Validation | I-2: Subprocess hangs | DEGRADED | Validate code that triggers hang, verify timeout |
+| bbjcpl Validation | I-3: Exit code always 0 | DEGRADED | Validate known-bad code, verify errors returned |
+| Source-Balanced Ranking | I-4: Over-boosting irrelevant sources | DEGRADED | Compare balanced vs unbalanced for 5 test queries |
+| Concurrent Ingestion | I-5: Resume state race condition | DEGRADED | Run 3 sources concurrently, verify state file integrity |
+| Concurrent Ingestion | I-6: GPU saturation without speedup | DEGRADED | Benchmark semaphore=2 vs semaphore=4 |
+| Source URL Mapping | U-2: Flare URLs 404 | ANNOYANCE | Click 10 mapped URLs in browser |
 
 ---
 
 ## Sources
 
-### Docker + Python Packaging
-- [psycopg binary wheels vs Alpine](https://github.com/docker-library/docs/issues/904)
-- [PyMuPDF Docker build issues](https://github.com/pymupdf/PyMuPDF/issues/4841)
-- [PyMuPDF ARM64 missing wheels](https://github.com/pymupdf/PyMuPDF/issues/4344)
-- [lxml installation guide](https://lxml.de/installation.html)
-- [uv Docker guide](https://docs.astral.sh/uv/guides/integration/docker/)
-- [Production Python Docker with uv (Hynek)](https://hynek.me/articles/docker-uv/)
-- [Optimal Dockerfile for Python with uv (Depot)](https://depot.dev/docs/container-builds/how-to-guides/optimal-dockerfiles/python-uv-dockerfile)
+### SSE Streaming + HTMX
+- [HTMX SSE Extension Documentation](https://htmx.org/extensions/sse/) -- event names, sse-close, swap behavior
+- [HTMX SSE Extension Error Handling Issue #134](https://github.com/bigskysoftware/htmx-extensions/issues/134) -- SSE extension does not handle errors
+- [HTMX SSE Extension Scope Issue #3467](https://github.com/bigskysoftware/htmx/issues/3467) -- misleading documentation on hx-ext placement
+- [FastAPI SSE in Docker Discussion #11590](https://github.com/fastapi/fastapi/discussions/11590) -- SSE problems in Docker environment
+- [HTMX + SSE Chatbot with Markdown Corruption](https://towardsdatascience.com/javascript-fatigue-you-dont-need-js-to-build-chatgpt-part-2/) -- base64 encoding workaround for newlines
 
-### pgvector + HNSW
-- [pgvector README - HNSW](https://github.com/pgvector/pgvector)
-- [HNSW indexes with pgvector (Crunchy Data)](https://www.crunchydata.com/blog/hnsw-indexes-with-postgres-and-pgvector)
-- [HNSW memory estimation issue #745](https://github.com/pgvector/pgvector/issues/745)
-- [shm-size and parallel builds issue #800 (Neon)](https://github.com/neondatabase/autoscaling/issues/800)
-- [Parallel HNSW builds issue #409](https://github.com/pgvector/pgvector/issues/409)
+### Claude API
+- [Anthropic Streaming Messages API](https://docs.anthropic.com/en/api/messages-streaming) -- mid-stream errors, SSE format
+- [Anthropic Error Handling](https://docs.anthropic.com/en/api/errors) -- 429, 529, 413 error codes, retry behavior
+- [Anthropic Citations API](https://docs.anthropic.com/en/docs/build-with-claude/citations) -- search result blocks, citation format
+- [Anthropic Handling Stop Reasons](https://docs.anthropic.com/en/api/handling-stop-reasons) -- max_tokens, model_context_window_exceeded
+- [Anthropic Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval) -- chunk relevance, lost-in-the-middle problem
+- [Simon Willison: Anthropic Citations API](https://simonwillison.net/2025/Jan/24/anthropics-new-citations-api/) -- practical integration observations
 
-### Ollama + Docker
-- [Ollama FAQ - Docker setup](https://docs.ollama.com/faq)
-- [host.docker.internal fix](https://openillumi.com/en/en-docker-ollama-localhost-connect-host-docker-internal/)
-- [Ollama Python OLLAMA_HOST issue #407](https://github.com/ollama/ollama-python/issues/407)
+### MCP Transport
+- [MCP Transport Future (Official Blog)](http://blog.modelcontextprotocol.io/posts/2025-12-19-mcp-transport-future/) -- session management changes, Q1 2026 spec update
+- [MCP Transports Specification](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports) -- Streamable HTTP protocol details
+- [MCP Python SDK GitHub #1367](https://github.com/modelcontextprotocol/python-sdk/issues/1367) -- path doubling when mounting in FastAPI
+- [Converting STDIO to Remote MCP Servers (Portkey)](https://portkey.ai/docs/guides/converting-stdio-to-streamable-http) -- migration guide
 
-### Embedding Timeouts
-- [LightRAG embedding 500/EOF issue #2300](https://github.com/HKUDS/LightRAG/issues/2300)
-- [Roo-Code timeout issue #5733](https://github.com/RooCodeInc/Roo-Code/issues/5733)
+### Ollama Concurrency
+- [Ollama Parallel Processing FAQ](https://docs.ollama.com/faq) -- OLLAMA_NUM_PARALLEL, OLLAMA_MAX_LOADED_MODELS
+- [Ollama Per-Model Concurrency Issue #5693](https://github.com/ollama/ollama/issues/5693) -- embedding vs LLM parallelism conflict
+- [Ollama vs TEI Performance Issue #12088](https://github.com/ollama/ollama/issues/12088) -- embedding throughput comparison
+- [How Ollama Handles Parallel Requests](https://www.glukhov.org/post/2025/05/how-ollama-handles-parallel-requests/) -- queuing, batching behavior
 
-### Pydantic Settings
-- [Settings management docs](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
-- [Nested override regression issue #714](https://github.com/pydantic/pydantic-settings/issues/714)
-- [Runtime TOML path override issue #259](https://github.com/pydantic/pydantic-settings/issues/259)
+### psycopg3 Connection Pool
+- [psycopg3 Connection Pools Documentation](https://www.psycopg.org/psycopg3/docs/advanced/pool.html) -- exhaustion behavior, blocking semantics
+- [psycopg3 Pool Leakage Issue #646](https://github.com/psycopg/psycopg/issues/646) -- pool exhaustion symptoms and diagnostics
+- [psycopg3 Possible Connection Leak Issue #1176](https://github.com/psycopg/psycopg/issues/1176) -- high TPS connection management
+- [psycopg3 PoolTimeout with Background Tasks #985](https://github.com/psycopg/psycopg/discussions/985) -- FastAPI background tasks and pool interaction
 
-### FastAPI + Database
-- [FastAPI connection pool discussion #9097](https://github.com/fastapi/fastapi/discussions/9097)
-- [psycopg3 connection pools docs](https://www.psycopg.org/psycopg3/docs/advanced/pool.html)
-- [psycopg3 async docs](https://www.psycopg.org/psycopg3/docs/advanced/async.html)
+### Subprocess Management
+- [Python subprocess.run timeout documentation](https://docs.python.org/3/library/subprocess.html) -- timeout parameter, TimeoutExpired exception
+- [Subprocess timeout in Python 3.14](https://discuss.python.org/t/subprocess-timeout-in-python-3-14/97391) -- recent timeout behavior changes
+- [Docker + Python subprocess issues](https://forums.docker.com/t/how-to-make-python-subprocess-run-work-in-docker-container/81578) -- path resolution across Docker boundary
 
-### MCP Protocol + SDK
-- [MCP Python SDK (GitHub)](https://github.com/modelcontextprotocol/python-sdk)
-- [MCP transport future (blog)](http://blog.modelcontextprotocol.io/posts/2025-12-19-mcp-transport-future/)
-- [MCP tips, tricks, and pitfalls (NearForm)](https://nearform.com/digital-community/implementing-model-context-protocol-mcp-tips-tricks-and-pitfalls/)
-- [MCP Python SDK on PyPI](https://pypi.org/project/mcp/)
+---
 
-### Docker macOS Performance
-- [Docker on macOS still slow? (2025 benchmarks)](https://www.paolomainardi.com/posts/docker-performance-macos-2025/)
-- [OrbStack volumes docs](https://docs.orbstack.dev/docker/file-sharing)
+*Research conducted 2026-02-03. All pitfalls verified against the existing codebase (v1.4 at commit f590cdd), official SDK documentation, and community-reported issues. Existing v1.4 PITFALLS.md covered Docker deployment pitfalls; this document covers integration pitfalls specific to v1.5 feature additions.*
