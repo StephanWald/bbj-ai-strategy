@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from bbj_rag.api.chat import router as chat_router
 from bbj_rag.api.routes import router as api_router
 from bbj_rag.health import router as health_router
 
@@ -86,3 +87,4 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="BBJ RAG", lifespan=lifespan)
 app.include_router(health_router)
 app.include_router(api_router)
+app.include_router(chat_router)
