@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A public Docusaurus site that communicates BASIS International's AI strategy for BBj — covering LLM fine-tuning, IDE integration, documentation chat, and RAG database design — plus a Python RAG ingestion pipeline that processes 6 BBj documentation sources into a generation-aware pgvector database. The site serves three audiences (internal developers, leadership, customers/partners) through 7 researched chapters with full-text search, professional content patterns, BASIS brand identity, and automated deployment. The ingestion pipeline bridges strategy documentation with executable code. Live at https://stephanwald.github.io/bbj-ai-strategy/.
+A public Docusaurus site that communicates BASIS International's AI strategy for BBj — covering LLM fine-tuning, IDE integration, documentation chat, and RAG database design — plus a running Docker-based RAG system that ingests all 6 BBj documentation sources (50,439 chunks) into pgvector and serves hybrid retrieval via REST API and MCP server (`search_bbj_knowledge`). The site serves three audiences (internal developers, leadership, customers/partners) through 7 researched chapters with full-text search, professional content patterns, BASIS brand identity, and automated deployment. The RAG pipeline bridges strategy documentation with executable code — from documentation source ingestion through to Claude Desktop integration. Live at https://stephanwald.github.io/bbj-ai-strategy/.
 
 ## Core Value
 
@@ -42,20 +42,16 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - ✓ Chapters 3, 6, 7 updated with cross-references to MCP orchestration and revised status — v1.3
 - ✓ All new BBj code samples compiler-validated before publishing (17 blocks via bbjcpl -N) — v1.3
 
+- ✓ Docker Compose orchestration (pgvector 0.8.0-pg17 + Python app) with schema auto-init, Ollama connectivity, env-based config — v1.4
+- ✓ TOML source configuration for 9 entries across 7 parser types with bbj-ingest-all CLI (resume, clean, source-filter) — v1.4
+- ✓ REST API: POST /search (hybrid RRF + generation filtering), GET /stats, GET /health (pool-based readiness) — v1.4
+- ✓ MCP server: search_bbj_knowledge tool via stdio transport for Claude Desktop with LLM-optimized text responses — v1.4
+- ✓ Full corpus ingested: 50,439 chunks across 6 source groups, validated via 17-query E2E test suite — v1.4
+- ✓ End-to-end validation script + VALIDATION.md report proving both REST API and MCP interfaces operational — v1.4
+
 ### Active
 
-**Current Milestone: v1.4 RAG Deployment**
-
-**Goal:** Take the rag-ingestion sub-project from parsers-and-schema to a running Docker-based system that ingests all 6 BBj documentation sources and serves retrieval via both a REST API and an MCP server (`search_bbj_knowledge`).
-
-**Target features:**
-- Docker Compose setup (PostgreSQL+pgvector, ingestion app)
-- Configuration wired to all 6 real data sources on disk/web
-- Support for multiple MDX source directories (config currently only supports one)
-- Full ingestion pipeline execution against real corpus
-- REST retrieval API (query → embed → hybrid search → ranked chunks)
-- Thin MCP server exposing `search_bbj_knowledge` tool
-- End-to-end validation: query the running system, get relevant BBj docs back
+No active milestone. v1.4 complete. Next milestone TBD.
 
 ### Out of Scope
 
@@ -77,7 +73,7 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.3 shipped 2026-02-01. v1.4 in progress — deploying RAG pipeline as running Docker service with retrieval API and MCP server. All 7 chapters updated with MCP server architecture (three tool definitions, generate-validate-fix loop), compiler validation (bbjcpl ground-truth checking, bbjcpltool v1 proof-of-concept), and consistent cross-references. RAG ingestion pipeline code complete (v1.2). 3,015 lines of docs content + 5,004 lines Python source + 4,906 lines tests. 310 tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector, psycopg3, Ollama.
+- **Current state:** v1.4 shipped 2026-02-02. RAG system running via Docker Compose — 50,439 chunks from all 6 sources, REST API at localhost:10800, MCP server for Claude Desktop. All 7 chapters updated with MCP server architecture (three tool definitions, generate-validate-fix loop), compiler validation (bbjcpl ground-truth checking, bbjcpltool v1 proof-of-concept), and consistent cross-references. 3,015 lines docs content + ~8,000 lines Python source + 329+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x.
 - **Source data inventory (v1.4):** Flare project at `/Users/beff/bbjdocs/` (7,087 .htm topics), PDF at project root, 3 MDX tutorial sites (DWC, beginner, DB modernization — 98 .md files), BBj source code in SVN checkout + tutorial samples (1,363+ .bbj files), WordPress articles at basis.cloud (HTTP), documentation.basis.cloud for web crawl (HTTP).
 - **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
 - **bbjcpltool:** Working proof-of-concept at `/Users/beff/bbjcpltool/` — v1 shipped. PostToolUse hook runs `bbjcpl -N` on every `.bbj` file Claude writes/edits, plus shared BBj language reference at `~/.claude/bbj-reference.md`. Validates the compiler-in-the-loop concept described in the MCP paper.
@@ -130,10 +126,15 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | No MCP tool schemas duplicated across chapters | All downstream chapters cross-reference Ch2 definitions; single source of truth | ✓ Good |
 | Status block dates removed permanently | :::note[Where Things Stand] with no month/year; avoids staleness across deployments | ✓ Good |
 
-| Docker Compose for RAG deployment | Self-contained local deployment; pgvector + app in single `docker compose up` | — Pending |
-| Host Ollama (not containerized) | Avoid duplicating large Ollama container; host already runs it | — Pending |
-| REST API + thin MCP server | Clean separation: API serves retrieval, MCP wraps it for LLM clients; MCP grows as capabilities come online | — Pending |
-| Python for MCP server | MCP server consumes same retrieval logic as API; avoids cross-language boundary | — Pending |
+| Docker Compose for RAG deployment | Self-contained local deployment; pgvector + app in single `docker compose up` | ✓ Good |
+| Host Ollama (not containerized) | Avoid duplicating large Ollama container; host already runs it with Metal GPU | ✓ Good |
+| REST API + thin MCP server | Clean separation: API serves retrieval, MCP wraps it for LLM clients | ✓ Good |
+| Python for MCP server | MCP server consumes same retrieval logic as API; avoids cross-language boundary | ✓ Good |
+| uv 0.9.28 pinned in Dockerfile | Matches local install; deterministic builds | ✓ Good |
+| External ports above 10000 (10800 app, 10432 db) | Avoids conflicts with common development ports | ✓ Good |
+| sources.toml with DATA_DIR env var resolution | Blank data_dir in TOML; resolved via Docker DATA_DIR=/data at runtime | ✓ Good |
+| Sequential ingestion (parallel deferred) | Proven reliable; GPU saturation optimization deferred to future milestone | ✓ Good |
+| Lightweight keyword heuristics for E2E validation | Human-reviewable snippets; automated pass/fail without complex NLP | ✓ Good |
 
 ---
-*Last updated: 2026-02-01 after v1.4 milestone started*
+*Last updated: 2026-02-03 after v1.4 milestone completed*

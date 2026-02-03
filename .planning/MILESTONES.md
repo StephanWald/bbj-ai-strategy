@@ -1,5 +1,34 @@
 # Project Milestones: BBj AI Strategy Documentation Site
 
+## v1.4 RAG Deployment (Shipped: 2026-02-02)
+
+**Delivered:** A running Docker-based system that ingests all 6 BBj documentation sources (50,439 chunks) and serves hybrid retrieval via REST API and MCP server (`search_bbj_knowledge`) for Claude Desktop integration.
+
+**Phases completed:** 20-24 + 23.1 (14 plans total)
+
+**Key accomplishments:**
+
+- Docker Compose orchestration (`docker compose up`) starts pgvector 0.8.0-pg17 and Python app with schema auto-initialization, Ollama connectivity, and env-based configuration
+- TOML-based source configuration for 9 documentation entries across 7 parser types, with `bbj-ingest-all` CLI supporting resume, clean, and source-filter modes
+- FastAPI REST API with three endpoints: POST `/search` (hybrid RRF retrieval with generation filtering), GET `/stats` (corpus statistics), GET `/health` (pool-based 3-tier readiness)
+- MCP server exposing `search_bbj_knowledge` tool via stdio transport for Claude Desktop, with LLM-optimized formatted text responses
+- WordPress parser Content-Type PDF detection fix, comprehensive README with Docker/API/MCP documentation, and full clean re-ingestion
+- End-to-end validation script (629 lines) exercising 14 REST + 3 MCP queries across the 50,439-chunk corpus with automated VALIDATION.md report generation
+
+**Stats:**
+
+- 173 files changed, 34,269 insertions(+), 2,305 deletions(-)
+- 50,439 chunks across 6 source groups (Flare 44,587 / WordPress 2,950 / Web Crawl 1,798 / MDX 951 / BBj Source 106 / PDF 47)
+- 329+ tests passing
+- 7 phases, 14 plans, 158 commits
+- 2 days (2026-02-01 → 2026-02-02)
+
+**Git range:** `feat(20-01)` → `docs(24): complete end-to-end-validation phase`
+
+**What's next:** TBD — potential directions include search/SEO optimization, embedding fine-tuning, source-balanced ranking, or agentic RAG features.
+
+---
+
 ## v1.3 MCP Architecture Integration (Shipped: 2026-02-01)
 
 **Delivered:** MCP server architecture, compiler validation, and ecosystem integration woven into all 7 existing documentation chapters -- making the concrete "how it all connects" visible to developers, leadership, and customers.
