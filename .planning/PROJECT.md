@@ -51,19 +51,30 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 
 ### Active
 
-No active milestone. v1.4 complete. Next milestone TBD.
+**Current Milestone: v1.5 Alpha-Ready RAG System**
+
+**Goal:** Make the RAG system usable by engineers for peer review — fast rebuilds, quality results with source citations, compiler-validated BBj code, a web chat interface backed by Claude API, and remote access for shared server deployment.
+
+**Target features:**
+- Concurrent ingestion workers and persistent HTTP connection reuse (carried-forward performance debt)
+- Source-balanced ranking to surface minority sources (PDF, BBj Source) alongside Flare-dominated results
+- source_url mapped to clickable HTTP links (flare:// → documentation.basis.cloud/...)
+- bbjcpl compiler integration for syntactic validation of BBj code in RAG responses
+- Web chat interface with Claude API for answer generation, RAG-grounded responses with source citations
+- Remote access: shared server deployment (MCP over network, chat UI accessible by team)
 
 ### Out of Scope
 
-- Authentication or access control — site is fully public
-- Interactive features (chat widgets, live demos) — this is documentation, not the AI system itself
+- Authentication or access control — internal alpha; engineers on trusted network
 - Mobile-optimized design beyond Docusaurus defaults — standard responsive is sufficient
 - Internationalization — English only
 - Embedding fine-tuning — requires baseline retrieval quality measurement first
 - Agentic RAG features — no query routing, agent loops, or multi-step reasoning
-- MCP `generate_bbj_code` and `validate_bbj_syntax` tools — v1.4 only implements `search_bbj_knowledge`; other tools arrive with fine-tuned model and compiler integration
-- Cloud/production hosting — v1.4 runs locally via Docker Compose
-- CI/CD pipeline for ingestion — manual trigger is sufficient for v1.4
+- MCP `generate_bbj_code` tool — requires fine-tuned BBj model (separate milestone)
+- Cloud/production hosting — v1.5 targets shared server on local network, not cloud
+- CI/CD pipeline for ingestion — manual trigger is sufficient for v1.5
+- Chat history persistence — alpha phase, no need to save conversations
+- User accounts or multi-tenancy — single shared instance for internal team
 
 ## Context
 
@@ -73,7 +84,8 @@ No active milestone. v1.4 complete. Next milestone TBD.
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.4 shipped 2026-02-02. RAG system running via Docker Compose — 50,439 chunks from all 6 sources, REST API at localhost:10800, MCP server for Claude Desktop. All 7 chapters updated with MCP server architecture (three tool definitions, generate-validate-fix loop), compiler validation (bbjcpl ground-truth checking, bbjcpltool v1 proof-of-concept), and consistent cross-references. 3,015 lines docs content + ~8,000 lines Python source + 329+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x.
+- **Current state:** v1.4 shipped 2026-02-02. RAG system running via Docker Compose — 50,439 chunks from all 6 sources, REST API at localhost:10800, MCP server for Claude Desktop. v1.5 targets alpha readiness for engineer peer review. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x. 3,015 lines docs content + ~8,000 lines Python source + 329+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy.
+- **Alpha testers:** Internal BASIS engineers with BBj installed locally. Most will access via shared server; some may run locally. Engineers have Claude Desktop/Code access and bbjcpl available on their machines.
 - **Source data inventory (v1.4):** Flare project at `/Users/beff/bbjdocs/` (7,087 .htm topics), PDF at project root, 3 MDX tutorial sites (DWC, beginner, DB modernization — 98 .md files), BBj source code in SVN checkout + tutorial samples (1,363+ .bbj files), WordPress articles at basis.cloud (HTTP), documentation.basis.cloud for web crawl (HTTP).
 - **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
 - **bbjcpltool:** Working proof-of-concept at `/Users/beff/bbjcpltool/` — v1 shipped. PostToolUse hook runs `bbjcpl -N` on every `.bbj` file Claude writes/edits, plus shared BBj language reference at `~/.claude/bbj-reference.md`. Validates the compiler-in-the-loop concept described in the MCP paper.
@@ -137,4 +149,4 @@ No active milestone. v1.4 complete. Next milestone TBD.
 | Lightweight keyword heuristics for E2E validation | Human-reviewable snippets; automated pass/fail without complex NLP | ✓ Good |
 
 ---
-*Last updated: 2026-02-03 after v1.4 milestone completed*
+*Last updated: 2026-02-03 after v1.5 milestone started*

@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** Between milestones. v1.4 shipped, v1.5 TBD.
+**Current focus:** v1.5 Alpha-Ready RAG System
 
 ## Current Position
 
-Milestone: v1.4 RAG Deployment -- SHIPPED (2026-02-02)
-Phase: None (between milestones)
-Plan: N/A
-Status: v1.4 milestone archived. All deliverables shipped and validated.
-Last activity: 2026-02-03 -- Completed milestone archival
+Milestone: v1.5 Alpha-Ready RAG System -- DEFINING REQUIREMENTS
+Phase: Not started (defining requirements)
+Plan: --
+Status: Defining requirements for v1.5
+Last activity: 2026-02-03 -- Milestone v1.5 started
 
-Progress: N/A (between milestones)
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -33,7 +33,7 @@ Progress: N/A (between milestones)
 
 See .planning/PROJECT.md Key Decisions table for full log (33 decisions, all validated).
 
-### Pending Todos (Carried Forward)
+### Pending Todos (Carried Forward into v1.5)
 
 - Concurrent ingestion workers (parallel embedding calls to keep GPU saturated)
 - Persistent HTTP connection reuse for Ollama embedding calls during ingestion
@@ -45,10 +45,12 @@ See .planning/PROJECT.md Key Decisions table for full log (33 decisions, all val
 - Ollama must be running on host with `OLLAMA_HOST=0.0.0.0:11434` for Docker connectivity
 - shm_size required for pgvector HNSW index builds (256mb minimum)
 - PDF and BBj Source source-targeted queries rank below Flare's 88% corpus dominance (corpus imbalance, not pipeline issue)
+- Engineers have BBj (and bbjcpl) installed locally — distribution not needed in Docker
+- Alpha deployment targets shared server on local network + local per-engineer option
 
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: v1.4 milestone archived and tagged
+Stopped at: Defining v1.5 requirements
 Resume file: None
-Next action: /gsd:new-milestone when ready to start v1.5
+Next action: Complete requirements definition and roadmap creation
