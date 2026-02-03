@@ -8,6 +8,7 @@ by doc_type and by generation tag).
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,7 +24,7 @@ from bbj_rag.api.schemas import (
     StatsResponse,
 )
 from bbj_rag.config import Settings
-from bbj_rag.search import async_hybrid_search
+from bbj_rag.search import async_hybrid_search, rerank_for_diversity
 
 router = APIRouter()
 
@@ -57,14 +58,20 @@ async def search(
             status_code=503, detail=f"Ollama embedding failed: {exc}"
         ) from exc
 
-    # Run hybrid RRF search
-    results = await async_hybrid_search(
+    # Over-fetch for diversity reranking pool
+    raw_results = await async_hybrid_search(
         conn=conn,
         query_embedding=embedding,
         query_text=body.query,
-        limit=body.limit,
+        limit=body.limit * 2,
         generation_filter=gen_filter,
     )
+
+    # Apply diversity reranking
+    results = rerank_for_diversity(raw_results, limit=body.limit)
+
+    # Compute source type breakdown
+    source_type_counts = dict(Counter(r.source_type for r in results))
 
     # Build response
     items = [
@@ -76,6 +83,8 @@ async def search(
             generations=r.generations,
             context_header=r.context_header,
             deprecated=r.deprecated,
+            display_url=r.display_url,
+            source_type=r.source_type,
             score=r.score,
         )
         for r in results
@@ -85,6 +94,7 @@ async def search(
         query=body.query,
         results=items,
         count=len(items),
+        source_type_counts=source_type_counts,
     )
 
 

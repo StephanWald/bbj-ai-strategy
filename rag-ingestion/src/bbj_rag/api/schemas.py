@@ -31,6 +31,8 @@ class SearchResultItem(BaseModel):
     generations: list[str]
     context_header: str
     deprecated: bool
+    display_url: str
+    source_type: str
     score: float
 
 
@@ -40,6 +42,10 @@ class SearchResponse(BaseModel):
     query: str
     results: list[SearchResultItem]
     count: int
+    source_type_counts: dict[str, int] = Field(
+        default_factory=dict,
+        description="Count of results per source type",
+    )
 
 
 class StatsResponse(BaseModel):

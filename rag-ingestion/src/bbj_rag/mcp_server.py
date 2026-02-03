@@ -54,7 +54,10 @@ def _format_results(data: dict[str, object]) -> str:
         parts.append("")
         parts.append(str(r["content"]))
         parts.append("")
-        parts.append(f"Source: {r['source_url']}")
+        display = r.get("display_url", r["source_url"])
+        parts.append(f"Source: {display}")
+        if r.get("source_type"):
+            parts.append(f"Source Type: {r['source_type']}")
         if r.get("generations"):
             gens = r["generations"]
             assert isinstance(gens, list)
@@ -62,7 +65,16 @@ def _format_results(data: dict[str, object]) -> str:
 
         blocks.append("\n".join(parts))
 
-    return f"Found {len(results)} results for: {query}\n\n" + "\n\n---\n\n".join(blocks)
+    # Build header with optional source breakdown
+    counts = data.get("source_type_counts", {})
+    assert isinstance(counts, dict)
+    if counts:
+        summary = ", ".join(f"{k}: {v}" for k, v in sorted(counts.items()))
+        header = f"Found {len(results)} results for: {query} ({summary})"
+    else:
+        header = f"Found {len(results)} results for: {query}"
+
+    return header + "\n\n" + "\n\n---\n\n".join(blocks)
 
 
 @mcp.tool()
