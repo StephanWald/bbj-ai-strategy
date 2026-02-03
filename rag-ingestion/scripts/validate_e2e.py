@@ -136,6 +136,30 @@ class McpResult:
     is_error: bool
 
 
+@dataclass
+class UrlMappingCheck:
+    """Result from URL mapping validation on a single search result."""
+
+    source_url: str
+    display_url: str
+    source_type: str
+    display_url_present: bool
+    source_type_present: bool
+    display_url_valid: bool
+    reason: str = ""
+
+
+@dataclass
+class DiversityResult:
+    """Result from the source diversity test query."""
+
+    query: str
+    source_types_found: list[str]
+    distinct_count: int
+    total_results: int
+    warning: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Prerequisites
 # ---------------------------------------------------------------------------
@@ -366,6 +390,106 @@ async def run_mcp_queries(queries: list[str]) -> list[McpResult]:
 
 
 # ---------------------------------------------------------------------------
+# URL mapping & source type validators
+# ---------------------------------------------------------------------------
+
+
+def validate_url_mapping_result(result: dict) -> UrlMappingCheck:
+    """Validate display_url and source_type on a single search result."""
+    source_url = result.get("source_url", "")
+    display_url = result.get("display_url", "")
+    source_type = result.get("source_type", "")
+
+    display_url_present = isinstance(display_url, str) and len(display_url) > 0
+    source_type_present = isinstance(source_type, str) and len(source_type) > 0
+
+    # Validate display_url format based on source_type.
+    display_url_valid = True
+    reason = ""
+    if source_type_present and display_url_present:
+        if source_type == "flare":
+            if not display_url.startswith("https://documentation.basis.cloud/"):
+                display_url_valid = False
+                reason = (
+                    f"flare display_url should start with "
+                    f"'https://documentation.basis.cloud/', got '{display_url}'"
+                )
+        elif source_type in ("wordpress", "web_crawl"):
+            if not display_url.startswith("https://"):
+                display_url_valid = False
+                reason = (
+                    f"{source_type} display_url should start with "
+                    f"'https://', got '{display_url}'"
+                )
+        elif source_type in ("pdf", "bbj_source", "mdx"):
+            if not display_url.startswith("["):
+                display_url_valid = False
+                reason = (
+                    f"{source_type} display_url should start with "
+                    f"'[' (bracket-wrapped), got '{display_url}'"
+                )
+
+    return UrlMappingCheck(
+        source_url=source_url,
+        display_url=display_url,
+        source_type=source_type,
+        display_url_present=display_url_present,
+        source_type_present=source_type_present,
+        display_url_valid=display_url_valid,
+        reason=reason,
+    )
+
+
+def validate_source_type_counts(data: dict) -> tuple[bool, dict]:
+    """Check that source_type_counts exists and is a dict[str, int]."""
+    counts = data.get("source_type_counts")
+    if counts is None:
+        return False, {}
+    if not isinstance(counts, dict):
+        return False, {}
+    # Verify all keys are strings and values are ints.
+    for k, v in counts.items():
+        if not isinstance(k, str) or not isinstance(v, int):
+            return False, {}
+    return True, counts
+
+
+async def run_diversity_query(client: httpx.AsyncClient) -> DiversityResult:
+    """Run a diversity test query and analyze source type spread."""
+    query = "BBj GUI programming window button example"
+    data = await run_rest_query(client, query, limit=10)
+    results = data.get("results", [])
+
+    source_types: list[str] = []
+    for r in results:
+        st = r.get("source_type", "")
+        if st:
+            source_types.append(st)
+
+    distinct = list(set(source_types))
+    warning = ""
+    if len(results) >= 10 and len(distinct) <= 1:
+        warning = (
+            f"All {len(results)} results have the same source_type "
+            f"({distinct[0] if distinct else 'unknown'}). "
+            "Diversity reranking may not be effective."
+        )
+    elif len(results) >= 5 and len(distinct) <= 1:
+        warning = (
+            f"Only 1 distinct source_type across {len(results)} results. "
+            "Consider checking diversity reranking."
+        )
+
+    return DiversityResult(
+        query=query,
+        source_types_found=source_types,
+        distinct_count=len(distinct),
+        total_results=len(results),
+        warning=warning,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Cross-source collector
 # ---------------------------------------------------------------------------
 
@@ -392,6 +516,10 @@ def generate_report(
     rest_results: list[RestResult],
     mcp_results: list[McpResult],
     cross_source: dict[str, bool],
+    url_mapping_checks: list[UrlMappingCheck] | None = None,
+    source_type_counts_valid: bool | None = None,
+    source_type_counts_data: dict | None = None,
+    diversity_result: DiversityResult | None = None,
 ) -> str:
     """Generate the VALIDATION.md content string."""
     now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
@@ -498,6 +626,63 @@ def generate_report(
         lines.append(f"| {group} | `{prefix}` | {found} |")
     lines.append("")
 
+    # -- URL Mapping & Source Diversity --
+    if url_mapping_checks is not None:
+        lines.append("## URL Mapping & Source Diversity")
+        lines.append("")
+
+        # display_url presence
+        total_checked = len(url_mapping_checks)
+        display_present = sum(1 for c in url_mapping_checks if c.display_url_present)
+        source_present = sum(1 for c in url_mapping_checks if c.source_type_present)
+        display_valid = sum(1 for c in url_mapping_checks if c.display_url_valid)
+
+        lines.append(
+            f"- **display_url present:** {display_present}/{total_checked} results"
+        )
+        lines.append(
+            f"- **source_type present:** {source_present}/{total_checked} results"
+        )
+        lines.append(
+            f"- **display_url format valid:** {display_valid}/{total_checked} results"
+        )
+        lines.append("")
+
+        # source_type_counts
+        if source_type_counts_valid is not None:
+            stc_status = "PASS" if source_type_counts_valid else "FAIL"
+            lines.append(f"- **source_type_counts in response:** {stc_status}")
+            if source_type_counts_data:
+                counts_str = ", ".join(
+                    f"{k}: {v}"
+                    for k, v in sorted(
+                        source_type_counts_data.items(), key=lambda x: -x[1]
+                    )
+                )
+                lines.append(f"  - Counts: {counts_str}")
+            lines.append("")
+
+        # Diversity test
+        if diversity_result is not None:
+            lines.append(f"### Diversity Test: `{diversity_result.query}`")
+            lines.append("")
+            lines.append(f"- **Results returned:** {diversity_result.total_results}")
+            lines.append(
+                f"- **Distinct source types:** {diversity_result.distinct_count}"
+            )
+            if diversity_result.source_types_found:
+                type_counts: dict[str, int] = {}
+                for st in diversity_result.source_types_found:
+                    type_counts[st] = type_counts.get(st, 0) + 1
+                breakdown = ", ".join(
+                    f"{k}: {v}"
+                    for k, v in sorted(type_counts.items(), key=lambda x: -x[1])
+                )
+                lines.append(f"- **Breakdown:** {breakdown}")
+            if diversity_result.warning:
+                lines.append(f"- **Warning:** {diversity_result.warning}")
+            lines.append("")
+
     # -- Known Issues --
     failed_rest = [r for r in rest_results if not r.passed]
     failed_mcp = [r for r in mcp_results if not r.passed]
@@ -544,24 +729,29 @@ async def main() -> None:
     print()
 
     # -- Prerequisites --
-    print("[1/5] Checking prerequisites...")
+    print("[1/7] Checking prerequisites...")
     async with httpx.AsyncClient() as client:
         stats = await check_prerequisites(client)
 
         # -- Source-targeted REST queries --
-        print("[2/5] Running source-targeted queries (6)...")
+        print("[2/7] Running source-targeted queries (6)...")
         rest_results: list[RestResult] = []
+        all_response_data: list[
+            dict
+        ] = []  # Collect raw responses for URL mapping checks
         for sq in SOURCE_QUERIES:
             data = await run_rest_query(client, sq.query)
+            all_response_data.append(data)
             result = evaluate_source_query(data, sq)
             status_char = "+" if result.passed else "-"
             print(f"  [{status_char}] {sq.target_source}: {sq.query}")
             rest_results.append(result)
 
         # -- Topic-based REST queries --
-        print("[3/5] Running topic-based queries (7 + 1 generation-filtered)...")
+        print("[3/7] Running topic-based queries (7 + 1 generation-filtered)...")
         for tq in TOPIC_QUERIES:
             data = await run_rest_query(client, tq.query)
+            all_response_data.append(data)
             result = evaluate_topic_query(data, tq, category="topic-based")
             status_char = "+" if result.passed else "-"
             print(f"  [{status_char}] {tq.query}")
@@ -579,8 +769,49 @@ async def main() -> None:
         print(f"  [{status_char}] {gq} (generation={GENERATION_FILTER})")
         rest_results.append(gen_result)
 
+        # -- URL mapping validation --
+        print("[4/7] Validating URL mapping fields (display_url, source_type)...")
+        url_mapping_checks: list[UrlMappingCheck] = []
+        for data in all_response_data:
+            for result_item in data.get("results", []):
+                check = validate_url_mapping_result(result_item)
+                url_mapping_checks.append(check)
+
+        display_ok = sum(1 for c in url_mapping_checks if c.display_url_present)
+        source_ok = sum(1 for c in url_mapping_checks if c.source_type_present)
+        format_ok = sum(1 for c in url_mapping_checks if c.display_url_valid)
+        total_ck = len(url_mapping_checks)
+        print(f"  display_url present: {display_ok}/{total_ck}")
+        print(f"  source_type present: {source_ok}/{total_ck}")
+        print(f"  display_url format valid: {format_ok}/{total_ck}")
+
+        # Check source_type_counts on the first non-empty response.
+        source_type_counts_valid = False
+        source_type_counts_data: dict = {}
+        for data in all_response_data:
+            if data.get("results"):
+                source_type_counts_valid, source_type_counts_data = (
+                    validate_source_type_counts(data)
+                )
+                stc_str = "PASS" if source_type_counts_valid else "FAIL"
+                print(f"  source_type_counts in response: {stc_str}")
+                if source_type_counts_data:
+                    print(f"    {source_type_counts_data}")
+                break
+
+        # -- Diversity test --
+        print("[5/7] Running diversity test query...")
+        diversity_result = await run_diversity_query(client)
+        print(
+            f"  Query: '{diversity_result.query}' -> "
+            f"{diversity_result.distinct_count} distinct source types "
+            f"across {diversity_result.total_results} results"
+        )
+        if diversity_result.warning:
+            print(f"  WARNING: {diversity_result.warning}")
+
     # -- MCP queries --
-    print("[4/5] Running MCP queries (3)...")
+    print("[6/7] Running MCP queries (3)...")
     try:
         mcp_results = await run_mcp_queries(MCP_QUERIES)
         for r in mcp_results:
@@ -602,8 +833,17 @@ async def main() -> None:
     cross_source = collect_cross_source(rest_results)
 
     # -- Report generation --
-    print("[5/5] Generating report...")
-    report = generate_report(stats, rest_results, mcp_results, cross_source)
+    print("[7/7] Generating report...")
+    report = generate_report(
+        stats,
+        rest_results,
+        mcp_results,
+        cross_source,
+        url_mapping_checks=url_mapping_checks,
+        source_type_counts_valid=source_type_counts_valid,
+        source_type_counts_data=source_type_counts_data,
+        diversity_result=diversity_result,
+    )
     output_path = RAG_DIR / "VALIDATION.md"
     output_path.write_text(report, encoding="utf-8")
     print(f"  Report written to: {output_path}")
