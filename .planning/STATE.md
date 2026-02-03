@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 Milestone: v1.5 Alpha-Ready RAG System
 Phase: 26 of 29 (Chat Interface) — In progress
-Plan: 1 of 3
-Status: In progress — Plan 01 complete, Plans 02-03 remaining
-Last activity: 2026-02-03 — Completed 26-01-PLAN.md (Chat Backend Infrastructure)
+Plan: 2 of 3
+Status: In progress — Plans 01-02 complete, Plan 03 remaining
+Last activity: 2026-02-03 — Completed 26-02-PLAN.md (Chat Frontend UI)
 
-Progress: [███░░░░░░░] 22%
+Progress: [███░░░░░░░] 24%
 
 ## Performance Metrics
 
@@ -25,7 +25,7 @@ Progress: [███░░░░░░░] 22%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 7 phases, 14 plans (RAG deployment + validation)
-- **Total: 26 phases, 60 plans delivered across 5 milestones**
+- **Total: 26 phases, 61 plans delivered across 5 milestones**
 
 ## Accumulated Context
 
@@ -37,6 +37,9 @@ See .planning/PROJECT.md Key Decisions table for full log (33 decisions, all val
 - JSON-encode all SSE data payloads to safely transport newlines in code blocks
 - Sources event emitted before streaming with low_confidence flag per-source
 - Sliding window message truncation via chat_max_history setting (default 20 messages)
+- Sticky positioning for chat input bar (works in flex layout without overlap)
+- marked.js imported as ES module from CDN (no build tooling)
+- Prism autoloader for on-demand BBj grammar loading
 
 ### Pending Todos (Carried Forward into v1.5)
 
@@ -64,6 +67,6 @@ All carried-forward items now mapped to roadmap phases:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 26-01-PLAN.md (Chat Backend Infrastructure)
+Stopped at: Completed 26-02-PLAN.md (Chat Frontend UI)
 Resume file: None
-Next action: Execute 26-02-PLAN.md (Chat Frontend UI)
+Next action: Execute 26-03-PLAN.md (Chat Polish)
