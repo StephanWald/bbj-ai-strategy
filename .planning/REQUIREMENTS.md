@@ -1,0 +1,109 @@
+# Requirements: BBj AI Strategy — v1.5 Alpha-Ready RAG System
+
+**Defined:** 2026-02-03
+**Core Value:** Engineers can evaluate the BBj RAG system through a usable chat interface with source citations, compiler-validated code, and shared server access.
+
+## v1.5 Requirements
+
+### Ingestion Performance
+
+- [ ] **PERF-01**: Concurrent embedding workers process multiple chunks in parallel via asyncio
+- [ ] **PERF-02**: Persistent HTTP connection reuse for Ollama embedding calls across batches
+- [ ] **PERF-03**: `bbj-ingest-all --parallel` flag enables concurrent mode with configurable worker count
+
+### Result Quality
+
+- [ ] **QUAL-01**: Source-balanced ranking reserves slots in top-k results for minority sources (PDF, BBj Source, MDX)
+- [ ] **QUAL-02**: source_url mapped to clickable HTTP links (flare:// → https://documentation.basis.cloud/..., WordPress and Web Crawl already HTTP)
+- [ ] **QUAL-03**: Search results include clickable `display_url` field alongside internal `source_url`
+
+### Chat Interface
+
+- [ ] **CHAT-01**: Web chat page served from FastAPI with question input and streamed response display
+- [ ] **CHAT-02**: Claude API (Anthropic SDK) generates answers using RAG search results as context
+- [ ] **CHAT-03**: Responses include source citations with clickable links to documentation
+- [ ] **CHAT-04**: Response streaming via SSE with proper handling of multi-line content (code blocks)
+- [ ] **CHAT-05**: Chat page accessible without authentication on LAN
+
+### Compiler Validation
+
+- [ ] **COMP-01**: `validate_bbj_syntax` MCP tool validates BBj code via bbjcpl compiler on host
+- [ ] **COMP-02**: Chat responses automatically validate BBj code blocks via bbjcpl
+- [ ] **COMP-03**: Validated code blocks show visual indicator (valid/invalid/not-validated)
+- [ ] **COMP-04**: bbjcpl stderr output parsed for error details (compiler exits 0 even on errors)
+
+### Remote Access
+
+- [ ] **REMOTE-01**: MCP server supports Streamable HTTP transport for remote Claude Desktop connections
+- [ ] **REMOTE-02**: Chat UI accessible from other machines on local network
+- [ ] **REMOTE-03**: Docker Compose configuration supports shared server deployment (bind to 0.0.0.0)
+
+## Future Requirements
+
+Deferred to later milestones. Tracked but not in v1.5 roadmap.
+
+### Chat Enhancements
+
+- **CHAT-F01**: Generation filtering in chat (filter by BBj product generation)
+- **CHAT-F02**: Multi-turn conversation context within session
+- **CHAT-F03**: Chat history persistence across sessions
+
+### Compiler Enhancements
+
+- **COMP-F01**: Validation error feedback loop (send bbjcpl errors back to LLM for self-correction)
+
+### Production Deployment
+
+- **PROD-F01**: User authentication for shared deployment
+- **PROD-F02**: Cloud hosting (beyond LAN server)
+- **PROD-F03**: CI/CD pipeline for automated ingestion
+
+### Quality & Optimization
+
+- **QUAL-F01**: Embedding fine-tuning based on alpha retrieval quality feedback
+- **QUAL-F02**: Agentic RAG (query routing, multi-step reasoning)
+- **QUAL-F03**: Incremental ingestion (update changed documents only)
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| User authentication | Internal alpha on trusted network; no sensitive data |
+| Chat history persistence | Alpha phase — ephemeral conversations are fine for evaluation |
+| generate_bbj_code MCP tool | Requires fine-tuned BBj model (separate milestone) |
+| Cloud/production hosting | v1.5 targets LAN server, not cloud |
+| Mobile-optimized chat UI | Engineers use desktop browsers |
+| Embedding fine-tuning | Requires baseline quality measurement from alpha feedback |
+| Multi-user session isolation | Single shared instance; engineers evaluate sequentially or accept shared context |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PERF-01 | TBD | Pending |
+| PERF-02 | TBD | Pending |
+| PERF-03 | TBD | Pending |
+| QUAL-01 | TBD | Pending |
+| QUAL-02 | TBD | Pending |
+| QUAL-03 | TBD | Pending |
+| CHAT-01 | TBD | Pending |
+| CHAT-02 | TBD | Pending |
+| CHAT-03 | TBD | Pending |
+| CHAT-04 | TBD | Pending |
+| CHAT-05 | TBD | Pending |
+| COMP-01 | TBD | Pending |
+| COMP-02 | TBD | Pending |
+| COMP-03 | TBD | Pending |
+| COMP-04 | TBD | Pending |
+| REMOTE-01 | TBD | Pending |
+| REMOTE-02 | TBD | Pending |
+| REMOTE-03 | TBD | Pending |
+
+**Coverage:**
+- v1.5 requirements: 18 total
+- Mapped to phases: 0 (pending roadmap creation)
+- Unmapped: 18
+
+---
+*Requirements defined: 2026-02-03*
+*Last updated: 2026-02-03 after initial definition*
