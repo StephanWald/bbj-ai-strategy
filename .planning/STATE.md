@@ -11,9 +11,9 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 Milestone: v1.5 Alpha-Ready RAG System
 Phase: 28 of 29 (Compiler Validation) — Complete
-Plan: 2 of 2
-Status: Phase complete — BBj code validation integrated into chat
-Last activity: 2026-02-04 — Completed 28-02-PLAN.md
+Plan: 3 of 3
+Status: Phase complete — BBj code validation with frontend warning UI
+Last activity: 2026-02-04 — Completed 28-03-PLAN.md
 
 Progress: [████████░░] 70%
 
@@ -87,12 +87,16 @@ All carried-forward items now mapped to roadmap phases:
 - Reduce hallucinations — stronger grounding instructions, citation verification
 - Response quality — better prompting, example-based guidance
 
+**Streaming UX (from Phase 28):**
+- Validation batch-then-simulate pattern causes response to arrive in one rush after long wait
+- Consider exploring alternatives: progressive validation, partial streaming, or visual validation indicator
+
 **New Data Source:**
 - BBjAPI JavaDoc is available and should be ingested — provides structured API documentation that would significantly improve RAG quality for API-related queries
 
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed Phase 28 (Compiler Validation)
+Stopped at: Completed 28-03-PLAN.md (Validation Warning UI)
 Resume file: None
 Next action: Plan Phase 29 (Performance Optimization)
