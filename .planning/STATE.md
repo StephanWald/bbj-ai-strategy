@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** v1.5 Alpha-Ready RAG System — Phase 26 (Chat Interface)
+**Current focus:** v1.5 Alpha-Ready RAG System — Phase 27 (Remote Access)
 
 ## Current Position
 
 Milestone: v1.5 Alpha-Ready RAG System
-Phase: 26 of 29 (Chat Interface) — Complete
-Plan: 3 of 3
-Status: Complete — All plans executed, phase verified
-Last activity: 2026-02-04 — Completed Phase 26 (Chat Interface)
+Phase: 27 of 29 (Remote Access)
+Plan: 1 of 1
+Status: Complete — Phase 27 complete, remote access enabled
+Last activity: 2026-02-04 — Completed 27-01-PLAN.md
 
-Progress: [████░░░░░░] 40%
+Progress: [████░░░░░░] 43%
 
 ## Performance Metrics
 
@@ -25,7 +25,8 @@ Progress: [████░░░░░░] 40%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 7 phases, 14 plans (RAG deployment + validation)
-- **Total: 26 phases, 61 plans delivered across 5 milestones**
+- v1.5 (in progress): 2 phases, 4 plans (alpha-ready features)
+- **Total: 27 phases, 62 plans delivered across 5 milestones**
 
 ## Accumulated Context
 
@@ -40,6 +41,11 @@ See .planning/PROJECT.md Key Decisions table for full log (33 decisions, all val
 - Sticky positioning for chat input bar (works in flex layout without overlap)
 - marked.js imported as ES module from CDN (no build tooling)
 - Prism autoloader for on-demand BBj grammar loading
+
+**Phase 27 decisions:**
+- FastMCP stateless_http=True with streamable_http_path="/" to avoid double-prefix
+- mcp.session_manager.run() context wraps FastAPI yield for proper MCP lifecycle
+- Explicit 0.0.0.0 binding in docker-compose.yml for LAN accessibility
 
 ### Pending Todos (Carried Forward into v1.5)
 
@@ -57,11 +63,12 @@ All carried-forward items now mapped to roadmap phases:
 - Engineers have BBj (and bbjcpl) installed locally — bbjcpl validation runs host-side, not in Docker
 - Alpha deployment targets shared server on local network + local per-engineer option
 - ANTHROPIC_API_KEY needed for Phase 26 (Claude API) — set spending alerts
+- Remote access: Claude Desktop connects via `npx mcp-remote http://<server>:10800/mcp --allow-http`
 
 ### Research Flags
 
 - Phase 26 (Chat Interface): Research COMPLETE — JSON-encoded SSE events, vanilla JS fetch() for POST-based SSE
-- Phase 27 (Remote Access): NEEDS research — MCP SDK mounting issues, Streamable HTTP fallback patterns
+- Phase 27 (Remote Access): Research COMPLETE — FastMCP stateless_http mode, lifespan session manager integration
 - Phases 28, 29: Standard patterns, skip research
 
 ### Future Improvements (Captured from Phase 26 Testing)
@@ -80,6 +87,6 @@ All carried-forward items now mapped to roadmap phases:
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed Phase 26 (Chat Interface)
+Stopped at: Completed 27-01-PLAN.md
 Resume file: None
-Next action: Plan Phase 27 (Remote Access)
+Next action: Plan Phase 28 (BBj Validation)
