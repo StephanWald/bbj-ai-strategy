@@ -19,11 +19,11 @@
 
 ### Chat Interface
 
-- [ ] **CHAT-01**: Web chat page served from FastAPI with question input and streamed response display
-- [ ] **CHAT-02**: Claude API (Anthropic SDK) generates answers using RAG search results as context
-- [ ] **CHAT-03**: Responses include source citations with clickable links to documentation
-- [ ] **CHAT-04**: Response streaming via SSE with proper handling of multi-line content (code blocks)
-- [ ] **CHAT-05**: Chat page accessible without authentication on LAN
+- [x] **CHAT-01**: Web chat page served from FastAPI with question input and streamed response display
+- [x] **CHAT-02**: Claude API (Anthropic SDK) generates answers using RAG search results as context
+- [x] **CHAT-03**: Responses include source citations with clickable links to documentation
+- [x] **CHAT-04**: Response streaming via SSE with proper handling of multi-line content (code blocks)
+- [x] **CHAT-05**: Chat page accessible without authentication on LAN
 
 ### Compiler Validation
 
@@ -34,9 +34,9 @@
 
 ### Remote Access
 
-- [ ] **REMOTE-01**: MCP server supports Streamable HTTP transport for remote Claude Desktop connections
-- [ ] **REMOTE-02**: Chat UI accessible from other machines on local network
-- [ ] **REMOTE-03**: Docker Compose configuration supports shared server deployment (bind to 0.0.0.0)
+- [x] **REMOTE-01**: MCP server supports Streamable HTTP transport for remote Claude Desktop connections
+- [x] **REMOTE-02**: Chat UI accessible from other machines on local network
+- [x] **REMOTE-03**: Docker Compose configuration supports shared server deployment (bind to 0.0.0.0)
 
 ## Future Requirements
 
@@ -83,14 +83,14 @@ Deferred to later milestones. Tracked but not in v1.5 roadmap.
 | QUAL-01 | Phase 25 | Complete |
 | QUAL-02 | Phase 25 | Complete |
 | QUAL-03 | Phase 25 | Complete |
-| CHAT-01 | Phase 26 | Pending |
-| CHAT-02 | Phase 26 | Pending |
-| CHAT-03 | Phase 26 | Pending |
-| CHAT-04 | Phase 26 | Pending |
-| CHAT-05 | Phase 26 | Pending |
-| REMOTE-01 | Phase 27 | Pending |
-| REMOTE-02 | Phase 27 | Pending |
-| REMOTE-03 | Phase 27 | Pending |
+| CHAT-01 | Phase 26 | Complete |
+| CHAT-02 | Phase 26 | Complete |
+| CHAT-03 | Phase 26 | Complete |
+| CHAT-04 | Phase 26 | Complete |
+| CHAT-05 | Phase 26 | Complete |
+| REMOTE-01 | Phase 27 | Complete |
+| REMOTE-02 | Phase 27 | Complete |
+| REMOTE-03 | Phase 27 | Complete |
 | COMP-01 | Phase 28 | Pending |
 | COMP-02 | Phase 28 | Pending |
 | COMP-03 | Phase 28 | Pending |
@@ -106,4 +106,4 @@ Deferred to later milestones. Tracked but not in v1.5 roadmap.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 after roadmap creation (phase assignments)*
+*Last updated: 2026-02-04 after Phase 27 completion*
