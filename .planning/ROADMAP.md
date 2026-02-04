@@ -67,11 +67,10 @@ Plans:
   1. Claude Desktop on a different machine connects to the MCP server via Streamable HTTP URL (e.g., `http://server:10800/mcp`) and successfully executes `search_bbj_knowledge`
   2. A browser on a different machine on the LAN opens `http://server:10800/chat` and can submit queries
   3. `docker compose up` with the shared-server configuration binds all services to 0.0.0.0 and is accessible from other machines
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 27-01: TBD
-- [ ] 27-02: TBD
+- [ ] 27-01-PLAN.md -- Mount MCP HTTP endpoint, update Docker binding, add README deployment docs
 
 ### Phase 28: Compiler Validation
 **Goal**: BBj code in chat responses is automatically validated against the real BBj compiler, giving engineers confidence that code examples are syntactically correct
@@ -112,7 +111,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 |-------|-----------|----------------|--------|-----------|
 | 25. Result Quality Foundation | v1.5 | 3/3 | Complete | 2026-02-03 |
 | 26. Chat Interface | v1.5 | 3/3 | Complete | 2026-02-04 |
-| 27. Remote Access | v1.5 | 0/TBD | Not started | - |
+| 27. Remote Access | v1.5 | 0/1 | Planned | - |
 | 28. Compiler Validation | v1.5 | 0/TBD | Not started | - |
 | 29. Ingestion Performance | v1.5 | 0/TBD | Not started | - |
 
