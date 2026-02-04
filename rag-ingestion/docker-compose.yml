@@ -46,7 +46,7 @@ services:
       - BBJ_RAG_CHAT_MODEL=${BBJ_RAG_CHAT_MODEL:-claude-sonnet-4-5-20250929}
       - BBJ_RAG_CHAT_MAX_TOKENS=${BBJ_RAG_CHAT_MAX_TOKENS:-2048}
     ports:
-      - "${APP_PORT_EXTERNAL:-10800}:8000"
+      - "0.0.0.0:${APP_PORT_EXTERNAL:-10800}:8000"
     volumes:
       # Source data -- each repo mounted individually at the path sources.toml expects
       - ${BBJDOCS_PATH:-/Users/beff/bbjdocs}:/data/bbjdocs:ro
