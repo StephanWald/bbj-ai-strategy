@@ -24,6 +24,9 @@ let currentAbort = null;
 /** @type {boolean} */
 let isStreaming = false;
 
+/** @type {Array<{code_index: number, errors: string, code_preview: string}>} */
+let pendingValidationWarnings = [];
+
 // ---------------------------------------------------------------------------
 // DOM references (populated on DOMContentLoaded)
 // ---------------------------------------------------------------------------
@@ -72,11 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // New chat
   newChatBtn.addEventListener('click', () => {
     messages = [];
+    pendingValidationWarnings = [];
     // Remove all messages but keep empty state
     const msgEls = conversationEl.querySelectorAll('.message');
     msgEls.forEach((el) => el.remove());
-    // Remove any leftover source lists
-    const srcEls = conversationEl.querySelectorAll('.sources-list, .low-confidence');
+    // Remove any leftover source lists and validation warnings
+    const srcEls = conversationEl.querySelectorAll('.sources-list, .low-confidence, .validation-warning, .validation-unavailable');
     srcEls.forEach((el) => el.remove());
     emptyStateEl.style.display = '';
     enableInput();
@@ -221,6 +225,11 @@ async function streamResponse(messagesArray, responseEl, abortCtrl) {
       case 'done': {
         // Final render
         renderMarkdown(accumulated, responseEl);
+        // Inject validation warnings above relevant code blocks
+        if (pendingValidationWarnings.length > 0) {
+          injectValidationWarnings(responseEl, pendingValidationWarnings);
+          pendingValidationWarnings = [];
+        }
         // Remove streaming indicator
         removeStreamingIndicator(responseEl);
         // Push assistant message to history
@@ -235,6 +244,11 @@ async function streamResponse(messagesArray, responseEl, abortCtrl) {
       }
       case 'error': {
         showError(responseEl, data.message || 'An error occurred');
+        break;
+      }
+      case 'validation_warning': {
+        // Store warning for injection after markdown render
+        pendingValidationWarnings.push(data);
         break;
       }
       default:
@@ -292,6 +306,11 @@ async function streamResponse(messagesArray, responseEl, abortCtrl) {
     // Ensure final render if we got data but no 'done' event (e.g. abort)
     if (accumulated) {
       renderMarkdown(accumulated, responseEl);
+      // Inject any pending validation warnings
+      if (pendingValidationWarnings.length > 0) {
+        injectValidationWarnings(responseEl, pendingValidationWarnings);
+        pendingValidationWarnings = [];
+      }
       removeStreamingIndicator(responseEl);
       addCopyButtons(responseEl);
       if (!messages.some((m) => m.role === 'assistant' && m.content === accumulated)) {
@@ -303,6 +322,11 @@ async function streamResponse(messagesArray, responseEl, abortCtrl) {
       // Partial response is fine -- finalize what we have
       if (accumulated) {
         renderMarkdown(accumulated, responseEl);
+        // Inject any pending validation warnings
+        if (pendingValidationWarnings.length > 0) {
+          injectValidationWarnings(responseEl, pendingValidationWarnings);
+          pendingValidationWarnings = [];
+        }
         removeStreamingIndicator(responseEl);
         addCopyButtons(responseEl);
         if (!messages.some((m) => m.role === 'assistant' && m.content === accumulated)) {
@@ -382,6 +406,54 @@ function addCopyButtons(element) {
     });
     pre.appendChild(btn);
   });
+}
+
+// ---------------------------------------------------------------------------
+// Validation warnings
+// ---------------------------------------------------------------------------
+
+/**
+ * Inject validation warning banners above code blocks that failed validation.
+ * @param {HTMLElement} containerEl - The response element containing code blocks
+ * @param {Array<{code_index: number, errors: string, code_preview?: string}>} warnings
+ */
+function injectValidationWarnings(containerEl, warnings) {
+  const codeBlocks = containerEl.querySelectorAll('pre');
+
+  for (const warning of warnings) {
+    // code_index is 1-based from backend
+    const blockIndex = warning.code_index - 1;
+    if (blockIndex < 0 || blockIndex >= codeBlocks.length) continue;
+
+    const targetBlock = codeBlocks[blockIndex];
+
+    // Check if this is a "unavailable" warning (no errors, special message)
+    const isUnavailable = !warning.errors ||
+      warning.errors.includes('unavailable') ||
+      warning.errors.includes('timed out');
+
+    const warningEl = document.createElement('div');
+
+    if (isUnavailable) {
+      warningEl.className = 'validation-unavailable';
+      warningEl.textContent = warning.errors || 'Syntax validation unavailable';
+    } else {
+      warningEl.className = 'validation-warning';
+
+      const header = document.createElement('div');
+      header.className = 'validation-warning-header';
+      header.textContent = 'Could not verify syntax - use with caution';
+      warningEl.appendChild(header);
+
+      const errorsEl = document.createElement('div');
+      errorsEl.className = 'validation-warning-errors';
+      errorsEl.textContent = warning.errors;
+      warningEl.appendChild(errorsEl);
+    }
+
+    // Insert warning immediately before the code block
+    targetBlock.parentNode.insertBefore(warningEl, targetBlock);
+  }
 }
 
 // ---------------------------------------------------------------------------
