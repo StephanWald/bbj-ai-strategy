@@ -81,11 +81,12 @@ Plans:
   2. A chat response containing a BBj code block shows a visual indicator (checkmark, X, or neutral) reflecting whether bbjcpl validated the syntax
   3. A known-bad BBj code snippet (e.g., missing END statement) is correctly identified as invalid with the specific error message from bbjcpl stderr
   4. bbjcpl stderr output is parsed for error details rather than relying on exit code (which is always 0)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 28-01: TBD
-- [ ] 28-02: TBD
+- [ ] 28-01-PLAN.md — Compiler module with validate_bbj_syntax() and MCP tool
+- [ ] 28-02-PLAN.md — Chat validation loop with auto-fix attempts and SSE events
+- [ ] 28-03-PLAN.md — Frontend warning UI for failed validations
 
 ### Phase 29: Ingestion Performance
 **Goal**: Corpus rebuilds run significantly faster through concurrent processing, reducing wait time for re-ingestion during development
@@ -112,7 +113,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 25. Result Quality Foundation | v1.5 | 3/3 | Complete | 2026-02-03 |
 | 26. Chat Interface | v1.5 | 3/3 | Complete | 2026-02-04 |
 | 27. Remote Access | v1.5 | 1/1 | Complete | 2026-02-04 |
-| 28. Compiler Validation | v1.5 | 0/TBD | Not started | - |
+| 28. Compiler Validation | v1.5 | 0/3 | Planned | - |
 | 29. Ingestion Performance | v1.5 | 0/TBD | Not started | - |
 
 ## Coverage
