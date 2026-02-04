@@ -343,6 +343,12 @@ function renderMarkdown(text, element) {
     element.appendChild(indicator);
   }
 
+  // Make all links open in new tab
+  element.querySelectorAll('a').forEach((link) => {
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+  });
+
   // Apply Prism syntax highlighting
   element.querySelectorAll('pre code').forEach((block) => {
     // eslint-disable-next-line no-undef

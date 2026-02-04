@@ -40,12 +40,12 @@ def build_rag_system_prompt(
     # Citation instructions
     sections.append(
         "Answer questions using ONLY the reference material provided below. "
-        "Cite sources inline using [Source N](url) markdown link notation, "
-        "where N matches the source number and url is the source URL. "
-        "For each claim, cite the 1-3 most relevant sources. When citing, "
-        "mention the source type label naturally, for example: "
-        '"according to the Flare Docs [Source 1](url)..." or '
-        '"the PDF Manual notes [Source 2](url)...".'
+        "Cite sources inline using markdown links with descriptive text. "
+        "Use the source title or a natural phrase as the link text, like: "
+        '"see the [BBjWindow documentation](url)" or "as described in '
+        '[Creating Windows in BBj](url)". Do NOT use generic text like '
+        '"Source 1" or "click here". For each claim, cite the 1-3 most '
+        "relevant sources with their URLs from the reference material."
     )
 
     # Low confidence caveat
