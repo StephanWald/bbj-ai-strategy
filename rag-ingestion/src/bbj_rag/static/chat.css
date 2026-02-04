@@ -481,3 +481,56 @@ body {
     font-size: 0.8rem;
   }
 }
+
+/* Validation warning banner - appears above code blocks that failed validation */
+.validation-warning {
+  background: #fef3c7;  /* Amber-100 */
+  border: 1px solid #f59e0b;  /* Amber-500 */
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.validation-warning-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #92400e;  /* Amber-800 */
+  margin-bottom: 8px;
+}
+
+.validation-warning-header::before {
+  content: "\26A0\FE0F";  /* Warning emoji */
+}
+
+.validation-warning-errors {
+  background: #fffbeb;  /* Amber-50 */
+  border: 1px solid #fcd34d;  /* Amber-300 */
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #78350f;  /* Amber-900 */
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Validation unavailable note - different style, less alarming */
+.validation-unavailable {
+  background: #f3f4f6;  /* Gray-100 */
+  border: 1px solid #d1d5db;  /* Gray-300 */
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: #4b5563;  /* Gray-600 */
+  font-style: italic;
+}
+
+.validation-unavailable::before {
+  content: "\2139\FE0F  ";  /* Info emoji */
+}
