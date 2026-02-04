@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** v1.5 Alpha-Ready RAG System — Phase 28 (Compiler Validation) Complete
+**Current focus:** v1.5 Alpha-Ready RAG System — Phase 29 (Ingestion Performance) In Progress
 
 ## Current Position
 
 Milestone: v1.5 Alpha-Ready RAG System
-Phase: 28 of 29 (Compiler Validation) — Complete
-Plan: 3 of 3
-Status: Phase complete — BBj code validation with frontend warning UI
-Last activity: 2026-02-04 — Completed 28-03-PLAN.md
+Phase: 29 of 29 (Ingestion Performance) — In Progress
+Plan: 1 of 3
+Status: In progress — Async embedder foundation complete
+Last activity: 2026-02-04 — Completed 29-01-PLAN.md
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
@@ -54,6 +54,11 @@ See .planning/PROJECT.md Key Decisions table for full log (33 decisions, all val
 - Batch response + simulated streaming for validation (validates before user sees code)
 - Max 3 total attempts per code block (initial + 2 fix attempts)
 - Graceful degradation when bbjcpl unavailable (skip validation, no warning)
+
+**Phase 29 decisions:**
+- httpx.Limits(max_connections=10, max_keepalive_connections=5) for connection pooling
+- 5-minute timeout for large embedding batches
+- OLLAMA_HOST env var fallback for backward compatibility with existing deployments
 
 ### Pending Todos (Carried Forward into v1.5)
 
@@ -97,6 +102,6 @@ All carried-forward items now mapped to roadmap phases:
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 28-03-PLAN.md (Validation Warning UI)
+Stopped at: Completed 29-01-PLAN.md (Async Embedder Foundation)
 Resume file: None
-Next action: Plan Phase 29 (Performance Optimization)
+Next action: Execute 29-02-PLAN.md (Parallel Chunk Processor)
