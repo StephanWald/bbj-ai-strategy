@@ -22,7 +22,7 @@ v1.5 transforms the working v1.4 RAG system into an alpha product engineers can 
 - [x] **Phase 25: Result Quality Foundation** — Clickable source links and source-balanced ranking
 - [x] **Phase 26: Chat Interface** — Web chat with Claude API, streaming responses, and source citations
 - [x] **Phase 27: Remote Access** — Streamable HTTP MCP and network-accessible deployment
-- [ ] **Phase 28: Compiler Validation** — bbjcpl integration for BBj code syntax checking in chat responses
+- [x] **Phase 28: Compiler Validation** — bbjcpl integration for BBj code syntax checking in chat responses
 - [ ] **Phase 29: Ingestion Performance** — Concurrent workers and persistent connections for faster rebuilds
 
 ## Phase Details
@@ -113,7 +113,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 25. Result Quality Foundation | v1.5 | 3/3 | Complete | 2026-02-03 |
 | 26. Chat Interface | v1.5 | 3/3 | Complete | 2026-02-04 |
 | 27. Remote Access | v1.5 | 1/1 | Complete | 2026-02-04 |
-| 28. Compiler Validation | v1.5 | 0/3 | Planned | - |
+| 28. Compiler Validation | v1.5 | 3/3 | Complete | 2026-02-04 |
 | 29. Ingestion Performance | v1.5 | 0/TBD | Not started | - |
 
 ## Coverage

@@ -15,7 +15,7 @@ Plan: 3 of 3
 Status: Phase complete — BBj code validation with frontend warning UI
 Last activity: 2026-02-04 — Completed 28-03-PLAN.md
 
-Progress: [████████░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -25,8 +25,8 @@ Progress: [████████░░] 70%
 - v1.2: 7 phases, 15 plans (RAG ingestion pipeline)
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 7 phases, 14 plans (RAG deployment + validation)
-- v1.5 (in progress): 4 phases, 9 plans (alpha-ready features)
-- **Total: 28 phases, 67 plans delivered across 5 milestones**
+- v1.5 (in progress): 4 phases, 10 plans (alpha-ready features)
+- **Total: 29 phases, 68 plans delivered across 5 milestones**
 
 ## Accumulated Context
 

@@ -27,10 +27,10 @@
 
 ### Compiler Validation
 
-- [ ] **COMP-01**: `validate_bbj_syntax` MCP tool validates BBj code via bbjcpl compiler on host
-- [ ] **COMP-02**: Chat responses automatically validate BBj code blocks via bbjcpl
-- [ ] **COMP-03**: Validated code blocks show visual indicator (valid/invalid/not-validated)
-- [ ] **COMP-04**: bbjcpl stderr output parsed for error details (compiler exits 0 even on errors)
+- [x] **COMP-01**: `validate_bbj_syntax` MCP tool validates BBj code via bbjcpl compiler on host
+- [x] **COMP-02**: Chat responses automatically validate BBj code blocks via bbjcpl
+- [x] **COMP-03**: Validated code blocks show visual indicator (valid/invalid/not-validated)
+- [x] **COMP-04**: bbjcpl stderr output parsed for error details (compiler exits 0 even on errors)
 
 ### Remote Access
 
@@ -91,10 +91,10 @@ Deferred to later milestones. Tracked but not in v1.5 roadmap.
 | REMOTE-01 | Phase 27 | Complete |
 | REMOTE-02 | Phase 27 | Complete |
 | REMOTE-03 | Phase 27 | Complete |
-| COMP-01 | Phase 28 | Pending |
-| COMP-02 | Phase 28 | Pending |
-| COMP-03 | Phase 28 | Pending |
-| COMP-04 | Phase 28 | Pending |
+| COMP-01 | Phase 28 | Complete |
+| COMP-02 | Phase 28 | Complete |
+| COMP-03 | Phase 28 | Complete |
+| COMP-04 | Phase 28 | Complete |
 | PERF-01 | Phase 29 | Pending |
 | PERF-02 | Phase 29 | Pending |
 | PERF-03 | Phase 29 | Pending |
@@ -106,4 +106,4 @@ Deferred to later milestones. Tracked but not in v1.5 roadmap.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-04 after Phase 27 completion*
+*Last updated: 2026-02-04 after Phase 28 completion*
