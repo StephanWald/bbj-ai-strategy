@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     chat_max_tokens: int = Field(default=2048)
     chat_max_history: int = Field(default=20)
     chat_confidence_min_results: int = Field(default=2)
-    chat_confidence_min_score: float = Field(default=0.3)
+    chat_confidence_min_score: float = Field(default=0.025)
 
     # -- Source paths --
     flare_source_path: str = Field(default="")
