@@ -84,23 +84,24 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 28-01-PLAN.md — Compiler module with validate_bbj_syntax() and MCP tool
-- [ ] 28-02-PLAN.md — Chat validation loop with auto-fix attempts and SSE events
-- [ ] 28-03-PLAN.md — Frontend warning UI for failed validations
+- [x] 28-01-PLAN.md — Compiler module with validate_bbj_syntax() and MCP tool
+- [x] 28-02-PLAN.md — Chat validation loop with auto-fix attempts and SSE events
+- [x] 28-03-PLAN.md — Frontend warning UI for failed validations
 
 ### Phase 29: Ingestion Performance
 **Goal**: Corpus rebuilds run significantly faster through concurrent processing, reducing wait time for re-ingestion during development
 **Depends on**: Nothing (independent of Phases 25-28)
 **Requirements**: PERF-01, PERF-02, PERF-03
 **Success Criteria** (what must be TRUE):
-  1. `bbj-ingest-all --parallel` completes a full corpus ingestion measurably faster than sequential mode (targeting 1.5-2x speedup)
+  1. `bbj-ingest-all` runs in parallel mode by default, completing measurably faster than `--sequential` mode (targeting 1.5-2x speedup)
   2. Multiple embedding workers process chunks concurrently without Ollama GPU saturation or errors
   3. HTTP connections to Ollama are reused across batches within a worker (no per-batch connection setup overhead)
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 29-01: TBD
-- [ ] 29-02: TBD
+- [ ] 29-01-PLAN.md — Async embedder with persistent HTTP connections
+- [ ] 29-02-PLAN.md — Parallel worker module with retry logic and failure logging
+- [ ] 29-03-PLAN.md — CLI integration and performance verification
 
 ## Progress
 
@@ -114,7 +115,7 @@ Phases execute in numeric order: 25 → 26 → 27 → 28 → 29
 | 26. Chat Interface | v1.5 | 3/3 | Complete | 2026-02-04 |
 | 27. Remote Access | v1.5 | 1/1 | Complete | 2026-02-04 |
 | 28. Compiler Validation | v1.5 | 3/3 | Complete | 2026-02-04 |
-| 29. Ingestion Performance | v1.5 | 0/TBD | Not started | - |
+| 29. Ingestion Performance | v1.5 | 0/3 | Not started | - |
 
 ## Coverage
 
