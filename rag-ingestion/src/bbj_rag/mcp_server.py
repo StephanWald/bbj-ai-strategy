@@ -117,6 +117,42 @@ async def search_bbj_knowledge(
     return _format_results(resp.json())
 
 
+@mcp.tool()
+async def validate_bbj_syntax(code: str) -> str:
+    """Validate BBj code syntax using the bbjcpl compiler.
+
+    Runs the code through bbjcpl -N (syntax check only, no output file).
+    Returns whether the code compiled successfully, with error details if not.
+
+    NOTE: bbjcpl must be installed and accessible on the host system.
+    The compiler always exits 0; errors are reported via stderr.
+
+    Args:
+        code: BBj source code to validate (can be a snippet or full program).
+
+    Returns:
+        Validation result indicating success or failure with error details.
+    """
+    from bbj_rag.compiler import validate_bbj_syntax as do_validate
+
+    result = await do_validate(code)
+
+    if result.unavailable:
+        return (
+            "Validation unavailable: bbjcpl compiler not found.\n"
+            "Ensure BBj is installed and bbjcpl is in PATH, or set "
+            "BBJ_RAG_COMPILER_PATH environment variable."
+        )
+
+    if result.timed_out:
+        return "Validation timed out after 10 seconds."
+
+    if result.valid:
+        return "Valid: BBj code compiled successfully with no syntax errors."
+
+    return f"Invalid: BBj compilation failed.\n\nCompiler output:\n{result.errors}"
+
+
 def main() -> None:
     """Entry point for the bbj-mcp script."""
     mcp.run(transport="stdio")
