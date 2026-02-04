@@ -385,11 +385,23 @@ function addCopyButtons(element) {
 /**
  * Display a consolidated sources reference section below the response.
  * This complements Claude's inline citations with a "References" list.
+ * Deduplicates sources by URL to avoid showing the same document multiple times.
  * @param {Array<{title: string, url: string, source_type: string}>} sources
  * @param {HTMLElement} containerEl
  */
 function displaySources(sources, containerEl) {
   if (!sources || sources.length === 0) return;
+
+  // Deduplicate by URL, keeping the first occurrence (highest ranked)
+  const seen = new Set();
+  const uniqueSources = sources.filter((source) => {
+    const key = source.url || source.title;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  if (uniqueSources.length === 0) return;
 
   const sourcesDiv = document.createElement('div');
   sourcesDiv.className = 'sources-list';
@@ -400,7 +412,7 @@ function displaySources(sources, containerEl) {
   sourcesDiv.appendChild(label);
 
   const ul = document.createElement('ul');
-  for (const source of sources) {
+  for (const source of uniqueSources) {
     const li = document.createElement('li');
 
     const link = document.createElement('a');

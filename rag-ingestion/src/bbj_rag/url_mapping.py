@@ -56,23 +56,28 @@ def classify_source_type(source_url: str) -> str:
 def _mdx_path_to_slug(path: str) -> str:
     """Convert MDX internal path to URL slug.
 
-    Example: "01-gui-to-bui-to-dwc/03-gui-to-bui-to-dwc.md" -> "gui-to-bui-to-dwc"
+    Example: "01-gui-to-bui-to-dwc/03-registering-launching.md"
+          -> "gui-to-bui-to-dwc/registering-launching"
 
     The MDX paths use numbered prefixes for ordering (01-, 02-, etc.) which
     are stripped in the published URL. The .md extension is also removed.
+    The full path structure is preserved (folder/page).
     """
-    # Take the last path component (the actual page)
+    # Split into path components
     parts = path.rstrip("/").split("/")
-    slug = parts[-1] if parts else path
 
-    # Remove .md extension
-    if slug.endswith(".md"):
-        slug = slug[:-3]
+    # Process each part: strip numeric prefix and .md extension
+    processed = []
+    for part in parts:
+        # Remove .md extension
+        if part.endswith(".md"):
+            part = part[:-3]
+        # Remove leading number prefix (e.g., "03-" from "03-gui-to-bui-to-dwc")
+        part = re.sub(r"^\d+-", "", part)
+        if part:  # Skip empty parts
+            processed.append(part)
 
-    # Remove leading number prefix (e.g., "03-" from "03-gui-to-bui-to-dwc")
-    slug = re.sub(r"^\d+-", "", slug)
-
-    return slug
+    return "/".join(processed)
 
 
 def map_display_url(source_url: str) -> str:
