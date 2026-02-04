@@ -61,6 +61,10 @@ class Settings(BaseSettings):
     chat_confidence_min_results: int = Field(default=2)
     chat_confidence_min_score: float = Field(default=0.025)
 
+    # -- BBj compiler validation --
+    compiler_timeout: float = Field(default=10.0)
+    compiler_path: str = Field(default="bbjcpl")
+
     # -- Source paths --
     flare_source_path: str = Field(default="")
     crawl_source_urls: list[str] = Field(default_factory=list)
