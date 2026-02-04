@@ -76,8 +76,12 @@ class Settings(BaseSettings):
     @field_validator("ollama_host", mode="before")
     @classmethod
     def _ollama_host_from_env(cls, v: str | None) -> str:
-        """Fall back to OLLAMA_HOST env var if BBJ_RAG_OLLAMA_HOST not set."""
-        if v:
+        """Fall back to OLLAMA_HOST env var if BBJ_RAG_OLLAMA_HOST not set.
+
+        Priority: BBJ_RAG_OLLAMA_HOST > OLLAMA_HOST > default
+        """
+        # If BBJ_RAG_OLLAMA_HOST was explicitly set, use it
+        if v and v != "http://localhost:11434":
             return v
         # Check legacy OLLAMA_HOST env var as fallback
         return os.environ.get("OLLAMA_HOST", "http://localhost:11434")
