@@ -17,9 +17,10 @@ ignored (it no longer maps to a Settings field).
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -64,6 +65,22 @@ class Settings(BaseSettings):
     # -- BBj compiler validation --
     compiler_timeout: float = Field(default=10.0)
     compiler_path: str = Field(default="bbjcpl")
+
+    # -- Parallel ingestion --
+    ingest_workers: int = Field(default=4)
+    ingest_max_workers: int = Field(default=8)
+    ingest_batch_retries: int = Field(default=3)
+    ingest_failure_log: str = Field(default=".ingestion-failures.json")
+    ollama_host: str = Field(default="http://localhost:11434")
+
+    @field_validator("ollama_host", mode="before")
+    @classmethod
+    def _ollama_host_from_env(cls, v: str | None) -> str:
+        """Fall back to OLLAMA_HOST env var if BBJ_RAG_OLLAMA_HOST not set."""
+        if v:
+            return v
+        # Check legacy OLLAMA_HOST env var as fallback
+        return os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
     # -- Source paths --
     flare_source_path: str = Field(default="")
