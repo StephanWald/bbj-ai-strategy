@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from bbj_rag.api.chat import router as chat_router
 from bbj_rag.api.routes import router as api_router
 from bbj_rag.health import router as health_router
+from bbj_rag.mcp_server import mcp
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -81,7 +82,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.settings = settings
     app.state.ollama_client = ollama_client
 
-    yield
+    # MCP session manager context wraps yield (required for Streamable HTTP)
+    async with mcp.session_manager.run():
+        yield
 
     # Shutdown: close pool connections
     await pool.close()
@@ -92,6 +95,9 @@ app = FastAPI(title="BBJ RAG", lifespan=lifespan)
 app.include_router(health_router)
 app.include_router(api_router)
 app.include_router(chat_router)
+
+# MCP Streamable HTTP endpoint for remote Claude Desktop access
+app.mount("/mcp", mcp.streamable_http_app())
 
 # Static files mount MUST come after router includes (catch-all pattern)
 app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")

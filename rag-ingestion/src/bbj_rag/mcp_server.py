@@ -29,7 +29,11 @@ logger = logging.getLogger("bbj_mcp")
 # REST API base URL (configurable via env var in claude_desktop_config.json)
 API_BASE = os.environ.get("BBJ_RAG_API_URL", "http://localhost:10800")
 
-mcp = FastMCP("bbj-knowledge")
+mcp = FastMCP(
+    "bbj-knowledge",
+    stateless_http=True,
+    streamable_http_path="/",  # Serve at mount point, not /mcp/mcp
+)
 
 
 def _format_results(data: dict[str, object]) -> str:
