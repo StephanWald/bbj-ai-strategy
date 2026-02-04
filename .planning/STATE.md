@@ -11,11 +11,11 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 
 Milestone: v1.5 Alpha-Ready RAG System
 Phase: 29 of 29 (Ingestion Performance) — In Progress
-Plan: 1 of 3
-Status: In progress — Async embedder foundation complete
-Last activity: 2026-02-04 — Completed 29-01-PLAN.md
+Plan: 2 of 3 complete
+Status: In progress — Parallel chunk processor complete
+Last activity: 2026-02-04 — Completed 29-02-PLAN.md
 
-Progress: [█████████░] 90%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -59,6 +59,10 @@ See .planning/PROJECT.md Key Decisions table for full log (33 decisions, all val
 - httpx.Limits(max_connections=10, max_keepalive_connections=5) for connection pooling
 - 5-minute timeout for large embedding batches
 - OLLAMA_HOST env var fallback for backward compatibility with existing deployments
+- asyncio.Queue for batch distribution - workers pull until exhausted
+- Each worker owns its AsyncOllamaEmbedder for connection pool isolation
+- JSON lines format for failure log - append-only, easy streaming reads
+- Exponential backoff 2^attempt seconds (1s, 2s, 4s) between retry attempts
 
 ### Pending Todos (Carried Forward into v1.5)
 
@@ -102,6 +106,6 @@ All carried-forward items now mapped to roadmap phases:
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 29-01-PLAN.md (Async Embedder Foundation)
+Stopped at: Completed 29-02-PLAN.md (Parallel Chunk Processor)
 Resume file: None
-Next action: Execute 29-02-PLAN.md (Parallel Chunk Processor)
+Next action: Execute 29-03-PLAN.md (CLI Integration)
