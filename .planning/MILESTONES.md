@@ -1,5 +1,34 @@
 # Project Milestones: BBj AI Strategy Documentation Site
 
+## v1.6 Data Expansion (Shipped: 2026-02-05)
+
+**Delivered:** Expanded RAG knowledge base with 695 BBjAPI JavaDoc chunks (359 classes, 4,438 methods) and established training data infrastructure for curated BBj code examples with JSON Schema validation and contributor workflow.
+
+**Phases completed:** 30-31 (3 plans total)
+
+**Key accomplishments:**
+
+- **JavaDoc parser** — Created JavaDocParser extracting BBj API classes and methods from 7 JSON files into searchable chunks with clickable documentation.basis.cloud links
+- **695 API chunks ingested** — BBjAPI method documentation now searchable via RAG, with class context headers for disambiguation
+- **Training data infrastructure** — Created `training-data/` repository with 7 topic directories (gui, database, strings, file-io, control-flow, oop, dwc)
+- **JSON Schema validation** — Front matter schema enforces required fields (title, type, generation) with enum constraints
+- **Seed examples** — Two working examples (GUI hello-window, database keyed-file-read) demonstrating the training data format
+- **Contributor documentation** — 564 lines across README, FORMAT, CONTRIBUTING guides for adding new training examples
+
+**Stats:**
+
+- 39 files changed, +4,175 lines
+- 8,728 lines Python source (rag-ingestion)
+- 873 lines training-data files
+- 2 phases, 3 plans
+- Same day (2026-02-05)
+
+**Git range:** `feat(30-01)` → `docs(31): complete training-data-repository phase`
+
+**What's next:** Expand training data corpus with curated examples, potential v1.7 directions include JSONL conversion for fine-tuning, CI validation integration, or retrieval quality improvements.
+
+---
+
 ## v1.5 Alpha-Ready RAG System (Shipped: 2026-02-05)
 
 **Delivered:** Alpha-ready RAG system with web chat interface (Claude API + streaming), clickable source citations, compiler-validated BBj code blocks, remote MCP access, and parallel ingestion for faster corpus rebuilds.

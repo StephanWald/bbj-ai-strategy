@@ -56,11 +56,18 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - ✓ BBj compiler validation: validate_bbj_syntax MCP tool + automatic code block validation in chat with visual indicators — v1.5
 - ✓ Parallel ingestion with async embedder, connection pooling, and --retry-failed recovery — v1.5
 
+- ✓ JavaDoc JSON parser extracting BBj API classes, methods, parameters from $BBJ_HOME/documentation/javadoc/*.json — v1.6
+- ✓ 695 BBjAPI chunks ingested (359 classes, 4,438 methods) with clickable documentation.basis.cloud links — v1.6
+- ✓ Training data repository structure with 7 topic directories and JSON Schema validation — v1.6
+- ✓ Training example format specification (front matter, code blocks, explanations) — v1.6
+- ✓ 2 seed training examples (hello-window, keyed-file-read) passing validation — v1.6
+- ✓ Contributor documentation for adding new training examples — v1.6
+
 ### Active
 
-**Current Milestone: Ready for v1.6 planning**
+**Current Milestone: Ready for v1.7 planning**
 
-No active requirements — v1.5 shipped. Run `/gsd:new-milestone` to define v1.6 scope.
+No active requirements — v1.6 shipped. Run `/gsd:new-milestone` to define v1.7 scope.
 
 ### Out of Scope
 
@@ -83,7 +90,7 @@ No active requirements — v1.5 shipped. Run `/gsd:new-milestone` to define v1.6
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.5 shipped 2026-02-05. Alpha-ready RAG system with web chat interface (/chat), Claude API streaming, clickable source citations, compiler-validated BBj code blocks, remote MCP access (/mcp), and parallel ingestion. Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Anthropic SDK, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x + FastMCP. 3,015 lines docs content + ~8,500 lines Python source + 340+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy.
+- **Current state:** v1.6 shipped 2026-02-05. Data expansion milestone adding BBjAPI JavaDoc ingestion (695 chunks from 359 classes) and training data infrastructure (JSON Schema validation, 7 topic directories, 2 seed examples). Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Anthropic SDK, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x + FastMCP. 3,015 lines docs content + ~8,700 lines Python source + 340+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy.
 - **Alpha testers:** Internal BASIS engineers with BBj installed locally. Most will access via shared server; some may run locally. Engineers have Claude Desktop/Code access and bbjcpl available on their machines.
 - **Source data inventory (v1.4):** Flare project at `/Users/beff/bbjdocs/` (7,087 .htm topics), PDF at project root, 3 MDX tutorial sites (DWC, beginner, DB modernization — 98 .md files), BBj source code in SVN checkout + tutorial samples (1,363+ .bbj files), WordPress articles at basis.cloud (HTTP), documentation.basis.cloud for web crawl (HTTP).
 - **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
@@ -147,5 +154,12 @@ No active requirements — v1.5 shipped. Run `/gsd:new-milestone` to define v1.6
 | Sequential ingestion (parallel deferred) | Proven reliable; GPU saturation optimization deferred to future milestone | ✓ Good |
 | Lightweight keyword heuristics for E2E validation | Human-reviewable snippets; automated pass/fail without complex NLP | ✓ Good |
 
+| One Document per BBj API class (not per method) | Complete API overview for "what methods does BBjWindow have?" queries | ✓ Good |
+| html.parser for JavaDoc HTML fragments | Lighter than lxml for small fragments; no external dependencies | ✓ Good |
+| BBJ_HOME env var for JavaDoc path | Parser reads from BBj installation directly; path fixed per machine | ✓ Good |
+| Markdown-first training data format | Human-editable, GitHub-renderable, convertible to JSONL later | ✓ Good |
+| JSON Schema for training example validation | Portable, shareable with non-Python tools, standard approach | ✓ Good |
+| Topic-based flat directory organization | Better discoverability, no nested subtopics, slug filenames | ✓ Good |
+
 ---
-*Last updated: 2026-02-05 after v1.5 milestone shipped*
+*Last updated: 2026-02-05 after v1.6 milestone shipped*
