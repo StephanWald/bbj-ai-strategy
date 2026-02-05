@@ -110,3 +110,13 @@ parser = "web-crawl"
 paths = []
 generation_tag = "bbj"
 enabled = true
+
+# ---------------------------------------------------------------------------
+# 10. JavaDoc -- BBj API documentation from JSON files
+# ---------------------------------------------------------------------------
+[[sources]]
+name = "javadoc"
+parser = "javadoc"
+paths = []  # Parser reads from $BBJ_HOME/documentation/javadoc/
+generation_tag = "bbj_api"
+enabled = true

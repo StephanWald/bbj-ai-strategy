@@ -232,13 +232,13 @@ def _collect_chunks_from_source(
 
         # Compute source_type and display_url
         source_type = classify_source_type(doc.source_url)
-        display_url = map_display_url(doc.source_url)
-        doc = doc.model_copy(
-            update={
-                "source_type": source_type,
-                "display_url": display_url,
-            }
-        )
+        mapped_display_url = map_display_url(doc.source_url)
+        # Only overwrite display_url if mapping returns a value
+        # (parsers like JavaDocParser already set display_url from source data)
+        update_fields: dict[str, Any] = {"source_type": source_type}
+        if mapped_display_url:
+            update_fields["display_url"] = mapped_display_url
+        doc = doc.model_copy(update=update_fields)
 
         # Chunk the document
         doc_chunks = chunk_document(doc, max_tokens, overlap_tokens)
