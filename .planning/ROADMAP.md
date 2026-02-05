@@ -35,7 +35,11 @@ v1.6 expands the RAG knowledge base with structured API documentation and establ
   3. `bbj-ingest-all --source javadoc` completes without errors, adding ~4,000+ chunks to the corpus
   4. Method chunks include parent class name in context header for disambiguation
   5. E2E validation passes with new JavaDoc-specific test queries
-**Plans**: TBD (estimate 2-3 plans)
+**Plans:** 2 plans
+
+Plans:
+- [ ] 30-01-PLAN.md — Create JavaDoc JSON parser (class reference card format)
+- [ ] 30-02-PLAN.md — Wire parser into ingestion pipeline and validate E2E
 
 Data source:
 - Location: `/Users/beff/bbx/documentation/javadoc/*.json`
@@ -68,7 +72,7 @@ Phases execute in order: 30 → 31
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 30. BBjAPI JavaDoc Ingestion | v1.6 | 0/? | Not started | - |
+| 30. BBjAPI JavaDoc Ingestion | v1.6 | 0/2 | Planned | - |
 | 31. Training Data Repository | v1.6 | 0/? | Not started | - |
 
 ## Coverage
