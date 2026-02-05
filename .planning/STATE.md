@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 ## Current Position
 
 Milestone: v1.6 Data Expansion
-Phase: 30 of 31 (BBjAPI JavaDoc Ingestion) — Not started
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-05 — v1.6 milestone started
+Phase: 30 of 31 (BBjAPI JavaDoc Ingestion) — In progress
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-02-05 — Completed 30-01-PLAN.md (JavaDoc parser)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
@@ -26,13 +26,19 @@ Progress: [░░░░░░░░░░] 0%
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 7 phases, 14 plans (RAG deployment + validation)
 - v1.5: 5 phases, 13 plans (alpha-ready features)
-- **Total: 31 phases, 72 plans delivered across 6 milestones**
+- v1.6: 1 phase, 1 plan (in progress)
+- **Total: 31 phases, 73 plans delivered across 6 milestones**
 
 ## Accumulated Context
 
 ### Decisions
 
 See .planning/PROJECT.md Key Decisions table for full log.
+
+**v1.6 key decisions:**
+- One Document per BBj API class (not per method) for complete API overview queries
+- html.parser for lightweight HTML fragment parsing in JavaDoc
+- Truncate method descriptions to first sentence or 100 chars for scannable reference cards
 
 **v1.5 key decisions:**
 - JSON-encode all SSE data payloads to safely transport newlines in code blocks
@@ -61,9 +67,6 @@ See .planning/PROJECT.md Key Decisions table for full log.
 - Validation batch-then-simulate pattern causes response to arrive in one rush after long wait
 - Consider exploring alternatives: progressive validation, partial streaming, or visual validation indicator
 
-**New Data Source:**
-- BBjAPI JavaDoc is available and should be ingested — provides structured API documentation that would significantly improve RAG quality for API-related queries
-
 **Performance (from Phase 29):**
 - Parallel ingestion achieved ~1.24x speedup (4 workers vs sequential) — bottleneck appears to be Ollama embedding throughput, not chunk parallelism
 - Further optimization would require profiling Ollama GPU utilization and batch sizes
@@ -71,6 +74,6 @@ See .planning/PROJECT.md Key Decisions table for full log.
 ## Session Continuity
 
 Last session: 2026-02-05
-Stopped at: v1.6 milestone planning complete
+Stopped at: Completed 30-01-PLAN.md (JavaDoc parser)
 Resume file: None
-Next action: `/gsd:discuss-phase 30` or `/gsd:plan-phase 30` to start JavaDoc ingestion
+Next action: Execute 30-02-PLAN.md (pipeline integration)
