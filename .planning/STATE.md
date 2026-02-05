@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-05)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** v1.5 shipped — ready for v1.6 planning
+**Current focus:** v1.6 Data Expansion — BBjAPI JavaDoc ingestion and training data infrastructure
 
 ## Current Position
 
-Milestone: v1.5 Alpha-Ready RAG System — **SHIPPED**
-Phase: 29 of 29 — Complete
-Plan: All complete
-Status: Milestone shipped
-Last activity: 2026-02-05 — v1.5 milestone complete
+Milestone: v1.6 Data Expansion
+Phase: 30 of 31 (BBjAPI JavaDoc Ingestion) — Not started
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-02-05 — v1.6 milestone started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -71,6 +71,6 @@ See .planning/PROJECT.md Key Decisions table for full log.
 ## Session Continuity
 
 Last session: 2026-02-05
-Stopped at: v1.5 milestone complete
+Stopped at: v1.6 milestone planning complete
 Resume file: None
-Next action: `/gsd:new-milestone` to define v1.6 scope
+Next action: `/gsd:discuss-phase 30` or `/gsd:plan-phase 30` to start JavaDoc ingestion
