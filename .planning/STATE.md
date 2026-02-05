@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 ## Current Position
 
 Milestone: v1.6 Data Expansion
-Phase: 30 of 31 (BBjAPI JavaDoc Ingestion) — In progress
-Plan: 1 of 2 complete
-Status: In progress
-Last activity: 2026-02-05 — Completed 30-01-PLAN.md (JavaDoc parser)
+Phase: 30 of 31 (BBjAPI JavaDoc Ingestion) — Complete
+Plan: 2 of 2 complete
+Status: Phase complete
+Last activity: 2026-02-05 — Completed 30-02-PLAN.md (pipeline integration)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -26,8 +26,8 @@ Progress: [█░░░░░░░░░] 10%
 - v1.3: 5 phases, 10 plans (MCP architecture integration)
 - v1.4: 7 phases, 14 plans (RAG deployment + validation)
 - v1.5: 5 phases, 13 plans (alpha-ready features)
-- v1.6: 1 phase, 1 plan (in progress)
-- **Total: 31 phases, 73 plans delivered across 6 milestones**
+- v1.6: 1 phase, 2 plans (BBjAPI JavaDoc ingestion complete)
+- **Total: 31 phases, 74 plans delivered across 6 milestones**
 
 ## Accumulated Context
 
@@ -39,6 +39,8 @@ See .planning/PROJECT.md Key Decisions table for full log.
 - One Document per BBj API class (not per method) for complete API overview queries
 - html.parser for lightweight HTML fragment parsing in JavaDoc
 - Truncate method descriptions to first sentence or 100 chars for scannable reference cards
+- Use BBJ_HOME env var for JavaDoc path instead of data_dir
+- Preserve parser-set display_url when map_display_url returns empty
 
 **v1.5 key decisions:**
 - JSON-encode all SSE data payloads to safely transport newlines in code blocks
@@ -55,6 +57,7 @@ See .planning/PROJECT.md Key Decisions table for full log.
 - Alpha deployment targets shared server on local network + local per-engineer option
 - ANTHROPIC_API_KEY needed for chat interface — set spending alerts
 - Remote access: Claude Desktop connects via `npx mcp-remote http://<server>:10800/mcp --allow-http`
+- BBJ_HOME environment variable required for JavaDoc ingestion (points to BBj installation)
 
 ### Future Improvements (Captured from Alpha Development)
 
@@ -73,7 +76,7 @@ See .planning/PROJECT.md Key Decisions table for full log.
 
 ## Session Continuity
 
-Last session: 2026-02-05
-Stopped at: Completed 30-01-PLAN.md (JavaDoc parser)
+Last session: 2026-02-05T06:03:33Z
+Stopped at: Completed 30-02-PLAN.md (pipeline integration)
 Resume file: None
-Next action: Execute 30-02-PLAN.md (pipeline integration)
+Next action: Phase 30 complete, proceed to next milestone phase
