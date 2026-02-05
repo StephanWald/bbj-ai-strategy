@@ -56,7 +56,10 @@ Data source:
   2. Markdown format for training examples is documented (front matter schema, code block conventions, explanation sections)
   3. At least 2 seed examples demonstrate the format and pass validation
   4. Contributor documentation explains how to add new examples
-**Plans**: TBD (estimate 1-2 plans)
+**Plans:** 1 plan
+
+Plans:
+- [ ] 31-01-PLAN.md — Create repository structure, documentation, validation script, and seed examples
 
 Format considerations:
 - Markdown with YAML front matter (human-readable, version-controllable)
@@ -73,7 +76,7 @@ Phases execute in order: 30 → 31
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 30. BBjAPI JavaDoc Ingestion | v1.6 | 2/2 | Complete | 2026-02-05 |
-| 31. Training Data Repository | v1.6 | 0/? | Not started | - |
+| 31. Training Data Repository | v1.6 | 0/1 | Not started | - |
 
 ## Coverage
 
