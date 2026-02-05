@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://basis.cloud/training-data/example.schema.json",
+  "title": "BBj Training Example",
+  "description": "Schema for validating YAML front matter in BBj training examples",
+  "type": "object",
+  "required": ["title", "type", "generation"],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable title for the example"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["completion", "comprehension", "migration", "explanation"],
+      "description": "Type of training example"
+    },
+    "generation": {
+      "description": "BBj generation scope - 'all' for universal patterns, single value, or array",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["all", "character", "vpro5", "bbj-gui", "dwc"]
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["character", "vpro5", "bbj-gui", "dwc"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      ]
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["basic", "intermediate", "advanced"],
+      "description": "Difficulty level of the example"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Topic tags for organization and search"
+    },
+    "description": {
+      "type": "string",
+      "description": "One-sentence description of what the example demonstrates"
+    },
+    "requires_version": {
+      "type": "string",
+      "description": "Minimum BBj version required, e.g., '23.04'"
+    },
+    "from_generation": {
+      "type": "string",
+      "enum": ["character", "vpro5", "bbj-gui", "dwc"],
+      "description": "Source generation for migration examples"
+    },
+    "to_generation": {
+      "description": "Target generation(s) for migration examples",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["character", "vpro5", "bbj-gui", "dwc"]
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["character", "vpro5", "bbj-gui", "dwc"]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
