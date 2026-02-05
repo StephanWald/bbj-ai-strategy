@@ -21,6 +21,7 @@ _SOURCE_TYPE_RULES: list[tuple[str, str]] = [
     ("mdx-dwc://", "DWC Tutorial"),
     ("mdx-beginner://", "BBj Beginner Tutorial"),
     ("mdx-db-modernization://", "DB Modernization Guide"),
+    ("bbj_api://", "BBj API Reference"),
     ("https://basis.cloud/advantage", "BASIS Advantage Blog"),
     ("https://basis.cloud/knowledge-base", "BASIS Knowledge Base"),
     ("https://documentation.basis.cloud/", "BASIS BBj Documentation"),
@@ -107,6 +108,11 @@ def map_display_url(source_url: str) -> str:
         path = source_url[len(_MDX_DB_MOD_PREFIX) :]
         slug = _mdx_path_to_slug(path)
         return _MDX_DB_MOD_BASE + slug
+
+    if source_url.startswith("bbj_api://"):
+        # Parser already extracted display_url from [Docs] links
+        # Return empty to use the Document's display_url field
+        return ""
 
     if source_url.startswith("https://"):
         return source_url

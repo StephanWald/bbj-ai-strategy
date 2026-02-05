@@ -152,6 +152,15 @@ def _create_parser_for_source(
 
         return WebCrawlParser()
 
+    if parser_type == "javadoc":
+        from bbj_rag.parsers.javadoc import JavaDocParser
+
+        # JavaDoc location is fixed at BBj installation
+        bbj_home = os.environ.get("BBJ_HOME", "/usr/local/bbj")
+        return JavaDocParser(
+            javadoc_dir=Path(bbj_home) / "documentation" / "javadoc",
+        )
+
     # Should never happen thanks to Pydantic validation, but guard anyway.
     msg = f"No parser implementation for type: {parser_type!r}"
     raise ValueError(msg)

@@ -27,11 +27,12 @@ _KNOWN_PARSERS: frozenset[str] = frozenset(
         "wordpress-advantage",
         "wordpress-kb",
         "web-crawl",
+        "javadoc",
     }
 )
 
 # Parsers whose paths reference local directories.
-_DIR_PARSERS: frozenset[str] = frozenset({"flare", "mdx", "bbj-source"})
+_DIR_PARSERS: frozenset[str] = frozenset({"flare", "mdx", "bbj-source", "javadoc"})
 
 # Parsers whose paths reference local files.
 _FILE_PARSERS: frozenset[str] = frozenset({"pdf"})
@@ -44,6 +45,7 @@ _SOURCE_URL_PREFIXES: dict[str, str] = {
     "wordpress-advantage": "https://basis.cloud/advantage",
     "wordpress-kb": "https://basis.cloud/knowledge-base",
     "web-crawl": "https://documentation.basis.cloud",
+    "javadoc": "bbj_api://",
 }
 
 
