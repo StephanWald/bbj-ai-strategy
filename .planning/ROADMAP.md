@@ -20,7 +20,7 @@ v1.6 expands the RAG knowledge base with structured API documentation and establ
 - Integer phases (30, 31...): Planned milestone work
 - Decimal phases (30.1, 30.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 30: BBjAPI JavaDoc Ingestion** — Parser, chunking, and ingestion pipeline for structured API documentation
+- [x] **Phase 30: BBjAPI JavaDoc Ingestion** — Parser, chunking, and ingestion pipeline for structured API documentation
 - [ ] **Phase 31: Training Data Repository** — Infrastructure, format specification, and seed examples for curated BBj code
 
 ## Phase Details
@@ -38,8 +38,8 @@ v1.6 expands the RAG knowledge base with structured API documentation and establ
 **Plans:** 2 plans
 
 Plans:
-- [ ] 30-01-PLAN.md — Create JavaDoc JSON parser (class reference card format)
-- [ ] 30-02-PLAN.md — Wire parser into ingestion pipeline and validate E2E
+- [x] 30-01-PLAN.md — Create JavaDoc JSON parser (class reference card format)
+- [x] 30-02-PLAN.md — Wire parser into ingestion pipeline and validate E2E
 
 Data source:
 - Location: `/Users/beff/bbx/documentation/javadoc/*.json`
@@ -72,7 +72,7 @@ Phases execute in order: 30 → 31
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 30. BBjAPI JavaDoc Ingestion | v1.6 | 0/2 | Planned | - |
+| 30. BBjAPI JavaDoc Ingestion | v1.6 | 2/2 | Complete | 2026-02-05 |
 | 31. Training Data Repository | v1.6 | 0/? | Not started | - |
 
 ## Coverage

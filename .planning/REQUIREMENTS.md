@@ -7,11 +7,11 @@
 
 ### BBjAPI JavaDoc Ingestion
 
-- [ ] **API-01**: JavaDoc JSON parser extracts classes, methods, parameters, and documentation from `/Users/beff/bbx/documentation/javadoc/*.json`
-- [ ] **API-02**: Chunking preserves class-method relationships (each method chunk includes parent class context)
-- [ ] **API-03**: Documentation links (`[Docs](https://documentation.basis.cloud/...)`) extracted as `display_url` for citation
-- [ ] **API-04**: `bbj-ingest-all --source javadoc` ingests all 7 JSON files (359 classes, 4,438 methods)
-- [ ] **API-05**: Search queries for BBj API methods (e.g., "BBjWindow addButton") return relevant JavaDoc results
+- [x] **API-01**: JavaDoc JSON parser extracts classes, methods, parameters, and documentation from `/Users/beff/bbx/documentation/javadoc/*.json`
+- [x] **API-02**: Chunking preserves class-method relationships (each method chunk includes parent class context)
+- [x] **API-03**: Documentation links (`[Docs](https://documentation.basis.cloud/...)`) extracted as `display_url` for citation
+- [x] **API-04**: `bbj-ingest-all --source javadoc` ingests all 7 JSON files (359 classes, 4,438 methods)
+- [x] **API-05**: Search queries for BBj API methods (e.g., "BBjWindow addButton") return relevant JavaDoc results
 
 ### Training Data Infrastructure
 
@@ -56,11 +56,11 @@ Deferred to later milestones. Tracked but not in v1.6 roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| API-01 | Phase 30 | Pending |
-| API-02 | Phase 30 | Pending |
-| API-03 | Phase 30 | Pending |
-| API-04 | Phase 30 | Pending |
-| API-05 | Phase 30 | Pending |
+| API-01 | Phase 30 | Complete |
+| API-02 | Phase 30 | Complete |
+| API-03 | Phase 30 | Complete |
+| API-04 | Phase 30 | Complete |
+| API-05 | Phase 30 | Complete |
 | TRAIN-01 | Phase 31 | Pending |
 | TRAIN-02 | Phase 31 | Pending |
 | TRAIN-03 | Phase 31 | Pending |
