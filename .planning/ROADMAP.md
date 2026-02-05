@@ -8,7 +8,7 @@
 - v1.3 MCP Architecture Integration (Phases 15-19) — shipped 2026-02-01
 - v1.4 RAG Deployment (Phases 20-24 + 23.1) — shipped 2026-02-02
 - v1.5 Alpha-Ready RAG System (Phases 25-29) — shipped 2026-02-05
-- **v1.6 Data Expansion (Phases 30-31)** — in progress
+- **v1.6 Data Expansion (Phases 30-31)** — shipped 2026-02-05
 
 ## Overview
 
@@ -21,7 +21,7 @@ v1.6 expands the RAG knowledge base with structured API documentation and establ
 - Decimal phases (30.1, 30.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 30: BBjAPI JavaDoc Ingestion** — Parser, chunking, and ingestion pipeline for structured API documentation
-- [ ] **Phase 31: Training Data Repository** — Infrastructure, format specification, and seed examples for curated BBj code
+- [x] **Phase 31: Training Data Repository** — Infrastructure, format specification, and seed examples for curated BBj code
 
 ## Phase Details
 
@@ -59,7 +59,7 @@ Data source:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 31-01-PLAN.md — Create repository structure, documentation, validation script, and seed examples
+- [x] 31-01-PLAN.md — Create repository structure, documentation, validation script, and seed examples
 
 Format considerations:
 - Markdown with YAML front matter (human-readable, version-controllable)
@@ -76,7 +76,7 @@ Phases execute in order: 30 → 31
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 30. BBjAPI JavaDoc Ingestion | v1.6 | 2/2 | Complete | 2026-02-05 |
-| 31. Training Data Repository | v1.6 | 0/1 | Not started | - |
+| 31. Training Data Repository | v1.6 | 1/1 | Complete | 2026-02-05 |
 
 ## Coverage
 

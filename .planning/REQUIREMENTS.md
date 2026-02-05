@@ -15,10 +15,10 @@
 
 ### Training Data Infrastructure
 
-- [ ] **TRAIN-01**: Training data repository structure created (directory layout, README, format specification)
-- [ ] **TRAIN-02**: Markdown format defined for annotated code examples (front matter, code blocks, explanations)
-- [ ] **TRAIN-03**: 1-2 seed examples created to validate format and workflow
-- [ ] **TRAIN-04**: Documentation for contributors on how to add new training examples
+- [x] **TRAIN-01**: Training data repository structure created (directory layout, README, format specification)
+- [x] **TRAIN-02**: Markdown format defined for annotated code examples (front matter, code blocks, explanations)
+- [x] **TRAIN-03**: 1-2 seed examples created to validate format and workflow
+- [x] **TRAIN-04**: Documentation for contributors on how to add new training examples
 
 ## Future Requirements
 
@@ -61,10 +61,10 @@ Deferred to later milestones. Tracked but not in v1.6 roadmap.
 | API-03 | Phase 30 | Complete |
 | API-04 | Phase 30 | Complete |
 | API-05 | Phase 30 | Complete |
-| TRAIN-01 | Phase 31 | Pending |
-| TRAIN-02 | Phase 31 | Pending |
-| TRAIN-03 | Phase 31 | Pending |
-| TRAIN-04 | Phase 31 | Pending |
+| TRAIN-01 | Phase 31 | Complete |
+| TRAIN-02 | Phase 31 | Complete |
+| TRAIN-03 | Phase 31 | Complete |
+| TRAIN-04 | Phase 31 | Complete |
 
 **Coverage:**
 - v1.6 requirements: 9 total

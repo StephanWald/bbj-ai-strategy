@@ -10,10 +10,10 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 ## Current Position
 
 Milestone: v1.6 Data Expansion
-Phase: 31 of 31 (Training Data Repository) — Plan 1 complete
+Phase: 31 of 31 (Training Data Repository) — Complete ✓
 Plan: 1 of 1 complete
-Status: Phase 31 complete, v1.6 milestone complete
-Last activity: 2026-02-05 — Completed 31-01 (training data infrastructure)
+Status: Phase verified, v1.6 milestone complete
+Last activity: 2026-02-05 — Phase 31 verified (5/5 must-haves passed)
 
 Progress: [██████████] 100%
 
@@ -86,6 +86,6 @@ See .planning/PROJECT.md Key Decisions table for full log.
 ## Session Continuity
 
 Last session: 2026-02-05
-Stopped at: Completed Phase 31 plan 01 (training data infrastructure)
+Stopped at: v1.6 milestone complete
 Resume file: None
-Next action: v1.6 milestone complete — plan next milestone or expand training data content
+Next action: `/gsd:audit-milestone` or `/gsd:complete-milestone` to finalize v1.6
