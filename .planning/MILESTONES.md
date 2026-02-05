@@ -1,5 +1,33 @@
 # Project Milestones: BBj AI Strategy Documentation Site
 
+## v1.5 Alpha-Ready RAG System (Shipped: 2026-02-05)
+
+**Delivered:** Alpha-ready RAG system with web chat interface (Claude API + streaming), clickable source citations, compiler-validated BBj code blocks, remote MCP access, and parallel ingestion for faster corpus rebuilds.
+
+**Phases completed:** 25-29 (13 plans total)
+
+**Key accomplishments:**
+
+- **Clickable source citations** — `flare://` URLs mapped to `https://documentation.basis.cloud/...` with `display_url` field in all search results and chat citations
+- **Source-balanced ranking** — Diversity reranking with multiplicative boost for minority sources (PDF 1.3x, BBj Source 1.3x, MDX 1.2x) when Flare dominates ≥80% of results
+- **Web chat interface** — `/chat` page with Claude API (Anthropic SDK), SSE streaming, markdown rendering (marked.js + Prism syntax highlighting), and inline source citation links
+- **Remote MCP access** — Streamable HTTP transport at `/mcp` endpoint via FastMCP `stateless_http=True`, enabling Claude Desktop connections over LAN
+- **Compiler validation** — `validate_bbj_syntax` MCP tool calling `bbjcpl -N`, automatic BBj code block validation in chat responses with visual indicators (✓/✗), and 3-attempt auto-fix loop
+- **Parallel ingestion** — Async embedder with httpx connection pooling, `ParallelIngestor` with asyncio.Queue worker distribution, `--retry-failed` recovery from JSON failure log
+
+**Stats:**
+
+- 80 files changed, +13,670 lines
+- 8,486 lines Python source
+- 5 phases, 13 plans
+- 2 days (2026-02-03 → 2026-02-05)
+
+**Git range:** `feat(25-01)` → `feat(29-03)`
+
+**What's next:** Alpha testing with internal engineers — gather feedback on retrieval quality, chat UX, and compiler validation effectiveness. Potential v1.6 directions: improved chunking strategies, embedding tuning, chat history persistence, or BBjAPI JavaDoc ingestion.
+
+---
+
 ## v1.4 RAG Deployment (Shipped: 2026-02-02)
 
 **Delivered:** A running Docker-based system that ingests all 6 BBj documentation sources (50,439 chunks) and serves hybrid retrieval via REST API and MCP server (`search_bbj_knowledge`) for Claude Desktop integration.
