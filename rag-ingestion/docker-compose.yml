@@ -42,6 +42,7 @@ services:
       - BBJ_RAG_DB_HOST=db
       - OLLAMA_HOST=http://host.docker.internal:11434
       - DATA_DIR=/data
+      - BBJ_HOME=/bbj
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY must be set}
       - BBJ_RAG_CHAT_MODEL=${BBJ_RAG_CHAT_MODEL:-claude-sonnet-4-5-20250929}
       - BBJ_RAG_CHAT_MAX_TOKENS=${BBJ_RAG_CHAT_MAX_TOKENS:-2048}
@@ -54,6 +55,8 @@ services:
       - ${BBJ_DWC_TUTORIAL_PATH:-/Users/beff/_workspace/bbj-dwc-tutorial}:/data/bbj-dwc-tutorial:ro
       - ${BBJ_BEGINNER_TUTORIAL_PATH:-/Users/beff/_workspace/bbj-beginner-tutorial}:/data/bbj-beginner-tutorial:ro
       - ${BBJ_DB_MODERNIZATION_PATH:-/Users/beff/_workspace/bbj-db-modernization-tutorial}:/data/bbj-db-modernization-tutorial:ro
+      # BBj installation for JavaDoc JSON files
+      - ${BBJ_HOME:-/Users/beff/bbx}:/bbj:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
