@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** Phase 35 complete -- Implementation Roadmap Restructure done
+**Current focus:** Phase 36 complete -- Cross-Chapter Consistency done. v1.7 milestone complete.
 
 ## Current Position
 
 Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
-Phase: 35 (4 of 5 in v1.7)
+Phase: 36 (5 of 5 in v1.7)
 Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-02-06 -- Completed 35-01-PLAN.md (Implementation Roadmap Restructure)
+Status: Phase complete -- v1.7 milestone complete
+Last activity: 2026-02-06 -- Completed 36-01-PLAN.md (Cross-Chapter Consistency Fixes)
 
-Progress: [#######...] 100% (7/7 plans)
+Progress: [########] 100% (8/8 plans)
 
 ## Performance Metrics
 
 **Cumulative:**
 - v1.0-v1.6: 33 phases, 75 plans delivered across 7 milestones
-- v1.7: 7/7 plans
+- v1.7: 8/8 plans
 
 **By Phase (v1.7):**
 
@@ -31,6 +31,7 @@ Progress: [#######...] 100% (7/7 plans)
 | 33 | 2/2 | 21min | 10.5min |
 | 34 | 2/2 | 14min | 7min |
 | 35 | 1/1 | 2min | 2min |
+| 36 | 1/1 | 2min | 2min |
 
 ## Accumulated Context
 
@@ -82,6 +83,10 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - Chapter 7 reduced from 311 to 135 lines (56% reduction)
 - 4 stale cross-references in Chapters 2, 4, 5, 6 identified for Phase 36 scope
 
+**Phase 36 decisions (36-01):**
+- CONS-04 accepted as low-risk: 21 BBj code blocks unmodified in v1.7, bbjcpl unavailable, blocks validated when created
+- 10 minimal text fixes applied across 6 files (model names, status terminology, Ch7 cross-references, landing page)
+
 **Research findings informing v1.7:**
 - 14B-Base recommended over 7B-Base (better fine-tuning improvement) and 32B-Instruct (alignment tax)
 - Two-stage training: continued pretraining on raw BBj, then instruction fine-tuning
@@ -107,6 +112,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 35-01-PLAN.md (Implementation Roadmap Restructure) -- Phase 35 complete, v1.7 milestone complete (7/7 plans)
+Stopped at: Completed 36-01-PLAN.md (Cross-Chapter Consistency Fixes) -- Phase 36 complete, v1.7 milestone complete (8/8 plans)
 Resume file: None
-Next action: Phase 36 (Cross-Chapter Consistency) if planned, or begin next milestone
+Next action: Begin next milestone
