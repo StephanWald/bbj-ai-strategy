@@ -268,7 +268,7 @@ The bbjllm dataset also has known quality issues -- approximately 375 duplicate 
 
 ## The QLoRA Fine-Tuning Approach
 
-Full fine-tuning of a 7B parameter model requires updating all ~7 billion weights, demanding multiple high-end GPUs and substantial memory. **QLoRA** (Quantized Low-Rank Adaptation) achieves comparable results at a fraction of the cost by freezing the base model weights and training only small adapter matrices.
+Full fine-tuning of a 14B parameter model requires updating all ~14 billion weights, demanding multiple high-end GPUs and substantial memory. **QLoRA** (Quantized Low-Rank Adaptation) achieves comparable results at a fraction of the cost by freezing the base model weights and training only small adapter matrices.
 
 ### How LoRA Works
 
@@ -278,13 +278,13 @@ Full fine-tuning of a 7B parameter model requires updating all ~7 billion weight
 
 The result:
 
-| Approach | VRAM Required (7B) | Hardware | Approximate Cost |
+| Approach | VRAM Required (14B) | Hardware | Approximate Cost |
 |----------|-------------------|----------|-----------------|
-| Full fine-tuning (FP16) | 60-80 GB | 4x A100 80GB | $50,000+ |
-| LoRA (FP16 base) | 24-32 GB | 1-2x A100 | $15,000+ |
-| **QLoRA (NF4 base)** | **12-16 GB** | **1x RTX 4090** | **~$1,500** |
+| Full fine-tuning (FP16) | 120-160 GB | 8x A100 80GB | $100,000+ |
+| LoRA (FP16 base) | 40-56 GB | 2-4x A100 | $30,000+ |
+| **QLoRA (NF4 base)** | **16-20 GB** | **1x RTX 4090** | **~$1,500** |
 
-QLoRA on a single RTX 4090 ($1,500) can fine-tune a 7B model that would cost $50,000+ in hardware for full fine-tuning. This is not a compromise -- [research shows QLoRA matches full fine-tuning quality](https://www.index.dev/blog/top-ai-fine-tuning-tools-lora-vs-qlora-vs-full) with no measurable accuracy loss.
+QLoRA on a single RTX 4090 makes fine-tuning a 14B model accessible on hardware that would be orders of magnitude more expensive for full fine-tuning. This is not a compromise -- [research shows QLoRA matches full fine-tuning quality](https://www.index.dev/blog/top-ai-fine-tuning-tools-lora-vs-qlora-vs-full) with no measurable accuracy loss.
 
 ### Recommended Hyperparameters
 
@@ -300,18 +300,23 @@ Based on current best practices for [code model fine-tuning via Unsloth](https:/
 | Epochs | 1-3 | More risks overfitting on small datasets |
 | Batch size | 4-8 (with gradient accumulation) | Effective batch size of 32-64 |
 | Max sequence length | 2048-4096 | BBj functions are typically compact |
+| Completion masking | Assistant tokens only | Mask system/user tokens with -100 in labels |
 
 A critical detail: **apply LoRA to all linear layers**, not just the attention matrices. Recent research confirms that including MLP layers in the LoRA adaptation significantly improves performance on code tasks compared to attention-only LoRA.
 
-### Sequential Fine-Tuning
+**A note on learning rate:** The bbjllm training script uses a learning rate of 2e-5, which is 5-10x lower than the recommended QLoRA range of 2e-4 to 5e-5. At this rate, adapter weights may not move far enough from initialization to meaningfully encode BBj knowledge -- the model produces plausible output because the base model is already capable, but the fine-tuning adds minimal value. The learning rate range in the table above is the correct starting point for QLoRA.
 
-For a language with near-zero representation in the base model's training data, we recommend a two-stage approach:
+**Completion masking** is equally important: training should compute loss only on the assistant's response tokens, not on the system prompt or user question. The system prompt appears identically in all examples, and computing gradients on these constant tokens wastes 30-40% of the gradient signal. TRL's SFTTrainer handles this automatically when configured for completion-only training.
+
+### Two-Stage Training Approach
+
+For a language with near-zero representation in the base model's training data, a two-stage approach produces better results than jumping directly to instruction fine-tuning:
 
 ```mermaid
 graph LR
-    BASE["Qwen2.5-Coder-7B<br/><i>Base Model</i>"] --> CPT["Stage 1:<br/>Continued Pretraining<br/><i>Raw BBj corpus</i>"]
-    CPT --> IFT["Stage 2:<br/>Instruction Fine-Tuning<br/><i>Labeled examples</i>"]
-    IFT --> EVAL["Evaluation<br/><i>BBj benchmarks +<br/>general code tests</i>"]
+    BASE["Qwen2.5-Coder-14B-Base<br/><i>Base Model</i>"] --> CPT["Stage 1:<br/>Continued Pretraining<br/><i>Raw BBj corpus</i>"]
+    CPT --> IFT["Stage 2:<br/>Instruction Fine-Tuning<br/><i>ChatML examples</i>"]
+    IFT --> EVAL["Evaluation<br/><i>bbjcpl compile@1 +<br/>general code tests</i>"]
     EVAL -->|"Iterate"| CPT
 
     style BASE fill:#f0f0f0,stroke:#333
@@ -320,11 +325,13 @@ graph LR
     style EVAL fill:#f4e8e8,stroke:#8a2d2d
 ```
 
-**Stage 1 -- Continued Pretraining:** Feed the model raw BBj source code (without instruction/response formatting) so it learns the language's syntax, token patterns, and idioms. This builds foundational understanding.
+**Stage 1 -- Continued Pretraining:** Feed the model raw BBj source code (without instruction/response formatting) so it learns the language's syntax, token patterns, and idioms. This builds foundational understanding. The base model needs to learn that `!` suffixes denote object references, that `#` prefixes reference instance fields, that `methodend` closes a method block, and that `process_events` is a control flow statement -- none of which appear in its pre-training data.
 
-**Stage 2 -- Instruction Fine-Tuning:** Train on the structured JSON examples (comprehension, completion, migration) so the model learns to follow instructions and produce useful outputs in the BBj domain.
+**Stage 2 -- Instruction Fine-Tuning:** Train on the ChatML examples (comprehension, completion, migration) so the model learns to follow instructions and produce useful outputs in the BBj domain. This is where the 9,922 examples from bbjllm -- plus any additional examples from the training-data/ repository -- provide the instruction-following capability.
 
-Skipping Stage 1 and jumping directly to instruction fine-tuning can work, but performance is typically lower for languages the base model has never seen. The continued pretraining stage is especially valuable for BBj because even Qwen2.5-Coder's 92-language training set almost certainly does not include BBj.
+The bbjllm experiment skipped Stage 1 entirely, going directly to instruction fine-tuning on the 32B-Instruct model. The recommended approach includes Stage 1 because BBj has near-zero representation in the base model's pre-training data. Without continued pretraining, the model must simultaneously learn BBj syntax *and* learn to follow instructions about BBj -- two distinct learning objectives that compete for the same gradient updates. Separating them into stages allows each to be optimized independently.
+
+Stage 1 matters specifically for zero-representation languages because the base model's tokenizer was not designed for BBj. Common BBj tokens like `methodend`, `classend`, `BBjAPI`, and `sysgui!` will be split into subword fragments. Continued pretraining on raw BBj source code teaches the model's attention layers to recognize these fragment patterns as coherent constructs, even though the tokenizer splits them.
 
 ### Avoiding Catastrophic Forgetting
 
@@ -335,6 +342,131 @@ Mitigations:
 - **LoRA inherently helps** -- by only modifying small adapter weights, the base model's general knowledge is largely preserved.
 - **Mixed training data** -- include some general code examples (Python, Java, JavaScript) in the training mix to reinforce broad capabilities.
 - **Evaluation on both domains** -- always measure performance on general code benchmarks (HumanEval) alongside BBj-specific benchmarks. If general performance drops more than 5%, adjust the training mix.
+
+## Evaluation Methodology
+
+Without a BBj-specific evaluation framework, improvements from fine-tuning cannot be measured. No public BBj benchmark exists -- the language is too niche for standard code evaluation suites like HumanEval or MBPP. A custom evaluation approach is required, built around BBj's unique advantage: the bbjcpl compiler provides ground-truth syntax validation.
+
+### compile@1: Automated Syntax Validation
+
+The **compile@1** metric measures the percentage of generated BBj code samples that compile successfully on first attempt using the `bbjcpl` compiler.
+
+The evaluation process:
+
+1. Prompt the model with N test cases (natural language descriptions of BBj programs)
+2. Collect the generated code for each test case
+3. Validate each sample with `bbjcpl -N` (the `-N` flag compiles without linking, checking syntax only)
+4. Compute the pass rate: `compile@1 = (samples that compile) / (total samples)`
+
+This metric leverages BBj's "secret weapon": the `bbjcpl` compiler IS ground truth for syntactic correctness. Unlike natural language evaluation (which requires expensive human review or unreliable LLM-as-judge approaches), compilation is binary and deterministic. A BBj program either compiles or it does not. This creates a unique, non-gameable metric that most niche-language fine-tuning efforts lack.
+
+compile@1 does not measure whether the code is *correct* (it may compile but produce wrong output), but it establishes a necessary floor: code that does not compile is definitively wrong. For a language where generic LLMs consistently fabricate syntax (`.addEventListener()` instead of `.setCallback()`, missing `methodend`, inventing non-existent API methods), compile@1 is the most important first metric.
+
+### Qualitative Evaluation
+
+Compilation alone does not guarantee useful code. Human review evaluates dimensions that automated metrics cannot:
+
+- **Code quality:** Does the generated code follow BBj conventions? Proper use of `!` suffixes for object references, `#` prefixes for instance fields, `REM` comments, and appropriate error handling.
+- **Idiomatic patterns:** Does the model use generation-appropriate idioms? DWC patterns should use `getWebManager()` and modern event handling, not legacy `PRINT (sysgui)'WINDOW'(...)` syntax. Character-mode examples should use `PRINT @(x,y)`, not GUI calls.
+- **Documentation quality:** Are explanations accurate and helpful? When asked to explain code, does the model correctly identify BBj-specific constructs and their purposes?
+
+Qualitative evaluation is subjective and time-consuming, but it catches failure modes that compile@1 misses: code that compiles but uses deprecated patterns, code that works but is not idiomatic for the target generation, and explanations that are technically incorrect despite sounding plausible.
+
+### Baseline Comparison
+
+Evaluation results are meaningful only in comparison. Three baselines establish the performance spectrum:
+
+1. **Qwen2.5-Coder-14B-Base (unmodified):** What can the base model do before any fine-tuning? This is the floor. If the fine-tuned model does not beat this baseline on compile@1, fine-tuning has not helped.
+2. **Claude API (current system):** What does the current RAG + Claude approach achieve? This is the bar to clear for practical deployment. The fine-tuned model does not need to match Claude's general reasoning, but it should approach Claude's BBj-specific output quality.
+3. **bbjllm 32B output:** What did the existing fine-tuning experiment produce? This is the direct comparison point -- the recommended approach should outperform bbjllm's output, demonstrating that the methodology changes (Base model, two-stage training, completion masking) translate to measurable improvement.
+
+Run the same test set against all three baselines. Report results side-by-side to make improvement (or lack thereof) unambiguous.
+
+### Test Set Structure
+
+A well-constructed test set is the foundation of reliable evaluation:
+
+- **Held-out split:** Reserve 10% of training data for evaluation -- these examples are never used during training. The training script must enforce this split consistently across runs.
+- **Category coverage:** Test cases should span all generation labels (`all`, `character`, `vpro5`, `bbj-gui`, `dwc`) and all example types (comprehension, completion, migration, explanation). Evaluation results broken down by category reveal which areas the model has learned well and which need more training data.
+- **Size:** A minimum of 50-100 test cases is needed for statistically meaningful results. Smaller test sets produce noisy metrics where a single test case swings the score by 1-2 percentage points.
+- **Difficulty distribution:** Include basic, intermediate, and advanced examples. A model that scores 90% on basic examples but 10% on advanced ones has a different profile than one scoring 50% uniformly.
+
+### Sample Evaluation Test Case
+
+To make the methodology concrete, here is what a single evaluation test case looks like end-to-end:
+
+**Prompt:** "Write a BBj program that creates a window with a button. When the button is clicked, display a message box saying 'Hello'."
+
+**PASS example** -- syntactically valid BBj that compiles:
+
+```bbj
+REM Create window with button and message box
+sysgui! = BBjAPI().getSysGui()
+window! = sysgui!.addWindow(100, 100, 400, 300, "Button Demo")
+button! = window!.addButton(1, 50, 50, 120, 30, "Click Me")
+button!.setCallback(button!.ON_BUTTON_PUSH, "onButtonClick")
+window!.setCallback(window!.ON_CLOSE, "onClose")
+
+process_events
+
+onButtonClick:
+    i = msgbox("Hello")
+    return
+
+onClose:
+    release
+```
+
+```text
+$ bbjcpl -N button_demo.bbj
+$ echo $?
+0
+```
+
+The compiler returns exit code 0 -- the code compiles successfully. This test case passes compile@1.
+
+**FAIL example** -- code with a common LLM fabrication error:
+
+```bbj
+REM Create window with button - INCORRECT
+sysgui! = BBjAPI().getSysGui()
+window! = sysgui!.addWindow(100, 100, 400, 300, "Button Demo")
+button! = window!.addButton(1, 50, 50, 120, 30, "Click Me")
+button!.addEventListener("click", "onButtonClick")
+window!.setCallback(window!.ON_CLOSE, "onClose")
+
+process_events
+
+onButtonClick:
+    alert("Hello")
+    return
+
+onClose:
+    release
+```
+
+```text
+$ bbjcpl -N button_demo_bad.bbj
+**Error on line 5: Method addEventListener not found in BBjButton
+**Error on line 11: alert is not a recognized function
+$ echo $?
+1
+```
+
+The compiler returns exit code 1 with specific error messages. The model fabricated `.addEventListener()` (a JavaScript pattern) instead of using BBj's `.setCallback()`, and used `alert()` (JavaScript) instead of `msgbox()` (BBj). These are exactly the kinds of errors that generic LLMs make when they lack BBj training data -- and exactly what fine-tuning should fix.
+
+### Reporting Format
+
+Evaluation results should be reported in a standardized format for comparison across training runs:
+
+| Model | compile@1 | Qualitative | Date | Notes |
+|-------|----------|-------------|------|-------|
+| Qwen2.5-Coder-14B-Base (unmodified) | --% | -- | -- | Baseline (pre-fine-tuning) |
+| bbjllm 32B-Instruct | --% | -- | -- | Previous experiment |
+| Claude API + RAG | --% | -- | -- | Current system |
+| 14B-Base fine-tuned (v1) | --% | -- | -- | First recommended-approach run |
+
+Dashes indicate that these evaluations have not yet been run -- the evaluation framework itself is planned. Building it before the next training iteration is a prerequisite for measuring whether methodology changes actually improve outcomes.
 
 ## Toolchain: Unsloth + llama.cpp + Ollama
 
