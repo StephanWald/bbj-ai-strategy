@@ -9,10 +9,10 @@ Requirements for the documentation refresh milestone. Each maps to roadmap phase
 
 ### Status Updates (All Chapters)
 
-- [ ] **STAT-01**: All 7 chapters' "Where Things Stand" sections reflect actual project state as of February 2026
-- [ ] **STAT-02**: Tone corrected throughout: nothing described as "production" or "shipped" — use "operational for internal exploration" for running systems
-- [ ] **STAT-03**: RAG system (51K+ chunks, REST API, MCP server, web chat) reported as operational for internal exploration
-- [ ] **STAT-04**: MCP server reported with two operational tools (search_bbj_knowledge, validate_bbj_syntax) and one planned (generate_bbj_code)
+- [x] **STAT-01**: All 7 chapters' "Where Things Stand" sections reflect actual project state as of February 2026
+- [x] **STAT-02**: Tone corrected throughout: nothing described as "production" or "shipped" — use "operational for internal exploration" for running systems
+- [x] **STAT-03**: RAG system (51K+ chunks, REST API, MCP server, web chat) reported as operational for internal exploration
+- [x] **STAT-04**: MCP server reported with two operational tools (search_bbj_knowledge, validate_bbj_syntax) and one planned (generate_bbj_code)
 
 ### Chapter 3: Fine-Tuning Rewrite
 
@@ -35,8 +35,8 @@ Requirements for the documentation refresh milestone. Each maps to roadmap phase
 
 ### Chapter 5: Documentation Chat Update
 
-- [ ] **CHAT-01**: Web chat reported as operational for internal exploration — /chat endpoint with Claude API, SSE streaming, citations
-- [ ] **CHAT-02**: Architecture updated to reflect actual implementation (Claude API + RAG, not fine-tuned model)
+- [x] **CHAT-01**: Web chat reported as operational for internal exploration — /chat endpoint with Claude API, SSE streaming, citations
+- [x] **CHAT-02**: Architecture updated to reflect actual implementation (Claude API + RAG, not fine-tuned model)
 
 ### Chapter 7: Implementation Roadmap Restructure
 
@@ -79,12 +79,12 @@ Deferred to later milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STAT-01 | Phase 32 | Pending |
-| STAT-02 | Phase 32 | Pending |
-| STAT-03 | Phase 32 | Pending |
-| STAT-04 | Phase 32 | Pending |
-| CHAT-01 | Phase 32 | Pending |
-| CHAT-02 | Phase 32 | Pending |
+| STAT-01 | Phase 32 | Complete |
+| STAT-02 | Phase 32 | Complete |
+| STAT-03 | Phase 32 | Complete |
+| STAT-04 | Phase 32 | Complete |
+| CHAT-01 | Phase 32 | Complete |
+| CHAT-02 | Phase 32 | Complete |
 | FT-01 | Phase 33 | Pending |
 | FT-02 | Phase 33 | Pending |
 | FT-03 | Phase 33 | Pending |

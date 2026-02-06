@@ -10,7 +10,7 @@ v1.7 refreshes all 7 documentation chapters to reflect the actual state of the B
 
 ## Phases
 
-- [ ] **Phase 32: Multi-Chapter Status & Tone Update** - Update status sections and correct tone across chapters 1, 2, 5, 6
+- [x] **Phase 32: Multi-Chapter Status & Tone Update** - Update status sections and correct tone across chapters 1, 2, 5, 6
 - [ ] **Phase 33: Fine-Tuning Chapter Rewrite** - Research-backed rewrite of Chapter 3 with 14B-Base recommendation and evaluation methodology
 - [ ] **Phase 34: IDE Integration Update** - Update Chapter 4 with Continue.dev path and FIM requirements
 - [ ] **Phase 35: Implementation Roadmap Restructure** - Restructure Chapter 7 separating completed work from forward plan
@@ -32,8 +32,8 @@ v1.7 refreshes all 7 documentation chapters to reflect the actual state of the B
 **Plans**: 2 plans
 
 Plans:
-- [ ] 32-01-PLAN.md — Update status blocks and tone across chapters 1 and 2
-- [ ] 32-02-PLAN.md — Update status blocks, architecture, and tone across chapters 5 and 6
+- [x] 32-01-PLAN.md — Update status blocks and tone across chapters 1 and 2
+- [x] 32-02-PLAN.md — Update status blocks, architecture, and tone across chapters 5 and 6
 
 ### Phase 33: Fine-Tuning Chapter Rewrite
 
@@ -105,7 +105,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 32. Multi-Chapter Status & Tone Update | v1.7 | 0/2 | Not started | - |
+| 32. Multi-Chapter Status & Tone Update | v1.7 | 2/2 | Complete | 2026-02-06 |
 | 33. Fine-Tuning Chapter Rewrite | v1.7 | 0/3 | Not started | - |
 | 34. IDE Integration Update | v1.7 | 0/1 | Not started | - |
 | 35. Implementation Roadmap Restructure | v1.7 | 0/1 | Not started | - |
@@ -115,12 +115,12 @@ Plans:
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STAT-01 | 32 | Pending |
-| STAT-02 | 32 | Pending |
-| STAT-03 | 32 | Pending |
-| STAT-04 | 32 | Pending |
-| CHAT-01 | 32 | Pending |
-| CHAT-02 | 32 | Pending |
+| STAT-01 | 32 | Complete |
+| STAT-02 | 32 | Complete |
+| STAT-03 | 32 | Complete |
+| STAT-04 | 32 | Complete |
+| CHAT-01 | 32 | Complete |
+| CHAT-02 | 32 | Complete |
 | FT-01 | 33 | Pending |
 | FT-02 | 33 | Pending |
 | FT-03 | 33 | Pending |
