@@ -47,10 +47,10 @@ Requirements for the documentation refresh milestone. Each maps to roadmap phase
 
 ### Cross-Chapter Consistency
 
-- [ ] **CONS-01**: Model name/size consistent across all chapters (14B-Base recommendation, acknowledge 32B bbjllm experiment)
-- [ ] **CONS-02**: MCP tool names and status consistent across chapters 2, 4, 5, 7
-- [ ] **CONS-03**: Training data counts consistent (9,922 ChatML examples in bbjllm, 2 seed examples in training-data/)
-- [ ] **CONS-04**: All BBj code samples remain compiler-validated (bbjcpl -N)
+- [x] **CONS-01**: Model name/size consistent across all chapters (14B-Base recommendation, acknowledge 32B bbjllm experiment)
+- [x] **CONS-02**: MCP tool names and status consistent across chapters 2, 4, 5, 7
+- [x] **CONS-03**: Training data counts consistent (9,922 ChatML examples in bbjllm, 2 seed examples in training-data/)
+- [x] **CONS-04**: All BBj code samples remain compiler-validated (bbjcpl -N)
 
 ## Future Requirements
 
@@ -102,10 +102,10 @@ Deferred to later milestones.
 | ROAD-02 | Phase 35 | Complete |
 | ROAD-03 | Phase 35 | Complete |
 | ROAD-04 | Phase 35 | Complete |
-| CONS-01 | Phase 36 | Pending |
-| CONS-02 | Phase 36 | Pending |
-| CONS-03 | Phase 36 | Pending |
-| CONS-04 | Phase 36 | Pending |
+| CONS-01 | Phase 36 | Complete |
+| CONS-02 | Phase 36 | Complete |
+| CONS-03 | Phase 36 | Complete |
+| CONS-04 | Phase 36 | Complete |
 
 **Coverage:**
 - v1.7 requirements: 27 total

@@ -1,6 +1,6 @@
 # Milestone v1.7: Documentation Refresh & Fine-Tuning Strategy
 
-**Status:** In progress
+**Status:** Complete
 **Phases:** 32-36
 **Total Plans:** TBD
 
@@ -14,7 +14,7 @@ v1.7 refreshes all 7 documentation chapters to reflect the actual state of the B
 - [x] **Phase 33: Fine-Tuning Chapter Rewrite** - Research-backed rewrite of Chapter 3 with 14B-Base recommendation and evaluation methodology
 - [x] **Phase 34: IDE Integration Update** - Update Chapter 4 with Continue.dev path and FIM requirements
 - [x] **Phase 35: Implementation Roadmap Restructure** - Restructure Chapter 7 separating completed work from forward plan
-- [ ] **Phase 36: Cross-Chapter Consistency Pass** - Verify model names, tool status, data counts, and code samples across all chapters
+- [x] **Phase 36: Cross-Chapter Consistency Pass** - Verify model names, tool status, data counts, and code samples across all chapters
 
 ## Phase Details
 
@@ -97,7 +97,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 36-01-PLAN.md — Cross-chapter consistency fixes (10 text corrections) and build gate verification
+- [x] 36-01-PLAN.md — Cross-chapter consistency fixes (10 text corrections) and build gate verification
 
 ## Progress
 
@@ -109,7 +109,7 @@ Plans:
 | 33. Fine-Tuning Chapter Rewrite | v1.7 | 2/2 | Complete | 2026-02-06 |
 | 34. IDE Integration Update | v1.7 | 2/2 | Complete | 2026-02-06 |
 | 35. Implementation Roadmap Restructure | v1.7 | 1/1 | Complete | 2026-02-06 |
-| 36. Cross-Chapter Consistency Pass | v1.7 | 0/1 | Not started | - |
+| 36. Cross-Chapter Consistency Pass | v1.7 | 1/1 | Complete | 2026-02-06 |
 
 ## Coverage
 
@@ -138,10 +138,10 @@ Plans:
 | ROAD-02 | 35 | Complete |
 | ROAD-03 | 35 | Complete |
 | ROAD-04 | 35 | Complete |
-| CONS-01 | 36 | Pending |
-| CONS-02 | 36 | Pending |
-| CONS-03 | 36 | Pending |
-| CONS-04 | 36 | Pending |
+| CONS-01 | 36 | Complete |
+| CONS-02 | 36 | Complete |
+| CONS-03 | 36 | Complete |
+| CONS-04 | 36 | Complete |
 
 **Mapped: 27/27 -- all v1.7 requirements covered.**
 
