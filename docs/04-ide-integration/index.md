@@ -573,9 +573,9 @@ Editor adoption of LSP 3.18 inline completion is progressing: [Neovim has merged
 **Status:** Planned. The bbj-language-server's Langium foundation supports either approach.
 :::
 
-## The Copilot Bridge
+## Why Not Copilot?
 
-Developers will naturally ask: "Can't we just use GitHub Copilot with a custom model?" The short answer is: partially, and only for chat -- not for inline completions.
+Developers will naturally ask: "Can't we just use GitHub Copilot with a custom model?" The short answer is: partially, and only for chat -- not for inline completions. The contrast with Continue.dev makes the limitation clear.
 
 ### What BYOK Offers
 
@@ -586,40 +586,46 @@ As of VS Code v1.99 (March 2025), Copilot supports [Bring Your Own Key (BYOK)](h
 3. Enter endpoint: `http://localhost:11434`
 4. Select the model (e.g., `bbj-coder`)
 
-This gives Copilot Chat access to the fine-tuned BBj model. Developers can ask questions like "How do I create a window in BBj?" or "Convert this Visual PRO/5 code to DWC" and receive answers from a model that actually understands BBj.
+This gives Copilot Chat access to the fine-tuned BBj model in Ask Mode. Developers can ask questions like "How do I create a window in BBj?" or "Convert this Visual PRO/5 code to DWC" and receive answers from a model that understands BBj. The January 2026 enhancements expanded provider support to include AWS Bedrock, Google AI Studio, and OpenAI-compatible endpoints alongside the existing Anthropic and OpenAI providers.
+
+Enterprise and Business BYOK is now in [public preview](https://github.blog/changelog/2026-01-15-github-copilot-bring-your-own-key-byok-enhancements/) as of January 2026, with admin configuration through organization and enterprise settings. This removes the earlier limitation that restricted BYOK to individual subscriptions.
 
 ### What BYOK Does Not Offer
 
-**BYOK does not support inline code completions.** The dimmed ghost text suggestions that appear as you type -- arguably the most valuable Copilot feature for daily coding -- still come exclusively from GitHub's cloud-hosted models. There is no mechanism to route inline completions through a local Ollama model via BYOK.
+From the [VS Code official documentation](https://code.visualstudio.com/docs/copilot/customization/language-models): **"BYOK does not currently work with completions."** The dimmed ghost text suggestions that appear as you type -- arguably the most valuable Copilot feature for daily coding -- still come exclusively from GitHub's cloud-hosted models. There is no mechanism to route inline completions through a local Ollama model via BYOK, regardless of plan tier.
 
 This means BYOK with a fine-tuned BBj model gives you:
-- **Chat:** BBj-aware conversational assistance (works)
+- **Chat:** BBj-aware conversational assistance via Ask Mode (works)
 - **Inline completions:** Generic suggestions from GitHub's models, with no BBj knowledge (unchanged)
 
-Additionally, as of January 2026:
-- BYOK is not yet available for [Copilot Business or Enterprise plans](https://code.visualstudio.com/docs/copilot/customization/language-models) -- only individual subscriptions
-- Ollama models work only in Ask Mode, not Agent Mode
-- The [separate Copilot extension is being deprecated](https://code.visualstudio.com/blogs/2025/11/04/openSourceAIEditorSecondMilestone) and its functionality merged into the Copilot Chat extension
+Additionally, even with BYOK, the Copilot service remains a dependency: embeddings, repository indexing, query refinement, and intent detection still require internet connectivity and an active Copilot subscription. BYOK routes chat through a local model but does not eliminate the cloud dependency.
 
-:::info[Decision: Copilot Bridge is Complementary, Not Primary]
-**Choice:** Support the Copilot BYOK path as an interim bridge for chat-based BBj assistance, while building the custom `InlineCompletionItemProvider` as the primary path for inline code completion.
+The contrast with Continue.dev is direct: Continue.dev gives you both chat **and** tab completion with local models, works across VS Code and JetBrains, requires no subscription, and runs entirely offline. Copilot BYOK gives you chat only, works in VS Code only, requires a Copilot subscription, and still depends on internet for supporting services.
 
-**Rationale:** Copilot BYOK with Ollama provides immediate value for chat interactions -- developers can query the fine-tuned BBj model conversationally without any custom extension code. But the inline completion gap means the most impactful developer workflow (type-and-complete) requires the custom provider. Investing in the custom path also ensures multi-editor support via LSP 3.18 and avoids dependency on Copilot's evolving feature set.
+### Comparison: Continue.dev vs Copilot BYOK vs Language Server
 
-**Alternatives considered:** Wait for Copilot to support custom inline models (timeline uncertain, may never happen), use only Copilot BYOK chat (leaves the highest-value use case unserved), ignore Copilot entirely (wastes a free integration point for chat).
+| Feature | Continue.dev | Copilot BYOK | Custom Language Server |
+|---------|-------------|-------------|----------------------|
+| Chat with local model | Yes (Ollama) | Yes (Ask Mode only) | Planned (via MCP) |
+| Tab completion with local model | Yes (FIM-capable models) | No | Planned (InlineCompletionItemProvider) |
+| BBj language awareness | None (generic) | None (generic) | Full (Langium parser, AST, scope) |
+| Generation detection | No | No | Planned (character/vpro5/bbj-gui/dwc) |
+| Compiler validation | No | No | Planned (bbjcpl in-the-loop) |
+| Multi-editor support | VS Code + JetBrains | VS Code only | VS Code + IntelliJ (extensions in repo) |
+| Effort to integrate | Low (config file) | Low (built-in) | High (custom development) |
+| Subscription required | No (open source) | Yes (Copilot + internet) | No |
 
-**Status:** Copilot integration in early exploration. Custom inline completion provider planned.
+Continue.dev has the best near-term coverage: both chat and tab completion with local models, minimal setup, and no subscription. The custom language server has the best long-term potential: BBj-specific intelligence, generation-aware prompting, and compiler validation that no generic tool can provide. Copilot BYOK occupies the middle -- useful if developers already have a Copilot subscription, but not the recommended path for BBj-specific AI integration.
+
+:::info[Decision: Continue.dev as Primary IDE Integration Path]
+**Choice:** Evaluate Continue.dev as the primary near-term path for connecting fine-tuned BBj models to the IDE, with Copilot BYOK as a supplementary option for developers who already have Copilot.
+
+**Rationale:** Continue.dev fills the gap that Copilot BYOK leaves -- both chat and inline completion with local models. It supports separate models for chat and autocomplete roles, matching the BBj fine-tuning strategy (instruction-tuned for chat, FIM-trained for autocomplete). The language server remains the strategic path for BBj-specific intelligence, but Continue.dev provides immediate model delivery without custom extension development.
+
+**Alternatives considered:** Copilot BYOK as primary (no inline completion support, subscription required), custom extension only (high development effort, delays model delivery to developers), wait for Copilot to add local inline completions (timeline uncertain, may never happen).
+
+**Status:** Active research: Copilot BYOK integration (chat only). Continue.dev evaluation as primary IDE integration path.
 :::
-
-## Alternative Architectures
-
-### Continue.dev
-
-[Continue.dev](https://continue.dev/) is an open-source AI code assistant that supports Ollama for both chat and tab autocomplete. Its autocomplete implementation uses the `InlineCompletionItemProvider` API internally -- the same pattern described above -- combined with LSP for definitions and similarity search over recent files to build context.
-
-Continue.dev validates an important design insight: **autocomplete models do not need to be large.** Their [recommended autocomplete model](https://docs.continue.dev/customize/deep-dives/autocomplete) as of 2026 is Qwen 2.5 Coder 1.5B -- a model small enough to run on any modern laptop. Fill-in-the-middle (FIM) training format, which the Qwen2.5-Coder family supports natively, is more important than raw model size for inline completion quality.
-
-For the BBj use case, Continue.dev serves as an architectural reference rather than a direct solution. It does not have BBj language support, and its context assembly lacks the generation-aware prompting that Langium enables. But its approach to local-model tab completion is sound and informs the custom implementation.
 
 ### Langium AI
 
