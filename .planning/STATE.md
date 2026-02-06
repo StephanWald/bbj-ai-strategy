@@ -11,23 +11,23 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 
 Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
 Phase: 32 (1 of 5 in v1.7)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-06 -- Completed 32-01-PLAN.md (Chapters 1 & 2 status update)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-06 -- Completed 32-02-PLAN.md (Chapters 5 & 6 status update)
 
-Progress: [#.........] 14% (1/7 plans)
+Progress: [##........] 29% (2/7 plans)
 
 ## Performance Metrics
 
 **Cumulative:**
 - v1.0-v1.6: 33 phases, 75 plans delivered across 7 milestones
-- v1.7: 1/7 plans
+- v1.7: 2/7 plans
 
 **By Phase (v1.7):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 32 | 1/2 | 37min | 37min |
+| 32 | 2/2 | 56min | 28min |
 
 ## Accumulated Context
 
@@ -39,6 +39,9 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - Retained legitimate "production" uses in Ch1 line 62 (customer environments) and Ch2 lines 205, 229 (compiler behavior, webforJ external project)
 - Established status terminology pattern: operational / operational for internal exploration / active research / planned
 - Left Ch2 TL;DR unchanged (architectural vision, not status claim)
+- Ch5 architecture sections updated to distinguish current (Claude API + RAG) from planned (fine-tuned model) -- aspirational sections kept but marked as future
+- Ch6 corpus table replaced with full 7-source table including per-source chunk counts (51,134 total)
+- Ch5 Mermaid diagram left showing target architecture; Ch6 Mermaid diagram updated to show operational state
 
 **Research findings informing v1.7:**
 - 14B-Base recommended over 7B-Base (better fine-tuning improvement) and 32B-Instruct (alignment tax)
@@ -62,6 +65,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 32-01-PLAN.md (Chapters 1 & 2 status update)
+Stopped at: Completed 32-02-PLAN.md (Chapters 5 & 6 status update) -- Phase 32 complete
 Resume file: None
-Next action: Execute 32-02-PLAN.md (Chapters 5 & 6 status update)
+Next action: `/gsd:plan-phase 33` (Fine-Tuning Chapter Rewrite)
