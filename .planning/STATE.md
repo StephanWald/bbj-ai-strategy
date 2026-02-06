@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** Phase 34 complete -- IDE Integration Chapter Rewrite done
+**Current focus:** Phase 35 complete -- Implementation Roadmap Restructure done
 
 ## Current Position
 
 Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
-Phase: 34 (3 of 5 in v1.7)
-Plan: 2 of 2 in current phase
+Phase: 35 (4 of 5 in v1.7)
+Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-02-06 -- Completed 34-02-PLAN.md (Language Server Sections + Status + Cleanup)
+Last activity: 2026-02-06 -- Completed 35-01-PLAN.md (Implementation Roadmap Restructure)
 
-Progress: [######....] 86% (6/7 plans)
+Progress: [#######...] 100% (7/7 plans)
 
 ## Performance Metrics
 
 **Cumulative:**
 - v1.0-v1.6: 33 phases, 75 plans delivered across 7 milestones
-- v1.7: 6/7 plans
+- v1.7: 7/7 plans
 
 **By Phase (v1.7):**
 
@@ -30,6 +30,7 @@ Progress: [######....] 86% (6/7 plans)
 | 32 | 2/2 | 56min | 28min |
 | 33 | 2/2 | 21min | 10.5min |
 | 34 | 2/2 | 14min | 7min |
+| 35 | 1/1 | 2min | 2min |
 
 ## Accumulated Context
 
@@ -73,6 +74,14 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - LSP 3.18 softened to "potential migration path" (conditional, not definite)
 - eclipse-langium/langium-ai as primary repo reference (TypeFox/langium-ai archived Sept 2025)
 
+**Phase 35 decisions (35-01):**
+- Status-tier organization for "What We Built" section (ROAD-01): operational -> exploration -> research progression
+- Forward plan as bulleted list grouped by area, no phases/timelines/costs (ROAD-02): user constraint
+- Both Decision callout boxes removed (ROAD-03): chapter is now the current state summary
+- Mermaid diagram removed, cross-references trimmed to closing paragraph (ROAD-04): 4-phase diagram irrelevant without phases
+- Chapter 7 reduced from 311 to 135 lines (56% reduction)
+- 4 stale cross-references in Chapters 2, 4, 5, 6 identified for Phase 36 scope
+
 **Research findings informing v1.7:**
 - 14B-Base recommended over 7B-Base (better fine-tuning improvement) and 32B-Instruct (alignment tax)
 - Two-stage training: continued pretraining on raw BBj, then instruction fine-tuning
@@ -89,6 +98,7 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - Research summary at .planning/research/fine-tuning/SUMMARY.md -- essential for Phase 33
 - Chapter 3 fully rewritten (702 lines, 9 major sections, all 9 FT requirements addressed)
 - Chapter 4 fully rewritten (674 lines): Continue.dev primary, language server repositioned, Langium AI recontextualized, status using Phase 32 conventions
+- Chapter 7 restructured (135 lines): progress-and-plan chapter with comparison table, component summary, forward plan
 
 ### Blockers/Concerns
 
@@ -97,6 +107,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 34-02-PLAN.md (Language Server Sections + Status + Cleanup) -- Phase 34 complete
+Stopped at: Completed 35-01-PLAN.md (Implementation Roadmap Restructure) -- Phase 35 complete, v1.7 milestone complete (7/7 plans)
 Resume file: None
-Next action: Execute Phase 35 (Status/Roadmap Update) or next v1.7 phase
+Next action: Phase 36 (Cross-Chapter Consistency) if planned, or begin next milestone
