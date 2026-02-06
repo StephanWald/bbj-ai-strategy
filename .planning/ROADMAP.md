@@ -46,12 +46,11 @@ Plans:
   3. The relationship between bbjllm repo (9,922 ChatML examples, 32B-Instruct, PEFT/QLoRA) and recommended approach is clearly documented with gap analysis
   4. Evaluation methodology section describes bbjcpl-based compile@1 metric and baseline comparison approach
   5. Training data pipeline connecting training-data/ markdown format to bbjllm ChatML JSONL is described
-**Plans**: 2-3 plans (TBD at planning time)
+**Plans**: 2 plans
 
 Plans:
-- [ ] 33-01: Update model recommendation, toolchain versions, and model comparison table
-- [ ] 33-02: Add evaluation methodology, bbjllm relationship, training pipeline, and two-stage approach sections
-- [ ] 33-03: Add training workflow recommendations and final chapter polish (if needed)
+- [ ] 33-01-PLAN.md — Rewrite core content: TL;DR, bbjllm Foundation, Base Model Selection, Training Data pipeline, QLoRA+two-stage, Evaluation Methodology
+- [ ] 33-02-PLAN.md — Update Toolchain versions, add Training Workflow, update Hosting, replace Status block, full-file consistency pass
 
 ### Phase 34: IDE Integration Update
 
@@ -106,7 +105,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 32. Multi-Chapter Status & Tone Update | v1.7 | 2/2 | Complete | 2026-02-06 |
-| 33. Fine-Tuning Chapter Rewrite | v1.7 | 0/3 | Not started | - |
+| 33. Fine-Tuning Chapter Rewrite | v1.7 | 0/2 | Not started | - |
 | 34. IDE Integration Update | v1.7 | 0/1 | Not started | - |
 | 35. Implementation Roadmap Restructure | v1.7 | 0/1 | Not started | - |
 | 36. Cross-Chapter Consistency Pass | v1.7 | 0/1 | Not started | - |
