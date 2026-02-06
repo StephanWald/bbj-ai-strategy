@@ -11,29 +11,34 @@ See: .planning/PROJECT.md (updated 2026-02-06)
 
 Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
 Phase: 32 (1 of 5 in v1.7)
-Plan: 0 of 1 in current phase
-Status: Ready to plan
-Last activity: 2026-02-06 -- Roadmap created (5 phases, ~7 plans)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-06 -- Completed 32-01-PLAN.md (Chapters 1 & 2 status update)
 
-Progress: [..........] 0% (0/7 plans)
+Progress: [#.........] 14% (1/7 plans)
 
 ## Performance Metrics
 
 **Cumulative:**
 - v1.0-v1.6: 33 phases, 75 plans delivered across 7 milestones
-- v1.7: 0/7 plans (just started)
+- v1.7: 1/7 plans
 
 **By Phase (v1.7):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 32 | 1/2 | 37min | 37min |
 
 ## Accumulated Context
 
 ### Decisions
 
 See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
+
+**Phase 32 decisions:**
+- Retained legitimate "production" uses in Ch1 line 62 (customer environments) and Ch2 lines 205, 229 (compiler behavior, webforJ external project)
+- Established status terminology pattern: operational / operational for internal exploration / active research / planned
+- Left Ch2 TL;DR unchanged (architectural vision, not status claim)
 
 **Research findings informing v1.7:**
 - 14B-Base recommended over 7B-Base (better fine-tuning improvement) and 32B-Instruct (alignment tax)
@@ -57,6 +62,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Roadmap created, ready to plan Phase 32
+Stopped at: Completed 32-01-PLAN.md (Chapters 1 & 2 status update)
 Resume file: None
-Next action: `/gsd:plan-phase 32`
+Next action: Execute 32-02-PLAN.md (Chapters 5 & 6 status update)
