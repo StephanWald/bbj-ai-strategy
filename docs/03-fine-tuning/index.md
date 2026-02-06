@@ -475,15 +475,15 @@ The fine-tuning-to-deployment pipeline uses three tools, each handling a distinc
 ```mermaid
 graph TD
     subgraph "Fine-Tuning"
-        DATA["Training Data<br/><i>JSON examples</i>"] --> UNSLOTH["Unsloth<br/><i>QLoRA training</i>"]
-        QWEN["Qwen2.5-Coder-7B<br/><i>Base model (HF)</i>"] --> UNSLOTH
+        DATA["Training Data<br/><i>ChatML examples</i>"] --> UNSLOTH["Unsloth<br/><i>QLoRA training</i>"]
+        QWEN["Qwen2.5-Coder-14B-Base<br/><i>Base model (HF)</i>"] --> UNSLOTH
         UNSLOTH --> ADAPTER["LoRA Adapter<br/><i>Safetensors</i>"]
         UNSLOTH --> MERGED["Merged Model<br/><i>Full weights</i>"]
     end
 
     subgraph "Conversion"
         MERGED --> LLAMACPP["llama.cpp<br/><i>convert_hf_to_gguf.py</i>"]
-        LLAMACPP --> GGUF["GGUF File<br/><i>Quantized Q4_0</i>"]
+        LLAMACPP --> GGUF["GGUF File<br/><i>Quantized Q4_K_M</i>"]
     end
 
     subgraph "Deployment"
@@ -502,38 +502,55 @@ graph TD
 
 ### Unsloth -- Fine-Tuning
 
-[Unsloth](https://unsloth.ai/) is the recommended training framework for QLoRA fine-tuning. Compared to vanilla Hugging Face Transformers + PEFT:
+[Unsloth](https://unsloth.ai/) (2026.1.4) is the recommended training framework for QLoRA fine-tuning. Compared to vanilla Hugging Face Transformers + PEFT:
 
-- **2x training speed** through custom CUDA kernels
+- **2-3x training speed** through custom CUDA kernels
 - **70% less VRAM** usage via aggressive memory optimization
 - **0% accuracy loss** -- same mathematical operations, just more efficient execution
+- **Dynamic 4-bit Quantization** -- selectively preserves higher precision for critical parameters, improving accuracy over uniform NF4 quantization
+- **500K context support** -- enables training on very long sequences when needed
+- **Built-in GGUF export** -- can eliminate the llama.cpp conversion step in some workflows
 
-Unsloth natively supports Qwen2.5-Coder and provides direct export to GGUF format, eliminating the need for a separate conversion step in some workflows. It also integrates with Hugging Face datasets for data loading.
+Unsloth natively supports Qwen2.5-Coder and integrates with Hugging Face datasets for data loading. It is fully compatible with the HuggingFace ecosystem (PEFT, TRL, transformers) while providing batteries-included training workflows.
 
 Alternative frameworks worth noting: [LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) provides a web UI for fine-tuning configuration, and [Axolotl](https://github.com/OpenAccess-AI-Collective/axolotl) supports advanced training recipes. Both are viable, but Unsloth's speed and memory advantages make it the preferred choice for single-GPU setups.
+
+### Version Comparison
+
+The bbjllm training script pins library versions via `starttrain.sh`. Several of these are significantly behind current releases, including one critical bug fix:
+
+| Library | bbjllm Version | Current (Feb 2026) | Key Changes |
+|---------|---------------|-------------------|-------------|
+| transformers | 4.44.0 | 5.1.0 | Major v5 release (first in 5 years), significant API changes |
+| peft | 0.12.0 | 0.18.1 | 6 minor versions, Python 3.9 dropped |
+| bitsandbytes | 0.43.0 | 0.49.1 | **Critical:** 0.43.0 has QLoRA memory bug wasting 5-10GB VRAM (fixed in 0.43.2) |
+| trl | (not used) | 0.27.x | SFTTrainer with built-in completion masking and packing |
+| Unsloth | (not used) | 2026.1.4 | Recommended replacement for raw PEFT; 2-3x faster, 70% less VRAM |
+
+Before the next training run, update at minimum **bitsandbytes** (critical bug fix that recovers 5-10GB of wasted VRAM) and add **trl** for completion masking support. The recommended approach uses Unsloth, which bundles compatible versions of all libraries and handles version management automatically.
 
 ### llama.cpp -- GGUF Conversion
 
 After training, the merged model weights (in Hugging Face Safetensors format) need to be converted to [GGUF format](https://github.com/ggerganov/gguf) for efficient CPU/GPU inference. The `convert_hf_to_gguf.py` script from [llama.cpp](https://github.com/ggerganov/llama.cpp) handles this conversion, including optional quantization to reduce model size.
 
-Common quantization levels:
+Common quantization levels for the 14B model:
 
-| Format | Size (7B model) | Quality | Use Case |
-|--------|-----------------|---------|----------|
-| F16 | ~14 GB | Full | Development/evaluation |
-| Q8_0 | ~7 GB | Near-full | High-end workstations |
-| **Q4_0** | **~4 GB** | **Good** | **Default for deployment** |
-| Q4_K_M | ~4.5 GB | Better than Q4_0 | Recommended balance |
-| Q2_K | ~2.5 GB | Reduced | Low-resource environments |
+| Format | Size (14B model) | Quality | Use Case |
+|--------|------------------|---------|----------|
+| F16 | ~28 GB | Full | Development/evaluation |
+| Q8_0 | ~14 GB | Near-full | High-end workstations |
+| Q4_0 | ~8 GB | Good | Default for deployment |
+| **Q4_K_M** | **~8.5 GB** | **Better than Q4_0** | **Recommended balance** |
+| Q2_K | ~5 GB | Reduced | Low-resource environments |
 
-Q4_0 is Ollama's default quantization level. For BBj code generation, where output quality matters more than inference speed, Q4_K_M provides a better quality-to-size ratio and is the recommended deployment format.
+For BBj code generation, where output quality matters more than inference speed, **Q4_K_M** provides the best quality-to-size ratio and is the recommended deployment format. At ~8.5 GB, it fits comfortably on workstations with 16 GB or more of RAM.
 
 ### Ollama Modelfile
 
 The final step is packaging the GGUF model for Ollama. A Modelfile is a simple text file that tells Ollama how to load and configure the model:
 
 ```text title="Modelfile"
-FROM ./bbj-coder-7b-q4_k_m.gguf
+FROM ./bbj-coder-14b-q4_k_m.gguf
 
 TEMPLATE """{{ if .System }}<|im_start|>system
 {{ .System }}<|im_end|>
@@ -555,18 +572,54 @@ Creating the model in Ollama is then a single command:
 ollama create bbj-coder -f Modelfile
 ```
 
+## Training Workflow
+
+Fine-tuning is not a one-time event. Each training run produces artifacts that must be preserved, and each evaluation cycle informs the next iteration. This section describes the practical workflow for managing training runs.
+
+### Artifact Management
+
+Each training run produces several artifact types with different storage requirements:
+
+- **LoRA adapter weights (100-300 MB):** Commit to the repository with Git LFS. These are the primary training output -- small enough for version control, and critical to preserve. Currently, adapter weights exist only on the training server. If that server is rebuilt, all training results are lost.
+- **Merged model weights (full precision, ~28 GB for 14B):** Store on the training server. These are intermediate artifacts used for GGUF conversion and do not need to be committed to version control.
+- **GGUF quantized models (~8.5 GB for Q4_K_M):** Store in a model registry for distribution to Ollama deployments. These are the deployment artifacts that reach end users.
+- **Training logs and metrics:** Track with [Weights & Biases](https://wandb.ai/) (free tier) or TensorBoard for run-to-run comparison. The bbjllm training script currently uses `report_to="none"`, which means loss curves are only visible in stdout and cannot be compared across runs.
+
+### What to Commit Back
+
+After each training run, commit the following to the repository:
+
+1. **Updated adapter weights** via Git LFS -- these are the versioned training output
+2. **Model card** documenting: hyperparameters used, training metrics (final training loss, validation loss), evaluation results (compile@1 score and baseline comparison), and training date and duration
+3. **Dataset changes** -- any deduplication, corrections, or new examples added since the previous run
+
+The model card is particularly important. Without it, there is no record of what changed between training runs or why one model performs differently from another. Each card should be a Markdown file committed alongside the adapter weights.
+
+### Iterative Improvement Process
+
+The training cycle follows a straightforward loop:
+
+1. **Evaluate** the current model against baselines (compile@1 for automated scoring, qualitative review for code quality)
+2. **Identify weak areas** -- which generation labels score lowest? Which example types produce the most compilation errors?
+3. **Create targeted training examples** for the weak areas identified in step 2
+4. **Retrain** with the updated dataset (including any data quality fixes)
+5. **Evaluate again** -- compare results to the previous run using the same test set
+6. **If improved**, export to GGUF and update the Ollama deployment
+
+Each iteration should change only one variable at a time (dataset changes OR hyperparameter changes, not both) so that improvements or regressions can be attributed to a specific change. Track every run in the experiment tracker so the team can identify which changes had the most impact.
+
 ## Hosting via Ollama
 
 Self-hosted inference via [Ollama](https://ollama.com/) is a deliberate architectural choice, not just a deployment convenience. It addresses the two most common objections to AI tooling in enterprise environments: **data privacy** and **ongoing costs**.
 
 :::info[Decision: Ollama for Local Model Serving]
-**Choice:** [Ollama](https://ollama.com/) (v0.9.x+) as the inference runtime for the fine-tuned BBj model. Customers self-host on their own hardware.
+**Choice:** [Ollama](https://ollama.com/) (v0.15.x) as the inference runtime for the fine-tuned BBj model. Customers self-host on their own hardware.
 
 **Rationale:** Zero per-query API costs after initial setup. Customer source code never leaves their network. OpenAI-compatible API means existing tooling (IDE extensions, chat interfaces) can integrate without custom adapters. Cross-platform support (macOS, Windows, Linux) with native desktop applications as of mid-2025.
 
-**Alternatives considered:** vLLM (higher throughput but more complex deployment), llama.cpp server directly (lower-level, less user-friendly), cloud API (privacy concerns, ongoing costs).
+**Alternatives considered:** vLLM (higher throughput but more complex deployment, better suited for centralized team serving with LoRA hot-swapping), llama.cpp server directly (lower-level, less user-friendly), cloud API (privacy concerns, ongoing costs).
 
-**Status:** Ollama infrastructure validated. Model packaging workflow not yet automated.
+**Status:** Ollama infrastructure validated for internal exploration. Model packaging workflow defined but not yet automated.
 :::
 
 ### Why Self-Hosting Matters
@@ -584,12 +637,12 @@ With Ollama:
 
 | Tier | Hardware | Model Size | Performance | Audience |
 |------|----------|-----------|-------------|----------|
-| Minimum | 8GB RAM, any modern CPU | 7B Q4_0 | ~5-10 tokens/sec | Individual developer |
-| Recommended | 16GB RAM, GPU with 6GB+ VRAM | 7B Q4_K_M | ~30-50 tokens/sec | Individual developer |
-| Team | 32GB+ RAM, RTX 3090/4090 | 14B Q4_K_M | ~20-40 tokens/sec | Shared inference server |
-| Enterprise | 64GB+ RAM, A100/H100 | 32B Q4_K_M | ~30-50 tokens/sec | Organization-wide |
+| Minimum | 16GB RAM, any modern CPU | 14B Q4_K_M (~8.5 GB) | ~5-10 tokens/sec | Individual developer |
+| Recommended | 24GB+ RAM, GPU with 12GB+ VRAM | 14B Q4_K_M (~8.5 GB) | ~20-40 tokens/sec | Individual developer |
+| Team | 32GB+ RAM, RTX 3090/4090 | 14B Q4_K_M (~8.5 GB) | ~30-50 tokens/sec | Shared inference server |
+| Enterprise | 64GB+ RAM, A100/H100 | 14B Q8_0 (~14 GB) | ~40-60 tokens/sec | Organization-wide |
 
-The 7B Q4_0 model at approximately 4GB can even run on a laptop CPU, though with reduced throughput. For IDE code completion where latency matters, a GPU is strongly recommended.
+The 14B Q4_K_M model at approximately 8.5 GB fits on workstations with 16 GB of RAM, though a GPU is strongly recommended for interactive use cases like IDE code completion where latency matters.
 
 ### API Compatibility
 
@@ -603,7 +656,7 @@ OPENAI_API_BASE=https://api.openai.com/v1
 OPENAI_API_BASE=http://localhost:11434/v1
 ```
 
-As of Ollama v0.9.x, the API also supports [Anthropic-format requests](https://github.com/ollama/ollama/releases), tool calling, and structured JSON output -- features that enable more sophisticated integrations as the BBj AI tooling matures.
+Ollama supports OpenAI-compatible API endpoints. As of Ollama v0.15.x, the API also supports tool calling and structured JSON output -- features that enable more sophisticated integrations as the BBj AI tooling matures.
 
 ### Deployment Architecture
 
@@ -626,28 +679,24 @@ graph TD
     style REGISTRY fill:#e8e8f4,stroke:#2d2d8a
 ```
 
-Model updates are distributed as GGUF files. Customers download new versions from a model registry (which could be a simple file server, Hugging Face Hub, or the Ollama model library) and update with `ollama create bbj-coder -f Modelfile`. No retraining on the customer side.
+Model updates are distributed as GGUF files (~8.5 GB for the 14B Q4_K_M model). Customers download new versions from a model registry (which could be a simple file server, Hugging Face Hub, or the Ollama model library) and update with `ollama create bbj-coder -f Modelfile`. No retraining on the customer side.
 
 ### MCP Integration
 
-The fine-tuned model described in this chapter is not accessed directly by consumer applications. Instead, it is consumed through the BBj MCP server's `generate_bbj_code` tool, defined in [Chapter 2](/docs/strategic-architecture#generate_bbj_code). The tool accepts a natural language prompt, a target BBj generation, and optional surrounding code context. It assembles RAG-retrieved documentation into an enriched prompt and forwards it to the Ollama-hosted model -- the same model built through the QLoRA pipeline described above.
+The fine-tuned model described in this chapter is designed to be accessed through the BBj MCP server. Two MCP tools are currently operational: `search_bbj_knowledge` (RAG-powered documentation retrieval) and `validate_bbj_syntax` (bbjcpl-based compilation checking). These are defined in [Chapter 2](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer).
 
-This means any MCP-compatible client -- Claude, Cursor, VS Code, or a custom application -- can generate BBj code using the fine-tuned model without building custom Ollama integration code. The model's generation awareness, trained through the labeled examples in this chapter, is available to every client through a single standard tool interface. When the model improves through continued fine-tuning, every client benefits immediately.
+A third tool, `generate_bbj_code`, is planned but not yet implemented. When built, it will accept a natural language prompt, a target BBj generation, and optional surrounding code context. It will assemble RAG-retrieved documentation into an enriched prompt and forward it to the Ollama-hosted fine-tuned model -- the same model built through the QLoRA pipeline described above. This follows the RAFT pattern (Retrieval-Augmented Fine-Tuning): the fine-tuned model provides BBj syntax knowledge, while RAG provides current API signatures and documentation context.
+
+Once `generate_bbj_code` is implemented, any MCP-compatible client -- Claude Desktop, Cursor, VS Code, or a custom application -- will be able to generate BBj code using the fine-tuned model without building custom Ollama integration code. The model's generation awareness, trained through the labeled examples in this chapter, will be available to every client through a single standard tool interface.
 
 For the complete MCP server architecture, tool schemas, and integration patterns, see [Chapter 2: Strategic Architecture](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer).
 
 ## Current Status
 
 :::note[Where Things Stand]
-**Training data:** Approximately 10,000 training examples have been curated using the generation labeling system described above. Results are promising and ongoing expansion continues with targeted additions for underrepresented patterns and generations.
-
-**Base model:** Qwen2.5-Coder-7B-Base selected and actively being fine-tuned. Experiments are producing promising results. The model is available on [Hugging Face](https://huggingface.co/Qwen/Qwen2.5-Coder-7B) and loads successfully in Unsloth.
-
-**Toolchain:** The fine-tuning pipeline is validated through active use. Unsloth, llama.cpp, and Ollama are all publicly available and actively maintained. The workflow described in this chapter is operational, not speculative.
-
-**Hosting:** Ollama infrastructure is validated and in use for model evaluation. The Modelfile configuration is being refined based on real inference results.
-
-**What's next:** Continue expanding the training dataset with targeted examples for weak areas identified during evaluation. Establish formal evaluation benchmarks for the [IDE completion use case](/docs/ide-integration). The [implementation roadmap](/docs/implementation-roadmap) in Chapter 7 provides the full phasing and timeline.
+- **Active research:** bbjllm experiment (9,922 ChatML examples fine-tuned on Qwen2.5-Coder-32B-Instruct via QLoRA/PEFT). Research recommends switching to Qwen2.5-Coder-14B-Base with two-stage training approach to address identified gaps (validation, loss masking, model variant).
+- **Operational:** Training data repository with 2 seed examples, 7 topic directories, JSON Schema validation, and contributor guides. Toolchain components (Unsloth, llama.cpp, Ollama) are publicly available and actively maintained.
+- **Planned:** Evaluation suite using bbjcpl-based compile@1 metric. Training data conversion pipeline (training-data/ Markdown to ChatML JSONL). Training workflow with artifact management and iterative improvement.
 :::
 
-The fine-tuned model is the foundation that both the [IDE extension](/docs/ide-integration) and the planned [documentation chat](/docs/documentation-chat) depend on. The generation labeling schema defined in this chapter is shared with the [RAG database](/docs/rag-database), ensuring consistency between what the model learned and what the retrieval system provides. As the model improves through continued fine-tuning, every consumer application benefits immediately -- this is the core value of the [unified architecture](/docs/strategic-architecture).
+The fine-tuned 14B model is the foundation that both the [IDE extension](/docs/ide-integration) and the planned [documentation chat](/docs/documentation-chat) depend on. The generation labeling schema defined in this chapter is shared with the [RAG database](/docs/rag-database), ensuring consistency between what the model learned and what the retrieval system provides. As the model improves through iterative training runs -- each evaluated against the compile@1 baseline and tracked through versioned adapter weights -- every consumer application benefits immediately. This is the core value of the [unified architecture](/docs/strategic-architecture).
