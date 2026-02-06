@@ -1,20 +1,158 @@
 ---
 sidebar_position: 4
 title: "IDE Integration"
-description: "How the bbj-language-server, Langium parsing, and a fine-tuned LLM combine to deliver AI-powered code completion for BBj in VS Code."
+description: "How Continue.dev provides near-term AI-powered BBj development alongside the bbj-language-server foundation for BBj-specific intelligence, generation-aware completion, and compiler validation."
 ---
 
 # IDE Integration
 
 :::tip[TL;DR]
-The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0, shipped on the VS Code Marketplace) provides the foundation for AI-powered BBj development. The architecture layers two completion mechanisms -- deterministic popup completion via Langium and generative ghost text via a fine-tuned LLM -- with a compiler validation step that runs every AI-generated snippet through the BBj compiler before presentation. This generate-validate-fix loop ensures ground-truth syntax validation: the code either compiles or the LLM corrects it. A Copilot BYOK bridge provides interim chat-based AI access, but custom inline completion with compiler validation is the strategic path.
+The architecture layers two completion mechanisms -- deterministic popup completion via Langium and generative ghost text via a fine-tuned LLM -- with a compiler validation step that runs every AI-generated snippet through the BBj compiler before presentation. [Continue.dev](https://continue.dev/) provides the near-term delivery path for connecting fine-tuned models to the IDE, supporting both chat and tab completion with local Ollama models. The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) provides the BBj-specific intelligence layer: Langium parsing, scope resolution, generation detection, and semantic context that generic tools cannot offer. These are parallel strategies -- Continue.dev for model delivery, the language server for language understanding.
 :::
 
-[Chapter 3](/docs/fine-tuning) describes how to build a BBj-aware language model. This chapter answers the next question: how does that model reach the developer? The answer is IDE integration -- specifically, a VS Code extension that combines traditional language intelligence with LLM-powered code generation.
+[Chapter 3](/docs/fine-tuning) describes how to build a BBj-aware language model. This chapter answers the next question: how does that model reach the developer?
 
-The vision is an editor that understands all four BBj generations natively. When a developer types `#window!.` in a DWC class, the extension offers both a deterministic list of available members (from the Langium parser) and a generative multi-line suggestion (from the fine-tuned model) that matches the surrounding generation context. Before any suggestion reaches the developer, the BBj compiler validates it -- ensuring ground-truth syntax correctness that no amount of model training can guarantee alone. These are complementary mechanisms, not competing ones.
+BBj has zero representation in the training data of any mainstream AI coding tool. GitHub Copilot, Cursor, Codeium -- none of them have seen BBj source code during training. The result is predictable: generic copilots produce plausible-looking code that fails to compile. They guess at syntax, hallucinate method names, and confuse BBj with other BASIC variants. For a language with four distinct generations of syntax and idioms, "close enough" is not close at all.
 
-What makes this achievable rather than aspirational is that the foundation already exists. The bbj-language-server is a real, shipped product -- not a prototype or a proposal. Building AI-powered completion on top of it is an extension of working infrastructure, not a greenfield project.
+IDE integration for a zero-representation language like BBj needs three things: a model that understands BBj (the fine-tuned model from [Chapter 3](/docs/fine-tuning)), a delivery mechanism that reaches the editor (how the model's output appears as suggestions), and validation that catches remaining errors (the BBj compiler as a ground-truth check). This chapter addresses all three.
+
+Two parallel strategies make this practical. [Continue.dev](https://continue.dev/) provides the near-term path: an open-source IDE extension that connects local Ollama models to VS Code and JetBrains for both chat and inline completion, with a simple config file and no subscription required. The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) provides the long-term path: BBj-specific intelligence through Langium parsing, generation-aware completion, and compiler validation that no generic tool can offer. These strategies complement each other -- Continue.dev delivers the model, the language server provides the understanding.
+
+## The Near-Term Path: Continue.dev
+
+[Continue.dev](https://continue.dev/) is an open-source AI code assistant (Apache 2.0) that supports VS Code and JetBrains IDEs. It connects to local Ollama models for both conversational chat and inline tab completion -- the two capabilities most relevant to BBj development. Unlike Copilot BYOK (which limits local models to chat only), Continue.dev provides a complete local AI coding experience with a single configuration file.
+
+The critical insight for BBj: Continue.dev supports **separate models for different roles**. A larger instruction-tuned model handles chat, while a smaller FIM-capable model handles tab completion. This maps directly to the BBj fine-tuning strategy described in [Chapter 3](/docs/fine-tuning) -- the instruction-tuned BBj model serves chat, and a future FIM-trained BBj model would serve autocomplete.
+
+### Chat Mode: Works Today
+
+Chat mode uses an instruction-tuned model to answer conversational questions about BBj code. This works with the current training data format -- the 9,922 ChatML examples in the bbjllm training set are instruction-tuned, which is exactly what chat mode expects.
+
+The chat portion of Continue.dev's configuration points to a larger model via Ollama:
+
+```yaml
+models:
+  # Chat model -- instruction-tuned, handles conversational questions
+  # When the fine-tuned BBj model is ready, swap qwen2.5-coder:14b for bbj-coder:14b
+  - name: Qwen2.5 Coder 14B
+    provider: ollama
+    model: qwen2.5-coder:14b
+    roles:
+      - chat
+      - edit
+      - apply
+```
+
+The `roles` field assigns this model to chat, edit, and apply tasks. A developer can ask "How do I create a DWC window in BBj?" or "Convert this Visual PRO/5 code to object-oriented BBj" and receive responses from a model running entirely on their local machine. Today, this uses a generic Qwen2.5-Coder model; when the fine-tuned BBj model from Chapter 3 is ready, a single line change (`model: bbj-coder:14b`) connects BBj-specific intelligence to the same chat interface.
+
+### Tab Completion: Needs FIM-Trained Model
+
+Tab completion -- the dimmed ghost text that appears as you type -- uses a fundamentally different model format than chat. Where chat uses ChatML instruction format (`<|im_start|>`, `<|im_end|>`), tab completion uses FIM (Fill-in-the-Middle) format (`<|fim_prefix|>`, `<|fim_suffix|>`, `<|fim_middle|>`). Autocomplete models are intentionally small (1.5B-7B parameters) because latency matters more than raw capability for inline suggestions.
+
+The autocomplete portion of the configuration uses a separate, smaller model:
+
+```yaml
+models:
+  # Autocomplete model -- FIM-capable, provides inline ghost text
+  # When a FIM-trained BBj model is ready, swap qwen2.5-coder:1.5b for bbj-coder-fim:1.5b
+  - name: Qwen2.5 Coder 1.5B Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:1.5b
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      maxPromptTokens: 1024
+      debounceDelay: 250
+      modelTimeout: 150
+      maxSuffixPercentage: 0.2
+      prefixPercentage: 0.3
+      multilineCompletions: always
+```
+
+The `autocompleteOptions` control the inline completion behavior: `debounceDelay` prevents triggering on every keystroke, `modelTimeout` ensures suggestions appear quickly or not at all, and `multilineCompletions: always` enables multi-line ghost text suggestions. A generic Qwen2.5-Coder-1.5B provides general code completion today; BBj-specific tab completion requires a FIM-trained model (see [The FIM Training Gap](#the-fim-training-gap) below).
+
+### The FIM Training Gap
+
+The current bbjllm training data (9,922 examples) is in ChatML instruction format. This supports chat but **structurally cannot produce FIM completions**. The formats are fundamentally incompatible:
+
+**ChatML format** (instruction-tuned, for chat):
+```text
+<|im_start|>user
+How do I load data into a grid in BBj?<|im_end|>
+<|im_start|>assistant
+Use the setData method with a BBjRecordSet...<|im_end|>
+```
+
+**FIM format** (for tab completion):
+```text
+<|fim_prefix|>method public void loadOrder(BBjNumber orderId)
+    #currentOrderId = orderId
+    declare BBjRecordSet rs!
+    rs! = #getOrderRecordSet(orderId)
+    #custGrid!.<|fim_suffix|>
+    methodend<|fim_middle|>setData(rs!)<|endoftext|>
+```
+
+The FIM format uses PSM (Prefix-Suffix-Middle) strategy: the code before the cursor becomes the prefix, the code after becomes the suffix, and the model predicts the middle -- the code that fills the gap. This is how tab completion "knows" what to insert at the cursor position.
+
+The Qwen2.5-Coder Base model already has FIM capability from pretraining -- it understands the `<|fim_prefix|>`, `<|fim_suffix|>`, `<|fim_middle|>` tokens natively. But fine-tuning exclusively on ChatML instruction data (as the current bbjllm pipeline does) would overwrite this capability. Supporting both chat and tab completion requires either two separate models -- one instruction-tuned for chat, one FIM-trained for autocomplete -- or mixed FIM + instruction training data.
+
+Continue.dev handles this naturally with its role-based model assignment. The path forward:
+
+1. **Today:** Generic Qwen2.5-Coder models provide general-purpose chat and autocomplete
+2. **After instruction fine-tuning** ([Chapter 3](/docs/fine-tuning)): Swap in `bbj-coder:14b` for chat -- BBj-aware conversational assistance
+3. **After FIM fine-tuning** on BBj source code: Swap in `bbj-coder-fim:1.5b` for autocomplete -- BBj-aware tab completion
+
+The FIM fine-tuning step creates training data by sampling random cursor positions in BBj source files, splitting each into prefix/suffix/middle segments. This is a separate training pipeline from the instruction fine-tuning described in Chapter 3, using the same Qwen2.5-Coder Base model but with FIM-formatted data. The two-stage training approach from Chapter 3 (continued pretraining + instruction fine-tuning) produces the chat model; a parallel FIM fine-tuning step would produce the autocomplete model.
+
+### Full Configuration
+
+Continue.dev uses `~/.continue/config.yaml` (the older JSON format is deprecated but still works). Here is the complete configuration for a BBj development setup:
+
+```yaml
+name: BBj Development
+version: 0.0.1
+schema: v1
+
+models:
+  # Chat model -- instruction-tuned, handles conversational BBj questions
+  # Swap qwen2.5-coder:14b for bbj-coder:14b when the fine-tuned model is ready
+  - name: Qwen2.5 Coder 14B
+    provider: ollama
+    model: qwen2.5-coder:14b
+    roles:
+      - chat
+      - edit
+      - apply
+
+  # Autocomplete model -- FIM-capable, provides inline ghost text
+  # Swap qwen2.5-coder:1.5b for bbj-coder-fim:1.5b when the FIM-trained model is ready
+  - name: Qwen2.5 Coder 1.5B Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:1.5b
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      maxPromptTokens: 1024
+      debounceDelay: 250
+      modelTimeout: 150
+      maxSuffixPercentage: 0.2
+      prefixPercentage: 0.3
+      multilineCompletions: always
+
+context:
+  - provider: code
+  - provider: docs
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase
+```
+
+The configuration defines two models with distinct roles: a 14B instruction-tuned model for chat, edit, and apply tasks, and a 1.5B FIM-capable model for autocomplete. The context providers give Continue.dev access to code definitions, documentation, git diffs, terminal output, editor problems, folder structure, and codebase-wide search -- enriching both chat and completion with project context.
+
+Continue.dev's autocomplete implementation uses VS Code's `InlineCompletionItemProvider` API internally -- the same API described later in the [Ghost Text Architecture](#ghost-text-architecture) section. This creates a natural connection: Continue.dev delivers the "pragmatic now" (local model tab completion with a config file), while the bbj-language-server's planned ghost text integration provides the "strategic future" (BBj-aware completion with Langium semantic context, generation detection, and compiler validation).
 
 ## The Foundation: bbj-language-server
 
