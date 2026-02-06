@@ -40,10 +40,10 @@ Requirements for the documentation refresh milestone. Each maps to roadmap phase
 
 ### Chapter 7: Implementation Roadmap Restructure
 
-- [ ] **ROAD-01**: Completed work clearly separated from remaining work in restructured phase layout
-- [ ] **ROAD-02**: Forward-looking plan added with credible next steps based on research findings
-- [ ] **ROAD-03**: Progress comparison table updated ("Paper Status Jan 2025" vs "Actual Feb 2026")
-- [ ] **ROAD-04**: Cost and timeline estimates updated based on actual experience (7 milestones shipped)
+- [x] **ROAD-01**: Completed work clearly separated from remaining work in restructured phase layout
+- [x] **ROAD-02**: Forward-looking plan added with credible next steps based on research findings
+- [x] **ROAD-03**: Progress comparison table updated ("Paper Status Jan 2025" vs "Actual Feb 2026")
+- [x] **ROAD-04**: Cost and timeline estimates updated based on actual experience (7 milestones shipped)
 
 ### Cross-Chapter Consistency
 
@@ -98,10 +98,10 @@ Deferred to later milestones.
 | IDE-02 | Phase 34 | Complete |
 | IDE-03 | Phase 34 | Complete |
 | IDE-04 | Phase 34 | Complete |
-| ROAD-01 | Phase 35 | Pending |
-| ROAD-02 | Phase 35 | Pending |
-| ROAD-03 | Phase 35 | Pending |
-| ROAD-04 | Phase 35 | Pending |
+| ROAD-01 | Phase 35 | Complete |
+| ROAD-02 | Phase 35 | Complete |
+| ROAD-03 | Phase 35 | Complete |
+| ROAD-04 | Phase 35 | Complete |
 | CONS-01 | Phase 36 | Pending |
 | CONS-02 | Phase 36 | Pending |
 | CONS-03 | Phase 36 | Pending |
