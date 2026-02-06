@@ -5,29 +5,30 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** Phase 32 - Multi-Chapter Status & Tone Update
+**Current focus:** Phase 33 - Fine-Tuning Chapter Rewrite
 
 ## Current Position
 
 Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
-Phase: 32 (1 of 5 in v1.7)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-06 -- Completed 32-02-PLAN.md (Chapters 5 & 6 status update)
+Phase: 33 (2 of 5 in v1.7)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-06 -- Completed 33-01-PLAN.md (Core Content Rewrite)
 
-Progress: [##........] 29% (2/7 plans)
+Progress: [###.......] 43% (3/7 plans)
 
 ## Performance Metrics
 
 **Cumulative:**
 - v1.0-v1.6: 33 phases, 75 plans delivered across 7 milestones
-- v1.7: 2/7 plans
+- v1.7: 3/7 plans
 
 **By Phase (v1.7):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 32 | 2/2 | 56min | 28min |
+| 33 | 1/2 | 17min | 17min |
 
 ## Accumulated Context
 
@@ -42,6 +43,14 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - Ch5 architecture sections updated to distinguish current (Claude API + RAG) from planned (fine-tuned model) -- aspirational sections kept but marked as future
 - Ch6 corpus table replaced with full 7-source table including per-source chunk counts (51,134 total)
 - Ch5 Mermaid diagram left showing target architecture; Ch6 Mermaid diagram updated to show operational state
+
+**Phase 33 decisions (33-01):**
+- Qwen2.5-Coder-14B-Base as primary recommendation (FT-01): greater fine-tuning improvement, Base variant avoids alignment tax
+- Base vs Instruct analysis with alignment tax concept (FT-03): Shadow-FT citation, practical consequence framing
+- bbjcpl-based compile@1 as primary automated evaluation metric (FT-04): ground-truth syntax validation
+- Constructive framing of bbjllm as "valuable first attempt" (FT-05): names 3 blockers directly while acknowledging accomplishments
+- Two-repo training data pipeline with planned conversion (FT-06): training-data/ Markdown as contributor format, bbjllm ChatML as training input
+- Section ordering: bbjllm Foundation -> Base Model Selection -> Training Data -> QLoRA -> Evaluation
 
 **Research findings informing v1.7:**
 - 14B-Base recommended over 7B-Base (better fine-tuning improvement) and 32B-Instruct (alignment tax)
@@ -60,11 +69,11 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 32-02-PLAN.md (Chapters 5 & 6 status update) -- Phase 32 complete
+Stopped at: Completed 33-01-PLAN.md (Core Content Rewrite) -- Phase 33 plan 1 of 2
 Resume file: None
-Next action: `/gsd:plan-phase 33` (Fine-Tuning Chapter Rewrite)
+Next action: Execute 33-02-PLAN.md (Supporting Updates + Status)
