@@ -5,30 +5,30 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** Phase 33 - Fine-Tuning Chapter Rewrite
+**Current focus:** Phase 33 complete -- Fine-Tuning Chapter Rewrite
 
 ## Current Position
 
 Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
 Phase: 33 (2 of 5 in v1.7)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-02-06 -- Completed 33-01-PLAN.md (Core Content Rewrite)
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-02-06 -- Completed 33-02-PLAN.md (Supporting Updates + Status)
 
-Progress: [###.......] 43% (3/7 plans)
+Progress: [####......] 57% (4/7 plans)
 
 ## Performance Metrics
 
 **Cumulative:**
 - v1.0-v1.6: 33 phases, 75 plans delivered across 7 milestones
-- v1.7: 3/7 plans
+- v1.7: 4/7 plans
 
 **By Phase (v1.7):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 32 | 2/2 | 56min | 28min |
-| 33 | 1/2 | 17min | 17min |
+| 33 | 2/2 | 21min | 10.5min |
 
 ## Accumulated Context
 
@@ -52,6 +52,12 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - Two-repo training data pipeline with planned conversion (FT-06): training-data/ Markdown as contributor format, bbjllm ChatML as training input
 - Section ordering: bbjllm Foundation -> Base Model Selection -> Training Data -> QLoRA -> Evaluation
 
+**Phase 33 decisions (33-02):**
+- Version comparison table showing bbjllm pinned versions vs current Feb 2026 (FT-02): highlights critical bitsandbytes bug fix
+- Training Workflow section with artifact management, commit practices, iterative loop (FT-08)
+- Q4_K_M as recommended quantization format (over Q4_0): better quality-to-size ratio at marginal size increase
+- MCP tool status distinction: operational (search_bbj_knowledge, validate_bbj_syntax) vs planned (generate_bbj_code)
+
 **Research findings informing v1.7:**
 - 14B-Base recommended over 7B-Base (better fine-tuning improvement) and 32B-Instruct (alignment tax)
 - Two-stage training: continued pretraining on raw BBj, then instruction fine-tuning
@@ -66,6 +72,7 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - ANTHROPIC_API_KEY needed for chat interface
 - BBJ_HOME environment variable required for JavaDoc ingestion
 - Research summary at .planning/research/fine-tuning/SUMMARY.md -- essential for Phase 33
+- Chapter 3 fully rewritten (702 lines, 9 major sections, all 9 FT requirements addressed)
 
 ### Blockers/Concerns
 
@@ -74,6 +81,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 33-01-PLAN.md (Core Content Rewrite) -- Phase 33 plan 1 of 2
+Stopped at: Completed 33-02-PLAN.md (Supporting Updates + Status) -- Phase 33 complete (2/2 plans)
 Resume file: None
-Next action: Execute 33-02-PLAN.md (Supporting Updates + Status)
+Next action: Begin Phase 34 (next phase in v1.7 milestone)
