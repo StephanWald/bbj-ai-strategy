@@ -79,39 +79,39 @@ Deferred to later milestones.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STAT-01 | TBD | Pending |
-| STAT-02 | TBD | Pending |
-| STAT-03 | TBD | Pending |
-| STAT-04 | TBD | Pending |
-| FT-01 | TBD | Pending |
-| FT-02 | TBD | Pending |
-| FT-03 | TBD | Pending |
-| FT-04 | TBD | Pending |
-| FT-05 | TBD | Pending |
-| FT-06 | TBD | Pending |
-| FT-07 | TBD | Pending |
-| FT-08 | TBD | Pending |
-| FT-09 | TBD | Pending |
-| IDE-01 | TBD | Pending |
-| IDE-02 | TBD | Pending |
-| IDE-03 | TBD | Pending |
-| IDE-04 | TBD | Pending |
-| CHAT-01 | TBD | Pending |
-| CHAT-02 | TBD | Pending |
-| ROAD-01 | TBD | Pending |
-| ROAD-02 | TBD | Pending |
-| ROAD-03 | TBD | Pending |
-| ROAD-04 | TBD | Pending |
-| CONS-01 | TBD | Pending |
-| CONS-02 | TBD | Pending |
-| CONS-03 | TBD | Pending |
-| CONS-04 | TBD | Pending |
+| STAT-01 | Phase 32 | Pending |
+| STAT-02 | Phase 32 | Pending |
+| STAT-03 | Phase 32 | Pending |
+| STAT-04 | Phase 32 | Pending |
+| CHAT-01 | Phase 32 | Pending |
+| CHAT-02 | Phase 32 | Pending |
+| FT-01 | Phase 33 | Pending |
+| FT-02 | Phase 33 | Pending |
+| FT-03 | Phase 33 | Pending |
+| FT-04 | Phase 33 | Pending |
+| FT-05 | Phase 33 | Pending |
+| FT-06 | Phase 33 | Pending |
+| FT-07 | Phase 33 | Pending |
+| FT-08 | Phase 33 | Pending |
+| FT-09 | Phase 33 | Pending |
+| IDE-01 | Phase 34 | Pending |
+| IDE-02 | Phase 34 | Pending |
+| IDE-03 | Phase 34 | Pending |
+| IDE-04 | Phase 34 | Pending |
+| ROAD-01 | Phase 35 | Pending |
+| ROAD-02 | Phase 35 | Pending |
+| ROAD-03 | Phase 35 | Pending |
+| ROAD-04 | Phase 35 | Pending |
+| CONS-01 | Phase 36 | Pending |
+| CONS-02 | Phase 36 | Pending |
+| CONS-03 | Phase 36 | Pending |
+| CONS-04 | Phase 36 | Pending |
 
 **Coverage:**
 - v1.7 requirements: 27 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 27
+- Mapped to phases: 27/27
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-06*
-*Last updated: 2026-02-06 after research completion*
+*Last updated: 2026-02-06 after roadmap creation*
