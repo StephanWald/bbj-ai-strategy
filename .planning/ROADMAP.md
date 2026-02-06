@@ -97,7 +97,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 36-01: Cross-chapter consistency audit and corrections
+- [ ] 36-01-PLAN.md — Cross-chapter consistency fixes (10 text corrections) and build gate verification
 
 ## Progress
 
