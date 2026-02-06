@@ -1,18 +1,122 @@
 ---
 sidebar_position: 3
 title: "Fine-Tuning the Model"
-description: "How to create a BBj-aware language model using QLoRA fine-tuning on Qwen2.5-Coder, with self-hosted deployment via Ollama."
+description: "How to create a BBj-aware language model using QLoRA fine-tuning on Qwen2.5-Coder-14B-Base, with self-hosted deployment via Ollama."
 ---
 
 # Fine-Tuning the Model
 
 :::tip[TL;DR]
-We fine-tune [Qwen2.5-Coder-7B](https://qwenlm.github.io/blog/qwen2.5-coder-family/) using QLoRA via [Unsloth](https://unsloth.ai/) on a single $1,500 GPU, export to GGUF format, and serve through [Ollama](https://ollama.com/) for local, self-hosted inference. The result is a BBj-aware code model that customers can run on their own hardware with zero per-query costs and complete data privacy.
+We fine-tune [Qwen2.5-Coder-14B-Base](https://qwenlm.github.io/blog/qwen2.5-coder-family/) using a two-stage QLoRA approach -- continued pretraining on raw BBj source code, then instruction fine-tuning on curated ChatML examples -- informed by findings from the [bbjllm](https://gitlab.basis.cloud/bbj-llm) experiment. The resulting model is exported to GGUF format, evaluated using the bbjcpl compiler's compile@1 metric, and served through [Ollama](https://ollama.com/) for local, self-hosted inference with zero per-query costs and complete data privacy.
 :::
 
 The foundation of the entire BBj AI strategy is a fine-tuned language model. Every other component -- IDE integration, documentation chat, migration tooling -- depends on a model that actually understands BBj syntax, idioms, and multi-generational patterns. Generic LLMs cannot provide this. As [Chapter 1](/docs/bbj-challenge) establishes, BBj is effectively invisible in public training corpora. Fine-tuning bridges that gap.
 
-This chapter is the technical blueprint: what training data looks like, why we chose the base model we did, how QLoRA makes fine-tuning affordable, and how the finished model reaches end users through Ollama.
+This chapter is the technical blueprint: what the existing bbjllm experiment established and where the recommended approach diverges, why Qwen2.5-Coder-14B-Base is the recommended base model, how training data is structured and pipelined, how two-stage QLoRA training addresses the unique challenges of a zero-representation language, how to evaluate the results using BBj's own compiler, and how the finished model reaches end users through Ollama.
+
+## The bbjllm Foundation
+
+The [bbjllm repository](https://gitlab.basis.cloud/bbj-llm) represents a valuable first attempt at fine-tuning a BBj-aware code model. It demonstrated that fine-tuning is feasible for BBj, produced working training infrastructure, and created a substantial dataset of curated examples. The recommended approach described in this chapter builds on that foundation while addressing specific gaps identified through analysis of the training methodology.
+
+### What bbjllm Built
+
+The bbjllm experiment accomplished several important things:
+
+- **Working QLoRA pipeline:** A functional training script using Qwen2.5-Coder-32B-Instruct with 4-bit NF4 quantization, LoRA rank 32, and alpha 64 -- a sound, standard QLoRA configuration.
+- **9,922 curated ChatML examples:** A substantial dataset in ChatML format aligned with Qwen's native chat template, covering BBj comprehension, completion, and explanation tasks.
+- **Proved fine-tuning viability for BBj:** Demonstrated that QLoRA can adapt a general-purpose code model toward BBj-specific tasks, establishing the foundation for continued iteration.
+- **Established Qwen2.5-Coder as the right model family:** Validated that the Qwen2.5-Coder architecture is suitable for BBj fine-tuning, narrowing the model selection question to which variant and size.
+- **Correct target module selection:** Applied LoRA to all linear layers including MLP -- the recommended configuration for code tasks.
+
+### Current Approach vs. Recommended Approach
+
+| Aspect | bbjllm Current | Recommended Approach |
+|--------|---------------|---------------------|
+| **Model** | Qwen2.5-Coder-32B-Instruct | Qwen2.5-Coder-14B-Base |
+| **Model variant** | Instruct (pre-aligned) | Base (clean slate for domain adaptation) |
+| **Training stages** | Single stage (instruction fine-tuning only) | Two stages (continued pretraining + instruction fine-tuning) |
+| **Loss computation** | Full sequence (system + user + assistant) | Completion only (assistant response tokens) |
+| **Validation** | None (100% data used for training) | 90/10 train/validation split with periodic evaluation |
+| **Learning rate** | 2e-5 | 2e-4 to 5e-5 (QLoRA-recommended range) |
+| **Library stack** | PEFT 0.12.0 + transformers 4.44.0 | Unsloth 2026.1.4 (2-3x faster, 70% less VRAM) |
+| **Evaluation** | 3 hardcoded test questions | bbjcpl-based compile@1 metric + held-out test set |
+| **Artifact management** | Adapters on training server only | Version-controlled with model cards |
+
+### Gaps the Recommended Approach Addresses
+
+Analysis of the bbjllm training methodology identified three issues that should be resolved before the next training iteration.
+
+**1. No validation set.** The training script uses 100% of the 9,922 examples for training with zero held-out data. Without a validation set, there is no way to detect overfitting -- the model may memorize training examples rather than learning generalizable BBj patterns. The training loss will decrease regardless of whether the model is actually improving. **Fix:** Reserve 10% of examples as a validation set and configure `evaluation_strategy="steps"` to monitor validation loss during training.
+
+**2. Full-sequence loss computation.** The training script computes loss on the entire sequence: system prompt, user question, and assistant response. The system prompt ("You are an expert BBj programmer...") appears identically in all 9,922 examples, and the user questions are fixed input text. Computing gradients on these constant tokens wastes an estimated 30-40% of the gradient signal on tokens the model does not need to learn to generate. **Fix:** Mask non-assistant tokens in the loss computation (set labels to -100 for system and user tokens), or use TRL's SFTTrainer which handles completion-only training automatically.
+
+**3. Instruct model choice.** Fine-tuning Qwen2.5-Coder-32B-Instruct -- a model already trained to follow instructions -- on domain-specific BBj data risks degrading the instruction-following capability that makes the model useful in the first place. This phenomenon, known as the alignment tax, is discussed in detail in the [Base Model Selection](#the-alignment-tax) section below. **Fix:** Switch to a Base variant (14B-Base recommended) where domain adaptation starts from a clean foundation rather than overwriting existing instruction alignment.
+
+The recommended approach described in the remainder of this chapter builds on bbjllm's foundation -- the same model family, the same QLoRA method, the same curated dataset -- while addressing these three gaps to improve training outcomes.
+
+## Base Model Selection
+
+Choosing the right base model determines the ceiling for the fine-tuned result. The model must be capable enough to learn a new language from relatively few examples, licensed for commercial deployment, and available in a Base variant suitable for domain adaptation.
+
+:::info[Decision: Qwen2.5-Coder-14B-Base as Primary Recommendation]
+**Choice:** Qwen2.5-Coder-14B-Base for fine-tuning, selected based on research into training outcomes and alignment characteristics.
+
+**Rationale:** 14B shows greater improvement from fine-tuning than 7B (per [Qwen technical report](https://arxiv.org/html/2409.12186v3)), remains trainable on a single 24GB GPU, and the Base variant avoids the alignment tax of fine-tuning an already instruction-tuned model.
+
+**Alternatives considered:** 7B-Base (smaller but less fine-tuning headroom), 32B-Instruct (used by bbjllm; higher base quality but alignment tax makes domain adaptation counterproductive).
+
+**Status:** Active research -- bbjllm experiment used 32B-Instruct; research recommends switching to 14B-Base for next training iteration.
+:::
+
+### Why Qwen2.5-Coder
+
+The [Qwen2.5-Coder family](https://arxiv.org/html/2409.12186v3) (released September 2024 by Alibaba's Qwen team) represents the current state of the art for open-source code models at fine-tunable sizes. The bbjllm experiment validated this choice, and the recommended approach stays within the same model family. Key facts:
+
+- **Sizes available:** 0.5B, 1.5B, 3B, 7B, 14B, 32B (both Base and Instruct variants)
+- **Training data:** 5.5 trillion tokens -- 70% code, 20% text, 10% math -- covering 92+ programming languages
+- **Benchmarks:** The 14B-Instruct variant exceeds the 7B on all code benchmarks, while the 32B-Instruct matches GPT-4o on code generation tasks. Critically, the [Qwen technical report](https://arxiv.org/html/2409.12186v3) shows the 14B model demonstrates greater improvement from fine-tuning compared to smaller variants.
+- **License:** Apache 2.0 -- fully permissive for commercial use, modification, and redistribution
+- **FIM support:** Native fill-in-the-middle capability, critical for IDE code completion where the model must generate code between existing lines
+
+### Training Suitability Comparison
+
+The choice between model variants is primarily about training suitability -- how well the model responds to fine-tuning on a niche language like BBj:
+
+| Model | Parameters | Fine-Tuning Improvement | Base vs Instruct | Alignment Tax Risk | Recommendation |
+|-------|-----------|------------------------|-----------------|-------------------|---------------|
+| Qwen2.5-Coder-7B-Base | 7B | Moderate | Base (clean slate) | None | Starting point for experimentation |
+| **Qwen2.5-Coder-14B-Base** | **14B** | **High** (per Qwen technical report) | **Base (clean slate)** | **None** | **Primary recommendation** |
+| Qwen2.5-Coder-32B-Instruct | 32B | Low (alignment tax) | Instruct (pre-aligned) | High | Not recommended for domain fine-tuning |
+
+The 14B-Base model occupies the sweet spot: large enough to show substantial improvement from fine-tuning on new domain data, small enough to train on a single GPU, and available as a Base variant that avoids the alignment tax entirely.
+
+### The Alignment Tax
+
+Fine-tuning an Instruct model on BBj data risks degrading its ability to follow instructions -- the very capability that makes it useful. This is the alignment tax: the hidden cost of fine-tuning a model that has already been trained to follow instructions.
+
+The mechanism is straightforward. An Instruct model's weights encode *both* domain knowledge (how to write code) *and* instruction-following behavior (how to structure responses, handle multi-step prompts, refuse harmful requests). When you fine-tune on domain-specific BBj data, the training process cannot selectively update only the "code knowledge" portion of the weights. It overwrites both simultaneously. The model may learn BBj syntax but degrade its response quality, producing less structured answers, ignoring parts of complex prompts, or losing its ability to explain its reasoning.
+
+Research confirms this risk. The [Shadow-FT study](https://arxiv.org/abs/2505.12716) (ICLR 2025) demonstrates that directly fine-tuning Instruct models on domain data can lead to "marginal improvements and even performance degeneration." The authors propose fine-tuning a Base model instead and grafting the weight deltas onto the Instruct version -- evidence that the research community recognizes Instruct fine-tuning as problematic for domain adaptation.
+
+For BBj specifically, this is why the bbjllm experiment's choice of 32B-Instruct is identified as an area for improvement. The model may learn to generate syntactically valid BBj code, but it may simultaneously lose the instruction-following quality that makes a coding assistant useful -- producing code without adequate explanation, misunderstanding multi-part prompts, or generating responses that do not address what was asked.
+
+This is why the recommended approach uses 14B-Base, not 32B-Instruct. Starting from a Base model means the two-stage training process (continued pretraining for syntax, instruction fine-tuning for response quality) builds both capabilities from a clean foundation rather than risking degradation of existing alignment.
+
+### Landscape Comparison (as of February 2026)
+
+Beyond the three Qwen variants under active consideration, the broader code model landscape provides additional context:
+
+| Model | Size | FIM | License | Notes |
+|-------|------|-----|---------|-------|
+| **Qwen2.5-Coder (7B/14B/32B)** | 7-32B dense | Yes | Apache 2.0 | **Recommended family.** Proven fine-tuning ecosystem, Base + Instruct variants |
+| Qwen3 dense (0.6B-32B) | 0.6-32B dense | Yes | Apache 2.0 | Newer architecture; not yet evaluated for BBj fine-tuning |
+| Qwen3-Coder | 480B/30B MoE | Yes | Apache 2.0 | MoE-only (no dense variants); impractical for single-GPU fine-tuning |
+| CodeLlama-7B | 7B dense | Yes | Llama 2 | Superseded by Qwen family on all code benchmarks |
+| StarCoder2-7B | 7B dense | Yes | BigCode Open | Superseded by Qwen family on all code benchmarks |
+
+The original strategy paper (January 2025) listed CodeLlama, DeepSeek Coder, and StarCoder2 as candidates. All three have been superseded by Qwen2.5-Coder on code generation benchmarks. [Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) (released July 2025) offers impressive capabilities but ships only in large MoE sizes that are impractical for single-GPU fine-tuning and customer self-hosting. The Qwen3 dense models (non-Coder variants) exist but have not been evaluated for BBj fine-tuning. As the Qwen3 ecosystem matures, it may become the preferred base.
+
+Model selection is not a permanent decision. The fine-tuning pipeline described below is model-agnostic -- when a better base model emerges, we retrain on the same curated data.
 
 ## Training Data Structure
 
@@ -20,31 +124,50 @@ The quality of training data determines the quality of the fine-tuned model. For
 
 ### Format and Schema
 
-Each training example is a JSON object with structured metadata. The critical design choice is **generation labeling**: every example is tagged with the BBj generation(s) it applies to, so the model learns to distinguish between character UI patterns, Visual PRO/5 idioms, modern BBj GUI code, and DWC browser-based patterns.
+Each training example is a Markdown file with YAML front matter for metadata and structured content sections. The critical design choice is **generation labeling**: every example is tagged with the BBj generation(s) it applies to, so the model learns to distinguish between character UI patterns, Visual PRO/5 idioms, modern BBj GUI code, and DWC browser-based patterns.
 
-```json title="training-example-universal.json"
-{
-  "id": "universal-file-io-001",
-  "type": "comprehension",
-  "generation": "all",
-  "difficulty": "intermediate",
-  "instruction": "Explain this file operation",
-  "input": "OPEN (1)\"customer.dat\"\nREAD (1,KEY=custId$)name$,address$,balance\nCLOSE (1)",
-  "output": "This code reads a customer record from a keyed file:\n1. OPEN (1) opens 'customer.dat' on channel 1\n2. READ (1,KEY=custId$) reads the record matching custId$\n3. CLOSE (1) closes the file channel\n\nThis keyed file access pattern works across all BBj generations."
-}
+````markdown title="training-data/gui/hello-window.md"
+---
+title: "Hello World Window"
+type: completion
+generation: ["bbj-gui", "dwc"]
+difficulty: basic
+tags: [gui, window, sysgui, hello-world]
+description: "Create and display a basic BBj window"
+---
+
+## Code
+
+```bbj
+REM Hello World Window - Modern BBj
+sysgui! = BBjAPI().getSysGui()
+window! = sysgui!.addWindow(100, 100, 400, 300, "Hello World")
+window!.setCallback(window!.ON_CLOSE, "handleClose")
+
+process_events
+
+handleClose:
+    release
 ```
 
-```json title="training-example-modern.json"
-{
-  "id": "comp-modern-001",
-  "type": "completion",
-  "generation": ["bbj-gui", "dwc"],
-  "difficulty": "basic",
-  "instruction": "Complete the event handler setup",
-  "prefix": "class public MyApp\n  field private BBjTopLevelWindow window!\n  method public void init()\n    sysgui! = BBjAPI().getSysGui()\n    #window! = sysgui!.addWindow(100,100,400,300,\"Test\")\n    #button! = #window!.addButton(101,10,10,100,25,\"Click\")\n",
-  "completion": "    #button!.setCallback(#button!.ON_BUTTON_PUSH, #this!, \"onClick\")\n  methodend\n  method public void onClick(BBjButtonPushEvent event!)\n    rem Handle button click\n  methodend"
-}
-```
+## Expected Behavior
+
+A 400x300 pixel window appears at screen position (100,100)
+with the title "Hello World". The window remains open until
+the user closes it, at which point the program terminates cleanly.
+
+## Explanation
+
+1. **Get GUI manager**: `BBjAPI().getSysGui()` returns the
+   system GUI interface
+2. **Create window**: `addWindow(x, y, width, height, title)`
+   creates a top-level window
+3. **Handle close event**: `setCallback()` connects the
+   window's close event to a label
+4. **Event loop**: `process_events` starts the BBj event
+   processing loop
+5. **Cleanup**: `release` frees all resources and exits
+````
 
 The **generation label** uses a simple schema:
 
@@ -97,12 +220,12 @@ A fine-tuned model that has seen hundreds of examples like this will understand 
 
 ### Volume and Quality Targets
 
-The target is **10,000 to 50,000** labeled training examples. However, current research consistently shows that **data quality outweighs data quantity** for instruction fine-tuning. One thousand carefully curated, expert-reviewed examples can outperform ten thousand hastily generated ones.
+Current research consistently shows that **data quality outweighs data quantity** for instruction fine-tuning. One thousand carefully curated, expert-reviewed examples can outperform ten thousand hastily generated ones.
 
-The data collection strategy is sequential:
+The data collection strategy combines two independent efforts:
 
-1. **Manual curation (Phase 1):** 2,000-5,000 examples written and reviewed by BBj experts. These anchor the model's understanding of correct patterns.
-2. **Synthetic augmentation (Phase 2):** Use a larger model (Claude, GPT-4) to generate additional BBj examples from documentation and existing code samples. Human review filters for correctness.
+1. **bbjllm dataset:** 9,922 ChatML examples created independently, covering BBj comprehension, completion, and explanation tasks. This dataset has known quality issues (duplicate entries, formatting inconsistencies) that should be addressed before the next training iteration.
+2. **training-data/ repository (this repo):** 2 seed examples in Markdown format with JSON Schema validation, organized across 7 topic directories ready for expansion. This is the canonical format for new contributions.
 3. **Iterative expansion (Ongoing):** Analyze model failures in evaluation, create targeted examples for weak areas, retrain.
 
 :::info[Decision: Quality-First Data Strategy]
@@ -112,61 +235,36 @@ The data collection strategy is sequential:
 
 **Alternatives considered:** Bulk scraping of BBj source repositories (risk of including broken/outdated code), fully automated synthetic generation (risk of compounding errors without human review).
 
-**Status:** Approximately 10,000 training examples curated. Generation labeling system in active use. Ongoing expansion continues with targeted additions for underrepresented patterns.
+**Status:** The bbjllm repository contains 9,922 ChatML examples created independently. The training-data/ repository provides 2 seed examples in Markdown format with JSON Schema validation and contributor guides. Conversion pipeline from Markdown to ChatML is planned.
 :::
 
-## Base Model Selection
+### Training Data Pipeline
 
-Choosing the right base model determines the ceiling for the fine-tuned result. The model must be small enough to fine-tune on accessible hardware, capable enough to learn a new language from relatively few examples, and licensed for commercial deployment.
+Two repositories contribute to the training data, each serving a different role:
 
-:::info[Decision: Qwen2.5-Coder-7B-Base as Starting Point]
-**Choice:** [Qwen2.5-Coder-7B-Base](https://qwenlm.github.io/blog/qwen2.5-coder-family/) as the primary base model for fine-tuning. As of January 2026.
+**training-data/ (this repository):** The canonical source for new training examples. Contributors create Markdown files with YAML front matter specifying the example type, target generation(s), and difficulty level. Files are validated against a JSON Schema and organized by topic (`gui/`, `file-io/`, etc.). This format is human-readable, GitHub-renderable, and designed for expert review.
 
-**Rationale:** Best-in-class code generation benchmarks at the 7B parameter scale. Trained on 5.5 trillion tokens across 92+ programming languages. Apache 2.0 license allows unrestricted commercial use. Native fill-in-the-middle (FIM) support is essential for IDE code completion.
+**bbjllm (separate repository):** Contains 9,922 ChatML JSONL examples -- the actual input to the training script. These examples were created independently using a different workflow, not converted from the training-data/ Markdown format.
 
-**Alternatives considered:** See comparison table below.
+**Conversion pipeline (planned):** A `convert_to_chatml.py` script will transform training-data/ Markdown examples into ChatML JSONL suitable for training. This pipeline does not yet exist. The bbjllm examples and training-data/ examples are currently disconnected -- unifying them through a conversion pipeline is a planned improvement.
 
-**Status:** Selected for initial experiments. Subject to revision as models evolve.
-:::
+The intended flow from contribution to deployment:
 
-### Why Qwen2.5-Coder
+```mermaid
+graph LR
+    MD["Markdown<br/><i>contributor creates</i>"] --> CONVERT["convert_to_chatml.py<br/><i>planned</i>"]
+    CONVERT --> CHATML["ChatML JSONL<br/><i>training input</i>"]
+    CHATML --> TRAIN["QLoRA Training<br/><i>fine-tuned model</i>"]
+    TRAIN --> GGUF["GGUF Export<br/><i>deployment artifact</i>"]
 
-The [Qwen2.5-Coder family](https://arxiv.org/html/2409.12186v3) (released September 2024 by Alibaba's Qwen team) represents the current state of the art for open-source code models at fine-tunable sizes. Key facts:
+    style MD fill:#f0f0f0,stroke:#333
+    style CONVERT fill:#f4e8e8,stroke:#8a2d2d
+    style CHATML fill:#e8e8f4,stroke:#2d2d8a
+    style TRAIN fill:#e8f4e8,stroke:#2d8a2d
+    style GGUF fill:#e8f4e8,stroke:#2d8a2d
+```
 
-- **Sizes available:** 0.5B, 1.5B, 3B, 7B, 14B, 32B (both Base and Instruct variants)
-- **Training data:** 5.5 trillion tokens -- 70% code, 20% text, 10% math -- covering 92+ programming languages
-- **Benchmarks:** The 7B-Instruct variant achieves [88.4% on HumanEval](https://qwenlm.github.io/blog/qwen2.5-coder-family/), surpassing models three times its size. The 32B-Instruct matches GPT-4o on code generation tasks.
-- **License:** Apache 2.0 -- fully permissive for commercial use, modification, and redistribution
-- **FIM support:** Native fill-in-the-middle capability, critical for IDE code completion where the model must generate code between existing lines
-
-### Model Comparison (as of January 2026)
-
-| Model | Size | HumanEval | FIM | License | Fine-Tune Friendly | Notes |
-|-------|------|-----------|-----|---------|---------------------|-------|
-| **Qwen2.5-Coder-7B** | 7B | 88.4% | Yes | Apache 2.0 | Yes (single GPU) | **Recommended** |
-| Qwen2.5-Coder-14B | 14B | Higher | Yes | Apache 2.0 | Yes (24GB+ VRAM) | If hardware allows |
-| Qwen2.5-Coder-32B | 32B | GPT-4o level | Yes | Apache 2.0 | Multi-GPU needed | Best quality, higher cost |
-| CodeLlama-7B | 7B | ~62% | Yes | Llama 2 | Yes | Surpassed; not recommended for new projects |
-| StarCoder2-7B | 7B | ~65% | Yes | BigCode Open | Yes | Benchmark-surpassed by Qwen family |
-| DeepSeek-V3 | 671B MoE | Very high | Yes | Custom | No (too large) | Cloud-only; not self-hostable |
-
-The original strategy paper (January 2025) listed CodeLlama, DeepSeek Coder, and StarCoder2 as candidates. All three have been surpassed by Qwen2.5-Coder on code generation benchmarks. For a new fine-tuning project in 2026, Qwen2.5-Coder is the clear starting point.
-
-### Size Rationale
-
-We recommend **7B parameters** as the starting point:
-
-- **Fine-tuning:** A 7B model can be fine-tuned on a single consumer GPU (RTX 4090, 24GB VRAM) using QLoRA. No multi-GPU setup or cloud compute required.
-- **Inference:** A 7B model quantized to 4-bit (Q4_0) requires approximately 4GB of RAM, making it accessible on virtually any modern workstation.
-- **Quality:** For domain-specific tasks like BBj code generation, a well-fine-tuned 7B model can match or exceed a general-purpose 70B model. The fine-tuning data compensates for the smaller parameter count.
-
-If hardware budgets allow, the 14B variant offers improved quality while remaining fine-tunable on a single 24GB+ GPU. The 32B variant requires multi-GPU setups but delivers the highest quality.
-
-### A Note on Newer Models
-
-[Qwen3-Coder](https://github.com/QwenLM/Qwen3-Coder) was released in July 2025 with impressive capabilities (256K native context, 1M with extrapolation). However, it currently ships only in large Mixture-of-Experts (MoE) sizes -- 480B-A35B and 30B-A3B -- which are impractical for single-GPU fine-tuning and customer self-hosting. As the Qwen3 family matures with smaller dense variants, it may become the preferred base. For now, Qwen2.5-Coder's proven fine-tuning ecosystem and practical size range make it the better choice.
-
-Model selection is not a permanent decision. The fine-tuning pipeline we describe below is model-agnostic -- when a better base model emerges, we retrain on the same curated data.
+The bbjllm dataset also has known quality issues -- approximately 375 duplicate entries and 60 examples with formatting inconsistencies -- that should be cleaned before the next training run. These are manageable data preprocessing tasks, not fundamental problems with the dataset.
 
 ## The QLoRA Fine-Tuning Approach
 
