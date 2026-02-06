@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-05)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** Ready for v1.7 planning
+**Current focus:** v1.7 Documentation Refresh & Fine-Tuning Strategy
 
 ## Current Position
 
-Milestone: v1.6 Data Expansion — SHIPPED ✓
-Phase: 31 of 31 (Training Data Repository) — Complete ✓
-Plan: N/A — milestone complete
-Status: Ready to plan next milestone
-Last activity: 2026-02-05 — v1.6 milestone archived
+Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-06 — Milestone v1.7 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -67,7 +67,7 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 
 ## Session Continuity
 
-Last session: 2026-02-05
-Stopped at: v1.6 milestone archived
+Last session: 2026-02-06
+Stopped at: v1.7 milestone started, defining requirements
 Resume file: None
-Next action: `/gsd:new-milestone` to define v1.7 scope
+Next action: Research → Requirements → Roadmap

@@ -65,9 +65,18 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 
 ### Active
 
-**Current Milestone: Ready for v1.7 planning**
+**Current Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy**
 
-No active requirements — v1.6 shipped. Run `/gsd:new-milestone` to define v1.7 scope.
+**Goal:** Full refresh of all 7 documentation chapters to reflect actual project state (internal exploration), with research-backed fine-tuning strategy analysis and forward-looking implementation roadmap.
+
+**Target features:**
+- Update all 7 chapters' status sections to accurately reflect current state
+- Correct tone: nothing is "production" — everything is "internal exploration" at best
+- Rewrite Chapter 3 (Fine-Tuning) based on actual bbjllm repo (32B-Instruct + PEFT, not 7B-Base + Unsloth) with research-backed critique and recommendations
+- Update Chapter 7 (Implementation Roadmap) with restructured phases showing completed work + credible forward plan
+- Report RAG system, web chat, MCP server, and compiler validation as operational for internal exploration
+- Add training workflow recommendations (artifact management, evaluation practices, what to commit back)
+- Research current LLM fine-tuning best practices (2026) to inform recommendations
 
 ### Out of Scope
 
@@ -90,7 +99,7 @@ No active requirements — v1.6 shipped. Run `/gsd:new-milestone` to define v1.7
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.6 shipped 2026-02-05. Data expansion milestone adding BBjAPI JavaDoc ingestion (695 chunks from 359 classes) and training data infrastructure (JSON Schema validation, 7 topic directories, 2 seed examples). Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Anthropic SDK, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x + FastMCP. 3,015 lines docs content + ~8,700 lines Python source + 340+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy.
+- **Current state:** v1.7 started 2026-02-06. Documentation refresh milestone to update all chapters against actual progress. Separate fine-tuning repo at `/Users/beff/_workspace/bbjllm` (Qwen2.5-Coder-32B-Instruct, QLoRA via PEFT, 9,922 ChatML training examples). Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Anthropic SDK, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x + FastMCP. 3,015 lines docs content + ~8,700 lines Python source + 340+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy.
 - **Alpha testers:** Internal BASIS engineers with BBj installed locally. Most will access via shared server; some may run locally. Engineers have Claude Desktop/Code access and bbjcpl available on their machines.
 - **Source data inventory (v1.4):** Flare project at `/Users/beff/bbjdocs/` (7,087 .htm topics), PDF at project root, 3 MDX tutorial sites (DWC, beginner, DB modernization — 98 .md files), BBj source code in SVN checkout + tutorial samples (1,363+ .bbj files), WordPress articles at basis.cloud (HTTP), documentation.basis.cloud for web crawl (HTTP).
 - **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
