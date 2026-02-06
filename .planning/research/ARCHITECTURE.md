@@ -1,829 +1,805 @@
-# Architecture: v1.5 Alpha-Ready Feature Integration
+# Architecture: Fine-Tuned Model Integration with RAG + MCP System
 
-**Milestone:** v1.5 Alpha-Ready RAG System
-**Researched:** 2026-02-03
-**Confidence:** HIGH (existing codebase analysis verified, SDK docs confirmed via web research)
+**Milestone:** v1.7 Documentation Refresh & Fine-Tuning Strategy
+**Researched:** 2026-02-06
+**Mode:** Ecosystem (architecture dimension)
+**Overall confidence:** MEDIUM (model serving path verified; generate_bbj_code implementation is design recommendation; IDE integration options verified against current docs)
 
-> **Context:** v1.4 is a working Docker Compose system (pgvector + FastAPI app at :10800, MCP server via stdio on host, Ollama on host). This document defines how v1.5 features integrate with the existing architecture -- not a redesign. Every recommendation references specific existing files and functions.
-
----
-
-## 1. Existing Component Map (v1.4 Baseline)
-
-```
-                        macOS Host
-                   +---------------------+
-                   |   Ollama :11434     |  (Qwen3-Embedding-0.6B)
-                   |   bbjcpl compiler   |  (BBj toolchain)
-                   +----------+----------+
-                              |
-                host.docker.internal:11434
-                              |
-       Docker Compose Network (bbj-rag-net)
-  +------------------------------------------------------+
-  |                                                      |
-  |  +------------------+    +------------------------+  |
-  |  | db (pgvector)    |    | app (FastAPI)          |  |
-  |  | pg17 + pgvector  |    |                        |  |
-  |  | :5432            |<-->| uvicorn :8000          |  |
-  |  |                  |    | POST /search           |  |
-  |  | 50,439 chunks    |    | GET  /stats            |  |
-  |  | HNSW + GIN idx   |    | GET  /health           |  |
-  |  +------------------+    +------------------------+  |
-  +------------------------------------------------------+
-                              |
-                        :10800 (mapped)
-                              |
-                   +----------+----------+
-                   |  MCP Server (host)  |  stdio transport
-                   |  bbj-mcp process    |  spawned by Claude Desktop
-                   |  -> HTTP to :10800  |
-                   +---------------------+
-```
-
-### Key Existing Files
-
-| File | Role | Lines |
-|------|------|-------|
-| `rag-ingestion/docker-compose.yml` | Service orchestration: `db` + `app` | 62 |
-| `rag-ingestion/src/bbj_rag/app.py` | FastAPI lifespan: pool, settings, ollama client on `app.state` | 89 |
-| `rag-ingestion/src/bbj_rag/api/routes.py` | `/search` and `/stats` endpoints | 124 |
-| `rag-ingestion/src/bbj_rag/api/deps.py` | DI: `get_conn`, `get_settings`, `get_ollama_client` | 33 |
-| `rag-ingestion/src/bbj_rag/api/schemas.py` | `SearchRequest`, `SearchResponse`, `SearchResultItem` | 51 |
-| `rag-ingestion/src/bbj_rag/search.py` | `hybrid_search`, `async_hybrid_search`, `dense_search`, `bm25_search` | 280 |
-| `rag-ingestion/src/bbj_rag/mcp_server.py` | FastMCP `search_bbj_knowledge` tool, stdio, proxies to REST API | 111 |
-| `rag-ingestion/src/bbj_rag/ingest_all.py` | Sequential ingestion CLI with resume, `--parallel` stub | 454 |
-| `rag-ingestion/src/bbj_rag/embedder.py` | `OllamaEmbedder.embed_batch()`, sync, uses `ollama.embed()` | 105 |
-| `rag-ingestion/src/bbj_rag/config.py` | Pydantic Settings with `BBJ_RAG_` prefix | 99 |
-| `rag-ingestion/src/bbj_rag/pipeline.py` | `run_pipeline()`: parse -> intelligence -> chunk -> embed -> store | 214 |
-| `rag-ingestion/sql/schema.sql` | chunks table, HNSW index, GIN indexes, `rrf_score()` function | 59 |
+> **Context:** The RAG system is operational (v1.6). The fine-tuning repo (`bbjllm`) trains Qwen2.5-Coder-32B-Instruct with QLoRA/PEFT on 9,922 ChatML examples targeting a remote GPU server. The documentation (Chapter 2) describes a `generate_bbj_code` MCP tool and a generate-validate-fix loop that do not yet exist. This research defines the realistic integration architecture and identifies what the documentation should say.
 
 ---
 
-## 2. New Features and Where They Live
+## 1. Current System Topology (Actual State)
 
-### 2.1 Chat UI (New Route on Existing FastAPI App)
+```
+                         macOS Host (Developer)
+                    +---------------------------+
+                    |  Ollama :11434            |  Qwen3-Embedding-0.6B (embeddings)
+                    |  bbjcpl compiler          |  BBj syntax validation
+                    +------------+--------------+
+                                 |
+                   host.docker.internal:11434
+                                 |
+        Docker Compose Network (bbj-rag-net)
+   +----------------------------------------------------------+
+   |                                                          |
+   |  +------------------+     +---------------------------+  |
+   |  | db (pgvector)    |     | app (FastAPI)             |  |
+   |  | pg17 + pgvector  |     |                           |  |
+   |  | :5432            |<--->| GET  /health              |  |
+   |  |                  |     | POST /search              |  |
+   |  | 51K+ chunks      |     | GET  /stats               |  |
+   |  | HNSW + GIN idx   |     | GET  /chat                |  |
+   |  +------------------+     | POST /chat/stream         |  |
+   |                           | POST /mcp (Streamable HTTP)|  |
+   |                           +---------------------------+  |
+   +----------------------------------------------------------+
+                                 |
+                           :10800 (mapped)
+                                 |
+               +--------+--------+--------+
+               |                          |
+   Claude Desktop (MCP stdio)    Web Browser (/chat)
+   Claude Desktop (MCP HTTP)     Claude API (chat backend)
 
-**Decision: Add routes to the existing FastAPI app, not a separate container.**
 
-Rationale:
-- The app container already runs FastAPI with uvicorn at :8000
-- Adding HTML routes is a one-line `app.include_router()` in `app.py`
-- No CORS issues (same origin for API + UI)
-- No new Docker service, no new port mapping
-- The Chat UI needs to call `/search` and a new `/chat` endpoint -- same-origin requests are simplest
+                    Remote GPU Server
+                    +---------------------------+
+                    |  bbjllm repo              |
+                    |  Qwen2.5-Coder-32B        |
+                    |  QLoRA training (PEFT)     |
+                    |  9,922 ChatML examples     |
+                    |  NOT connected to RAG      |
+                    +---------------------------+
+```
 
-**Pattern: Jinja2 templates + HTMX + SSE for streaming**
+### What Exists (Operational)
 
-This is the standard pattern for Python-first chat UIs without a JS build toolchain. The project already has zero frontend dependencies. HTMX adds interactivity via HTML attributes. SSE (Server-Sent Events) handles streaming Claude API responses.
+| Component | Status | Location |
+|-----------|--------|----------|
+| RAG pipeline (pgvector, 51K+ chunks) | Operational | Docker Compose |
+| FastAPI REST API (/search, /stats, /health) | Operational | Docker Compose |
+| MCP server (search_bbj_knowledge, validate_bbj_syntax) | Operational | stdio + Streamable HTTP |
+| Web chat (/chat, Claude API, SSE streaming) | Operational | Docker Compose |
+| Compiler validation (bbjcpl -N) | Operational | Host-side subprocess |
+| Training data repo (2 seed examples, JSON Schema) | Operational | training-data/ |
 
-**New files:**
+### What Does NOT Exist
 
-| File | Purpose |
-|------|---------|
-| `src/bbj_rag/chat/__init__.py` | Chat module package |
-| `src/bbj_rag/chat/routes.py` | FastAPI router: `GET /chat` (HTML page), `POST /chat/send` (SSE stream) |
-| `src/bbj_rag/chat/claude.py` | Anthropic API client wrapper: RAG context assembly + streaming |
-| `src/bbj_rag/chat/templates/chat.html` | Jinja2 template: chat interface with HTMX |
-| `src/bbj_rag/chat/static/chat.css` | Minimal styling (Tailwind CDN or plain CSS) |
+| Component | Doc Chapter | Status |
+|-----------|-------------|--------|
+| `generate_bbj_code` MCP tool | Ch. 2 describes it | NOT IMPLEMENTED |
+| Generate-validate-fix loop (automated) | Ch. 2 describes sequence diagram | NOT IMPLEMENTED (chat has manual validate-fix) |
+| Fine-tuned model served via Ollama | Ch. 3 describes it | NOT TRAINED YET (training script exists) |
+| Connection between bbjllm and RAG system | Ch. 2 implies it | NO CONNECTION |
+| Training data conversion pipeline (markdown to ChatML) | Implied by both repos | DOES NOT EXIST |
 
-**Modified files:**
+---
 
-| File | Change |
-|------|--------|
-| `src/bbj_rag/app.py` | Add `app.include_router(chat_router)`, mount static files, add Jinja2 templates |
-| `rag-ingestion/pyproject.toml` | Add `anthropic>=0.77,<1`, `sse-starlette>=2.0,<3`, `jinja2>=3.1,<4` dependencies |
-| `src/bbj_rag/config.py` | Add `anthropic_api_key: str`, `anthropic_model: str` settings |
-| `rag-ingestion/docker-compose.yml` | Pass `ANTHROPIC_API_KEY` env var to app container |
+## 2. Model Serving Architecture
 
-**Integration point:** `chat/routes.py` calls the existing `async_hybrid_search()` from `search.py` via the existing `get_conn` dependency, then passes results to the Claude API.
+### The Path from QLoRA Training to Ollama Serving
 
-### 2.2 Claude API Integration (New Module, Calls Existing Search)
+The bbjllm repo trains a QLoRA adapter on Qwen2.5-Coder-32B-Instruct using PEFT. The adapter output is safetensors format at `/usr2/yasser_experiment/trained_models/bbj_qwen_coder_adapters_32b_4bit/`. To serve via Ollama, there are two paths:
 
-**Decision: New `chat/claude.py` module as the RAG-to-LLM bridge.**
+**Path A: GGUF Conversion (Recommended)**
 
-The Claude API integration is the glue between retrieval and generation. It does not belong in `routes.py` (too much logic) or in `search.py` (search should not know about LLMs).
+```
+QLoRA Adapter (safetensors)
+        |
+        v
+convert_lora_to_gguf.py (llama.cpp)  -- converts adapter to GGUF format
+        |
+        v
+Ollama Modelfile:
+  FROM qwen2.5-coder:32b-instruct-q4_K_M
+  ADAPTER ./bbj-adapter.gguf
+        |
+        v
+ollama create bbj-coder -f Modelfile
+        |
+        v
+ollama run bbj-coder
+  (or via OpenAI-compatible API at :11434/v1/chat/completions)
+```
 
-**Architecture:**
+**Path B: Direct Safetensors Import (Simpler but less tested for Qwen2)**
+
+```
+Ollama Modelfile:
+  FROM qwen2.5-coder:32b-instruct
+  ADAPTER /path/to/adapter/directory/
+        |
+        v
+ollama create bbj-coder -f Modelfile
+```
+
+**Confidence: MEDIUM.** Ollama's import docs list supported architectures for safetensors adapter import as "Llama, Mistral, Gemma." Qwen2 is NOT explicitly listed for safetensors adapter import, though the Qwen2 architecture is fully supported for base model inference. GitHub issue #8132 reports issues with fine-tuned Qwen2.5-Instruct models. The GGUF conversion path via llama.cpp's `convert_lora_to_gguf.py` is more reliable because llama.cpp's Qwen2 architecture support is mature.
+
+**Critical consideration for 32B model:** The 32B parameter model at Q4 quantization requires approximately 18-20 GB VRAM. This is feasible on modern consumer GPUs (RTX 4090: 24GB) or Apple Silicon (M2 Ultra: 192GB unified). For a shared internal server, this is the primary hardware constraint. Inference latency for a 32B Q4 model on a single GPU is approximately 10-30 tokens/second, which is acceptable for code generation but slow for interactive chat.
+
+**Recommendation for documentation:** State that the fine-tuned model will be served via Ollama's OpenAI-compatible API at `http://<server>:11434/v1/chat/completions`. This is the same interface already used for embeddings, requiring no new infrastructure. The GGUF conversion step should be documented as a required post-training step.
+
+### How generate_bbj_code Connects to Ollama
+
+The `generate_bbj_code` MCP tool is the bridge between the MCP protocol and the fine-tuned model. It does NOT call Claude API -- it calls the local Ollama instance serving the fine-tuned BBj model.
+
+**Recommended implementation:**
 
 ```python
-# src/bbj_rag/chat/claude.py (conceptual)
+# In mcp_server.py (addition to existing tools)
 
-from anthropic import AsyncAnthropic
-from bbj_rag.search import SearchResult
+import httpx
 
-async def stream_rag_response(
-    query: str,
-    search_results: list[SearchResult],
-    client: AsyncAnthropic,
-    model: str = "claude-sonnet-4-5-20250929",
-) -> AsyncIterator[str]:
-    """Assemble RAG context from search results, stream Claude response."""
+OLLAMA_MODEL_URL = os.environ.get(
+    "BBJ_CODE_MODEL_URL", "http://localhost:11434"
+)
+BBJ_CODE_MODEL = os.environ.get("BBJ_CODE_MODEL", "bbj-coder")
 
-    system_prompt = build_system_prompt()  # BBj expert instructions
-    context = format_search_context(search_results)  # Results as numbered blocks
 
-    async with client.messages.stream(
-        model=model,
-        max_tokens=2048,
-        system=system_prompt,
-        messages=[
-            {"role": "user", "content": f"{context}\n\nQuestion: {query}"}
-        ],
-    ) as stream:
-        async for text in stream.text_stream:
-            yield text
+@mcp.tool()
+async def generate_bbj_code(
+    prompt: str,
+    generation: str = "dwc",
+    context: str | None = None,
+    max_tokens: int = 512,
+) -> str:
+    """Generate BBj code using the fine-tuned BBj model.
+
+    Uses the locally hosted fine-tuned Qwen2.5-Coder model via Ollama.
+    Optionally enriches the prompt with RAG-retrieved documentation.
+
+    Args:
+        prompt: Natural language description of the code to generate.
+        generation: Target BBj generation (character, vpro5, bbj-gui, dwc).
+        context: Optional surrounding code or additional context.
+        max_tokens: Maximum tokens in the generated response.
+    """
+    # Step 1: Retrieve relevant documentation from RAG
+    rag_context = ""
+    try:
+        rag_results = await _search_rag(prompt, generation, limit=3)
+        if rag_results:
+            rag_context = _format_rag_context(rag_results)
+    except Exception:
+        pass  # RAG enrichment is optional; model works without it
+
+    # Step 2: Build prompt for the fine-tuned model
+    system_msg = (
+        f"You are an expert BBj programmer. Generate {generation}-generation "
+        f"BBj code. Use correct syntax for the target generation."
+    )
+    if rag_context:
+        system_msg += f"\n\nRelevant documentation:\n{rag_context}"
+
+    user_msg = prompt
+    if context:
+        user_msg = f"Context:\n{context}\n\nTask: {user_msg}"
+
+    # Step 3: Call fine-tuned model via Ollama OpenAI-compatible API
+    messages = [
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": user_msg},
+    ]
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            f"{OLLAMA_MODEL_URL}/v1/chat/completions",
+            json={
+                "model": BBJ_CODE_MODEL,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": 0.7,
+            },
+        )
+        resp.raise_for_status()
+
+    result = resp.json()
+    return result["choices"][0]["message"]["content"]
 ```
 
 **Key design decisions:**
 
-- **Async streaming:** Use `client.messages.stream()` (high-level) which returns a context manager with `.text_stream` async iterator. This maps directly to SSE `EventSourceResponse`.
-- **Search results as context, not tool calls:** The chat endpoint calls `async_hybrid_search()` itself and injects results into the prompt. Claude does not call search as a tool -- that would add latency (LLM decides to search, search runs, LLM reads results) for no benefit when we always want to search.
-- **System prompt with BBj expertise:** The system prompt instructs Claude to act as a BBj programming expert, cite sources from the provided context, and flag deprecated APIs. This is configuration, not code -- store in a text file or constant.
-- **Citation format:** Search results include `source_url`, `title`, and `content`. The system prompt instructs Claude to reference these. The frontend renders citations as links.
+1. **Uses Ollama's OpenAI-compatible API**, not the native Ollama API. This allows swapping in vLLM or any OpenAI-compatible server without code changes.
+2. **RAG enrichment is optional.** The fine-tuned model has BBj knowledge baked in from training. RAG provides supplemental context (API signatures, latest docs) but is not required for every generation request.
+3. **Separate from the chat endpoint.** The `/chat` endpoint uses Claude API with RAG context for documentation Q&A. The `generate_bbj_code` tool uses the fine-tuned model for code generation. These are different models for different tasks.
 
-**Anthropic SDK version:** v0.77.0 (Jan 2026, latest). The `AsyncAnthropic` client and `.stream()` method are stable API. HIGH confidence.
+### How generate_bbj_code Differs from Claude API Chat
 
-### 2.3 bbjcpl Compiler Validation (Host-Side, Not in Docker)
+| Aspect | /chat (Claude API) | generate_bbj_code (Fine-tuned Model) |
+|--------|-------------------|--------------------------------------|
+| Model | Claude Sonnet 4.5 (cloud) | bbj-coder via Ollama (local) |
+| Primary use | Documentation Q&A, explanations | Code generation, completions |
+| RAG dependency | Required (grounding for citations) | Optional (enrichment only) |
+| Cost | Per-token (Anthropic billing) | Zero per-query (local inference) |
+| Latency | 500-1500ms first token (network) | 200-500ms first token (local) |
+| BBj knowledge source | RAG retrieval + Claude's training | Fine-tuned weights + optional RAG |
+| Quality for code | Good with RAG context, but Claude invents syntax | Trained on actual BBj syntax |
+| Quality for explanations | Excellent (strong instruction following) | Weaker (32B vs frontier model) |
+| Validation | Manual validate-fix in chat stream | Automated loop possible via MCP |
+| Privacy | Code sent to Anthropic API | Fully local |
 
-**Decision: Validation runs as a server-side subprocess, not client-side.**
+**Recommendation for documentation:** The two paths should be described as complementary, not competing. Claude API excels at documentation Q&A and explanations. The fine-tuned model excels at code generation. A developer asking "How do I create a BBj window?" gets a Claude-powered explanation with cited documentation. A developer asking for code generation gets the fine-tuned model output with compiler validation.
 
-The bbjcpl compiler is installed on the engineer's host machine (part of the BBj toolchain). It is NOT inside the Docker container. This creates an architectural boundary.
+---
 
-**Two validation contexts:**
+## 3. Generate-Validate-Fix Loop
 
-| Context | Where Code Runs | Where bbjcpl Runs | How They Connect |
-|---------|-----------------|-------------------|------------------|
-| MCP tool responses | MCP server (host process) | Host | Direct subprocess call |
-| Chat UI responses | FastAPI (Docker container) | NOT available | Cannot validate from Docker |
+### What Chapter 2 Describes (Conceptual)
 
-**Architecture for MCP validation (straightforward):**
+Chapter 2 shows a sequence diagram where:
+1. MCP host calls `search_bbj_knowledge` for context
+2. MCP host calls `generate_bbj_code` with enriched prompt
+3. MCP host calls `validate_bbj_syntax` with generated code
+4. If invalid, MCP host calls `generate_bbj_code` again with errors
+5. Loop continues until valid or max iterations
 
-The MCP server already runs on the host. Add a validation helper:
+### What Already Exists (Partial Implementation)
 
-```python
-# src/bbj_rag/validation.py (conceptual)
-
-import subprocess
-import tempfile
-
-def validate_bbj_code(code: str, bbjcpl_path: str = "bbjcpl") -> ValidationResult:
-    """Write code to temp file, run bbjcpl, parse output."""
-    with tempfile.NamedTemporaryFile(suffix=".bbj", mode="w", delete=False) as f:
-        f.write(code)
-        f.flush()
-        result = subprocess.run(
-            [bbjcpl_path, f.name],
-            capture_output=True, text=True, timeout=10,
-        )
-    return parse_compiler_output(result.stdout, result.stderr, result.returncode)
-```
-
-**New file:** `src/bbj_rag/validation.py` -- shared validation logic, used by MCP server.
-
-**Modified file:** `src/bbj_rag/mcp_server.py` -- add `validate_bbj_code` tool that extracts code blocks from context and validates them.
-
-**Architecture for Chat UI validation (requires design choice):**
-
-Three options, ranked by recommendation:
-
-1. **RECOMMENDED: Validation proxy endpoint on host MCP server.** Add a `/validate` HTTP endpoint to the MCP server (when running in HTTP mode) or create a lightweight validation microservice on the host. The chat UI calls this endpoint. This keeps bbjcpl on the host where it belongs.
-
-2. **Alternative: Mount bbjcpl into Docker container.** Bind-mount the BBj installation directory into the app container. This works but couples the container to the host's BBj installation and adds complexity. BBj is a JVM-based toolchain; the container would need a JRE.
-
-3. **Alternative: Client-side validation API.** Expose bbjcpl as a standalone HTTP service on the host, called directly from the browser. Requires CORS, separate port, separate process management.
-
-**Recommendation:** Option 1. In v1.5, the MCP server is being upgraded to Streamable HTTP anyway (see 2.4). Once it has an HTTP endpoint, add a `validate_bbj_code` tool that the chat backend can call as an MCP client. This unifies the validation path: both MCP and chat use the same tool.
-
-**Practical v1.5 approach:** For the alpha, validation in the chat UI can be deferred or made optional. The MCP server gets validation first (it runs on the host, trivial). Chat UI validation comes after remote MCP is working, since it depends on the HTTP transport being in place.
-
-**bbjcpl capabilities (from research):**
-- Accepts ASCII source files, produces tokenized BBj program files
-- Reports syntax errors with BBj line number + ASCII file line number
-- Reports duplicate labels and duplicate DEF FN names
-- Can read from stdin (pipe mode), but type-checking options are ignored in pipe mode
-- Supports `-d` (output directory) and `-x` (file extension) flags
-- Has type-checking compiler options (introduced later)
-
-**For validation purposes:** Run bbjcpl on temp files (not pipe mode) to get full error reporting including type checking. Parse stderr/stdout for error messages. A non-zero exit code means compilation failed.
-
-### 2.4 Remote MCP (Streamable HTTP Transport)
-
-**Decision: Keep the existing `mcp_server.py` tool definitions. Add HTTP transport as an alternative to stdio. Mount into FastAPI or run standalone.**
-
-The current MCP server (`mcp_server.py`) is a thin REST API proxy -- it calls `POST /search` on the FastAPI app and formats the results. For remote MCP, this same tool definition needs to be accessible over HTTP.
-
-**Two viable approaches:**
-
-**Approach A: Mount MCP into the existing FastAPI app (RECOMMENDED)**
-
-The official MCP SDK (v1.26.0, which this project uses) supports `mcp.streamable_http_app()` which returns a Starlette ASGI app. This can be mounted into the existing FastAPI app:
+The chat streaming module (`stream.py`) already implements a validate-fix loop:
 
 ```python
-# In app.py lifespan or as a mount
-from bbj_rag.mcp_server import mcp
-
-# Mount the MCP Streamable HTTP endpoint at /mcp
-mcp_http = mcp.streamable_http_app()
-app.mount("/mcp", mcp_http)
+# From stream.py _validate_response_code():
+# 1. Extract BBj code blocks from Claude's response
+# 2. Validate each via bbjcpl
+# 3. If invalid, ask Claude to fix (up to 3 attempts)
+# 4. Replace code blocks with fixed versions
+# 5. Add warnings for unfixable blocks
 ```
 
-This means:
-- The FastAPI app at :10800 serves both REST endpoints AND MCP Streamable HTTP at `/mcp`
-- No new container, no new port, no new process
-- The MCP server's tool (`search_bbj_knowledge`) needs to be refactored from REST-proxy to direct database access (since it is now running inside the same process as the FastAPI app)
+This is a **server-side, Claude-powered** validate-fix loop. It uses Claude (not the fine-tuned model) to fix code, and it runs automatically as part of the chat streaming pipeline.
 
-**Approach B: Run MCP server standalone with HTTP transport**
+### What the MCP Loop Would Look Like (Not Yet Built)
 
-```bash
-# Instead of stdio:
-fastmcp run src/bbj_rag/mcp_server.py --transport http --port 10801
+The MCP-based loop is fundamentally different: it is **client-orchestrated** (the MCP host decides when to retry) and uses the **fine-tuned model** (not Claude) for both generation and fixing.
+
+**There are two viable architectures:**
+
+#### Architecture A: Client-Orchestrated Loop (What Ch. 2 Describes)
+
+The MCP host (Claude Desktop, Cursor, IDE extension) orchestrates the loop by calling tools sequentially:
+
+```
+MCP Host (Claude Desktop / IDE)
+    |
+    |-- 1. Call search_bbj_knowledge("BBjGrid creation")
+    |       -> Returns: documentation context
+    |
+    |-- 2. Call generate_bbj_code(prompt, context)
+    |       -> Returns: generated BBj code
+    |
+    |-- 3. Call validate_bbj_syntax(code)
+    |       -> Returns: "Invalid: Line 5: Syntax error"
+    |
+    |-- 4. Call generate_bbj_code(original_prompt + errors)
+    |       -> Returns: corrected BBj code
+    |
+    |-- 5. Call validate_bbj_syntax(corrected_code)
+    |       -> Returns: "Valid"
+    |
+    v
+    Present validated code to developer
 ```
 
-This is simpler code-wise but adds another process and port to manage.
+**Advantage:** The MCP host (which is typically a frontier model like Claude) decides when to loop and how to modify the prompt. This leverages Claude's reasoning for error interpretation.
 
-**Recommendation: Approach A (mount into FastAPI).**
+**Disadvantage:** Requires the MCP host to understand the loop pattern. Claude Desktop and Claude Code already do this naturally when they see tool results. But a simple IDE extension would need explicit loop logic.
 
-**Critical refactoring required:** The current `mcp_server.py` uses `httpx` to proxy to the REST API (`POST {API_BASE}/search`). When mounted inside the FastAPI app, this creates a circular dependency (app calls itself via HTTP). The tool function must be refactored to call `async_hybrid_search()` directly, using the same `app.state.pool` and `app.state.ollama_client` that the REST routes use.
+#### Architecture B: Server-Side Orchestrated Loop (Single Tool)
 
-**New architecture for mcp_server.py:**
+A single `generate_validated_bbj_code` tool that handles the loop internally:
 
 ```python
-# Refactored mcp_server.py (conceptual)
-
-from mcp.server.fastmcp import FastMCP
-
-mcp = FastMCP("bbj-knowledge", stateless_http=True)
-
-# Tool functions will receive dependencies via a different mechanism
-# when running inside FastAPI vs standalone stdio
-
 @mcp.tool()
-async def search_bbj_knowledge(query: str, ...) -> str:
-    # Direct search, not HTTP proxy
-    # Dependencies injected at mount time
-    ...
-```
+async def generate_validated_bbj_code(
+    prompt: str,
+    generation: str = "dwc",
+    context: str | None = None,
+    max_attempts: int = 3,
+) -> str:
+    """Generate and validate BBj code, retrying on compiler errors.
 
-**Dual transport support:** The same `mcp` object can serve stdio (when spawned by Claude Desktop for local use) OR Streamable HTTP (when mounted in FastAPI for remote use). The tool definitions are transport-agnostic. The transport is selected at runtime:
-- `mcp.run(transport="stdio")` -- local Claude Desktop
-- `mcp.streamable_http_app()` -- remote HTTP clients
+    Calls the fine-tuned model, validates via bbjcpl, and retries
+    with compiler feedback until valid or max attempts reached.
+    """
+    code = await _generate_code(prompt, generation, context)
 
-**Modified files:**
+    for attempt in range(max_attempts):
+        result = await validate_bbj_syntax(code)
+        if "Valid" in result:
+            return f"```bbj\n{code}\n```\n\nCompiler validation: PASSED"
 
-| File | Change |
-|------|--------|
-| `src/bbj_rag/mcp_server.py` | Refactor from httpx proxy to direct search; export `mcp` object for mounting |
-| `src/bbj_rag/app.py` | Mount `mcp.streamable_http_app()` at `/mcp` path |
+        # Feed errors back to fine-tuned model
+        fix_prompt = (
+            f"The following BBj code has compiler errors:\n\n"
+            f"```bbj\n{code}\n```\n\n"
+            f"Compiler output:\n{result}\n\n"
+            f"Fix the code. Return ONLY the corrected BBj code."
+        )
+        code = await _generate_code(fix_prompt, generation, context)
 
-**Known issue:** The official MCP SDK's `streamable_http_app()` has reported issues with mounting in FastAPI (RuntimeError with task groups, GET hanging). Verified via GitHub issues. The standalone `fastmcp` package (v2.3+) has better FastAPI integration with `http_app()` and `combine_lifespans()`. **However**, this project uses `mcp[cli]` (official SDK), not standalone `fastmcp`. Switching packages is possible but adds risk.
-
-**Mitigation:** Test the official SDK mounting early. If it fails, fall back to running the MCP HTTP server as a separate process on a different port (Approach B). The tool definitions remain the same either way.
-
-**Confidence: MEDIUM.** The mounting pattern is documented but has open issues. Test early.
-
-### 2.5 Concurrent Ingestion (AsyncIO with Semaphore)
-
-**Decision: AsyncIO with `asyncio.Semaphore` to limit Ollama concurrency. Refactor `ingest_all.py` loop, keep `pipeline.py` synchronous per-source.**
-
-The current `ingest_all.py` already has a `--parallel` flag that prints a warning and falls back to sequential. The ingestion loop (lines 364-434) processes sources one at a time.
-
-**What's slow:** Embedding. Each `embed_batch()` call in `pipeline.py` sends a batch of 64 texts to Ollama and waits for the response. The single Ollama instance processes them sequentially. File-based parsers (flare, pdf, mdx, bbj-source) could parse and chunk in parallel while waiting for embeddings.
-
-**Concurrency model:**
-
-```
-Source 1: [parse] [chunk] [embed_batch] [store] [embed_batch] [store] ...
-Source 2:                  [parse] [chunk] [embed_batch] [store] ...
-Source 3:                                  [parse] [chunk] ...
-
-Ollama semaphore (limit=2): Only 2 embed_batch calls active at once
-DB writes: Can be concurrent (separate connections per source)
-```
-
-**Implementation approach:**
-
-1. **Keep `run_pipeline()` synchronous.** It works correctly and is well-tested. Wrapping it in async would be high-risk for low benefit.
-
-2. **Run each source's pipeline in a thread via `asyncio.to_thread()`:**
-
-```python
-# ingest_all.py (conceptual change)
-
-import asyncio
-
-async def ingest_all_async(sources, ...):
-    semaphore = asyncio.Semaphore(2)  # Max 2 concurrent Ollama calls
-
-    async def ingest_source(source):
-        async with semaphore:
-            return await asyncio.to_thread(
-                run_single_source, source, settings, ...
-            )
-
-    results = await asyncio.gather(
-        *[ingest_source(s) for s in sources],
-        return_exceptions=True,
+    return (
+        f"```bbj\n{code}\n```\n\n"
+        f"WARNING: Code did not pass validation after {max_attempts} attempts.\n"
+        f"Last compiler output:\n{result}"
     )
 ```
 
-3. **Limit Ollama concurrency with semaphore.** Qwen3-Embedding-0.6B is small but still GPU-bound. Sending more than 2-3 concurrent batch requests will not speed things up and may OOM on the GPU. A semaphore of 2 allows one batch to be embedding while another is being assembled.
+**Advantage:** Simpler for MCP hosts -- one tool call returns validated code. No loop logic needed in the client.
 
-**Modified files:**
+**Disadvantage:** Hides the process from the MCP host. Claude Desktop cannot inspect intermediate results or modify the approach.
 
-| File | Change |
-|------|--------|
-| `src/bbj_rag/ingest_all.py` | Replace sequential loop with `asyncio.gather()` + semaphore; implement `--parallel` flag |
+### Recommendation
 
-**What does NOT change:**
-- `pipeline.py` -- remains synchronous, called via `asyncio.to_thread()`
-- `embedder.py` -- `OllamaEmbedder.embed_batch()` remains synchronous (the `ollama` client is sync)
-- `db.py` -- each thread gets its own connection via `get_connection_from_settings()`
-- `parsers/` -- all remain synchronous generators
+**Use Architecture A (client-orchestrated) as the primary pattern.** Claude Desktop and Claude Code are sophisticated enough to orchestrate the loop themselves -- they already do this with the existing `validate_bbj_syntax` tool. Provide the three tools as building blocks.
 
-**Interaction with single Ollama instance:** The `ollama` Python client uses `httpx` under the hood with connection pooling. Multiple threads calling `ollama.embed()` simultaneously will result in concurrent HTTP requests to the same Ollama server. The Ollama server queues requests internally. The semaphore prevents overwhelming it.
+**Offer Architecture B as a convenience tool** for simpler clients (IDE extensions, scripts) that want a single-call code generation with validation.
 
-**Expected speedup:** Moderate. The bottleneck is Ollama embedding, which is inherently sequential on a single GPU. Parallelism helps with I/O overlap (parsing files while embedding) and database writes. Expect 1.5-2x speedup for a full re-ingestion, not a dramatic improvement.
+**The existing chat validate-fix loop in stream.py should remain as-is** for the web chat, since there is no MCP client involved -- the server orchestrates validation internally.
 
-### 2.6 Source-Balanced Ranking (Python Post-Processing in search.py)
+### How Similar Systems Handle This
 
-**Decision: Post-processing in Python after the existing SQL query, not a SQL modification.**
+**LLMLOOP (ICSME 2025):** Implements five iterative loops for Java code: compilation errors, static analysis, test failures, mutation analysis, and coverage improvement. The key finding: compiler feedback loops are effective (65-82% of compilation errors fixed in first iteration) but expensive (each loop invocation calls the LLM). Limiting to 3 iterations is the standard trade-off. HIGH confidence -- peer-reviewed research.
 
-The current `hybrid_search()` in `search.py` returns results ranked purely by RRF score. If 8 of 10 results come from the Flare parser (the largest source by chunk count), results from tutorials or examples get crowded out.
+**Cursor's approach:** Uses a "lint-fix" pattern where generated code is checked against language-specific linters/compilers, and errors are fed back to the model. This happens transparently inside the agent loop. The model sees the original request + the error output + instructions to fix.
 
-**Where the reranking happens:**
+**The BBj system has a unique advantage:** bbjcpl provides binary pass/fail with exact error locations, which is more actionable than heuristic linting. Most LLM code generation systems lack access to the actual production compiler.
+
+---
+
+## 4. RAG + Fine-Tuned Model Interaction
+
+### When to Use Which Path
 
 ```
-Existing flow:
-  async_hybrid_search() -> raw RRF-ranked results (SQL) -> return
-
-New flow:
-  async_hybrid_search() -> raw RRF-ranked results (SQL)
-      -> source_balanced_rerank() -> return
+User Query
+    |
+    +-- Is this a documentation/explanation question?
+    |     "What does BBjGrid support?"
+    |     "How do callbacks work in BBj?"
+    |     -> Route to Claude API + RAG (/chat)
+    |     -> Claude excels at explanation, citation, nuance
+    |
+    +-- Is this a code generation request?
+    |     "Write a BBj program that creates a grid with sorting"
+    |     "Complete this function"
+    |     -> Route to fine-tuned model (generate_bbj_code)
+    |     -> Fine-tuned model excels at BBj syntax, patterns
+    |
+    +-- Is this a code explanation or review request?
+    |     "What does this legacy BBj code do?"
+    |     -> Route to Claude API + RAG (/chat)
+    |     -> Claude's reasoning + RAG context for legacy patterns
+    |
+    +-- Is this a migration request?
+          "Convert this Visual PRO/5 code to DWC"
+          -> Route to fine-tuned model with RAG context
+          -> Fine-tuned model knows both generations
 ```
 
-**Implementation:**
+### The Hybrid Pattern: RAFT (Retrieval-Augmented Fine-Tuning)
+
+The ideal architecture is not RAG-or-fine-tuning but RAG-and-fine-tuning. The fine-tuned model has BBj syntax knowledge baked in, but it was trained on a static dataset. RAG provides:
+
+1. **API signatures that may have changed** since training data was curated
+2. **Specific documentation passages** that ground the response in official docs
+3. **Code examples from the corpus** that the model may not have memorized
+4. **Generation-specific context** that helps the model target the right BBj era
+
+**Practical implementation:**
+
+```
+generate_bbj_code(prompt="Create a BBjGrid with 3 columns", generation="dwc")
+    |
+    |-- 1. Search RAG: "BBjGrid creation columns DWC"
+    |       Returns: BBjGrid API docs, addColumn() signatures, examples
+    |
+    |-- 2. Build enriched prompt:
+    |       System: "You are a BBj expert. Use the documentation below."
+    |       + RAG results (API signatures, examples)
+    |       + User prompt
+    |
+    |-- 3. Call fine-tuned model with enriched prompt
+    |       Model generates code using both its training AND the RAG context
+    |
+    |-- 4. Validate with bbjcpl
+    |       If invalid, retry with error feedback
+    |
+    v
+    Return validated BBj code
+```
+
+**Why this works better than either approach alone:**
+- Fine-tuned model alone: May generate outdated API calls or miss generation-specific nuances
+- RAG + Claude alone: Claude invents BBj syntax despite having correct documentation (the core problem from Chapter 1)
+- RAG + fine-tuned model: The model knows BBj syntax from training AND has current API docs from RAG
+
+### Query Routing (Future)
+
+For the v1.7 documentation, do NOT describe an automated query router. The current system uses explicit paths:
+- Web chat = Claude API + RAG (always)
+- MCP generate_bbj_code = fine-tuned model + optional RAG (when implemented)
+- MCP search_bbj_knowledge = RAG only (no LLM generation)
+- MCP validate_bbj_syntax = bbjcpl only (no LLM involved)
+
+Query routing (automatic detection of "is this a code request or a docs request?") is an agentic RAG feature that is explicitly out of scope per PROJECT.md. Document the manual routing -- developers choose which tool or interface to use.
+
+---
+
+## 5. Training Data Pipeline
+
+### Current State: Two Disconnected Formats
+
+**training-data/ (bbj-ai-strategy repo):**
+- Markdown files with YAML front matter
+- JSON Schema validation
+- 2 seed examples (hello-window, keyed-file-read)
+- Topic-based directory structure (gui/, database/, control-flow/, etc.)
+- Human-readable, GitHub-renderable
+- Designed for contributors to write new examples
+
+**dataset/dataset.jsonl (bbjllm repo):**
+- ChatML JSONL format (9,922 examples)
+- System/user/assistant message triples
+- Uniform system message: "You are an expert BBj programmer who helps users write and understand BBj code."
+- Inconsistent formatting (some examples use ```bbj fences, some use > prefix, some are raw text)
+- No generation tagging
+- No difficulty metadata
+
+### The Gap
+
+The training-data/ repo was designed as a curated, validated pipeline for high-quality examples. The bbjllm repo's dataset.jsonl was independently created with bulk-generated examples. They share no data and no conversion pipeline.
+
+### Recommended Architecture: training-data/ as Source of Truth
+
+```
+training-data/ (human-authored, validated)
+    |
+    v
+convert_to_chatml.py (new script)
+    |
+    |-- Parse markdown front matter
+    |-- Extract code blocks and explanations
+    |-- Map example types to ChatML conversations:
+    |     completion  -> user: "Write BBj code to..." / assistant: code
+    |     comprehension -> user: "Explain this BBj code: ..." / assistant: explanation
+    |     migration   -> user: "Convert this ... to ..." / assistant: converted code
+    |     explanation -> user: "What does X do?" / assistant: explanation
+    |-- Include generation context in system message
+    |-- Output: examples.jsonl (ChatML format)
+    |
+    v
+Merge with existing dataset.jsonl (bbjllm repo)
+    |
+    |-- Deduplicate
+    |-- Validate format
+    |-- Output: final training dataset
+    |
+    v
+Train via train_qwen_32b.py
+```
+
+**Conversion script design:**
 
 ```python
-# src/bbj_rag/search.py (addition)
+# training-data/scripts/convert_to_chatml.py (new)
 
-def source_balanced_rerank(
-    results: list[SearchResult],
-    limit: int,
-    max_per_source: int = 3,
-) -> list[SearchResult]:
-    """Rerank results to ensure source diversity.
+def convert_completion(example):
+    """Convert a 'completion' type example to ChatML."""
+    return {
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    f"You are an expert BBj programmer. "
+                    f"Generate {example['generation']}-generation BBj code."
+                ),
+            },
+            {
+                "role": "user",
+                "content": example["description"] or example["title"],
+            },
+            {
+                "role": "assistant",
+                "content": example["code_blocks"][0],
+            },
+        ]
+    }
 
-    Round-robin by source (doc_type), taking top results from each
-    source until limit is reached. Falls back to original ranking
-    for remaining slots.
-    """
-    by_source: dict[str, list[SearchResult]] = {}
-    for r in results:
-        by_source.setdefault(r.doc_type, []).append(r)
 
-    balanced: list[SearchResult] = []
-    # Round-robin: take one from each source, repeat
-    while len(balanced) < limit:
-        added_any = False
-        for source_results in by_source.values():
-            if source_results and len([b for b in balanced if b.doc_type == source_results[0].doc_type]) < max_per_source:
-                balanced.append(source_results.pop(0))
-                added_any = True
-                if len(balanced) >= limit:
-                    break
-        if not added_any:
-            break
-
-    return balanced
+def convert_comprehension(example):
+    """Convert a 'comprehension' type example to ChatML."""
+    return {
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are an expert BBj programmer who helps users understand BBj code.",
+            },
+            {
+                "role": "user",
+                "content": f"Explain this BBj code:\n\n```bbj\n{example['code_blocks'][0]}\n```",
+            },
+            {
+                "role": "assistant",
+                "content": example["explanation"],
+            },
+        ]
+    }
 ```
 
-**Why Python, not SQL:** The SQL query already does the heavy lifting (HNSW index scan + BM25 + RRF). Adding source-balancing logic in SQL would mean modifying the already-complex RRF query with window functions and CTEs, making it harder to test and tune. The Python layer receives ~20 results and picks the best ~10 with diversity constraints. This is a trivial operation on a small list.
+**Recommendation for v1.7 documentation:**
+- Document training-data/ as the canonical format for new BBj training examples
+- Document the conversion pipeline as a planned automation step
+- Acknowledge that bbjllm's dataset.jsonl was independently created
+- Recommend that high-quality examples from dataset.jsonl be back-ported to training-data/ format for validation and curation
+- Do NOT recommend that training-data/ fully replace dataset.jsonl -- the 9,922 existing examples have value even if they lack metadata
 
-**Modified files:**
+### Key Observations About the Existing Dataset
 
-| File | Change |
-|------|--------|
-| `src/bbj_rag/search.py` | Add `source_balanced_rerank()` function |
-| `src/bbj_rag/api/routes.py` | Call `source_balanced_rerank()` after `async_hybrid_search()` |
-| `src/bbj_rag/api/schemas.py` | Optionally add `balanced: bool = True` to `SearchRequest` |
+From examining dataset.jsonl:
+- Examples are heavily focused on functions (ERR, ADJN, IOR, MAX, DEC, etc.)
+- Many are extremely short (one-line answers)
+- Some have duplicate user prompts with different responses
+- Some assistant responses lack BBj code fences or use inconsistent formatting
+- No generation tagging means the model cannot learn generation-appropriate behavior
+- System prompt is identical for all 9,922 examples
 
-**What does NOT change:** The SQL queries in `hybrid_search()` and `async_hybrid_search()` remain untouched. The database schema, indexes, and `rrf_score()` function are unchanged.
-
-**Fetch more, then filter:** To have enough results for balancing, the SQL query should return more results than the final limit. Request `limit * 3` from SQL, then balance down to `limit`. Modify the `limit` parameter passed to the SQL query, not the SQL itself.
-
-### 2.7 Source URL Mapping (Configuration + Runtime Transformation)
-
-**Decision: URL mapping table in `sources.toml`, runtime transformation in a new utility function.**
-
-The current `source_url` values are internal identifiers:
-- `flare://Content/bbjobjects/Window/bbjwindow.htm`
-- `pdf://GuideToGuiProgrammingInBBj.pdf#section-name`
-- `mdx-dwc://docs/getting-started.mdx`
-- `file://samples/example.bbj`
-- `https://basis.cloud/advantage/article-title` (already real URLs)
-- `https://documentation.basis.cloud/...` (already real URLs)
-
-For the chat UI, users need clickable links. Some source_url values are already real URLs; others need mapping.
-
-**Mapping table (in sources.toml or a new config):**
-
-```toml
-[url_mapping]
-"flare://" = "https://documentation.basis.cloud/BASISHelp/WebHelp/"
-"pdf://" = ""  # No web URL for PDF content
-"mdx-dwc://" = "https://basishub.github.io/bbj-dwc-tutorial/"
-"mdx-beginner://" = "https://basishub.github.io/bbj-beginner-tutorial/"
-"mdx-db-modernization://" = "https://basishub.github.io/bbj-db-modernization-tutorial/"
-"file://" = ""  # No web URL for local source files
-```
-
-**Implementation:**
-
-```python
-# src/bbj_rag/url_mapping.py
-
-def to_public_url(source_url: str, mapping: dict[str, str]) -> str | None:
-    """Convert internal source_url to a public web URL.
-
-    Returns None if no mapping exists (e.g., PDF or local files).
-    """
-    for prefix, base_url in mapping.items():
-        if source_url.startswith(prefix):
-            if not base_url:
-                return None
-            relative = source_url[len(prefix):]
-            return f"{base_url}{relative}"
-    # Already a real URL (wordpress, web-crawl)
-    if source_url.startswith("http"):
-        return source_url
-    return None
-```
-
-**Where it's applied:**
-- Chat UI responses: `chat/claude.py` maps URLs before injecting context into Claude prompt and before rendering citations
-- API responses: Optionally add a `public_url` field to `SearchResultItem`
-- MCP responses: `mcp_server.py` already shows `source_url` -- could add mapped URL
-
-**New files:**
-
-| File | Purpose |
-|------|---------|
-| `src/bbj_rag/url_mapping.py` | `to_public_url()` function + mapping loader |
-
-**Modified files:**
-
-| File | Change |
-|------|--------|
-| `src/bbj_rag/config.py` or `sources.toml` | Add URL mapping configuration |
-| `src/bbj_rag/api/schemas.py` | Add optional `public_url: str | None` to `SearchResultItem` |
-
-**NOT a database migration.** The `source_url` column stays as-is. Mapping is a pure runtime transformation. This avoids re-ingestion and keeps the internal identifiers stable for deduplication and cleaning.
+**These are not blocking issues for an initial fine-tune** but represent technical debt that the training-data/ curation pipeline is designed to address over time.
 
 ---
 
-## 3. Data Flow: Chat Query End-to-End
+## 6. IDE Integration Options (Ranked by Feasibility)
 
-```
-User types question in browser
-        |
-        v
-[1] Browser sends POST /chat/send  (HTMX hx-post)
-    Body: { "query": "How do I create a BBjGrid?" }
-        |
-        v
-[2] chat/routes.py::send_message()
-    |
-    |-- [2a] Embed query via app.state.ollama_client
-    |         ollama_client.embed(model="qwen3-embedding:0.6b", input=query)
-    |         Returns: list[float] (1024-dim vector)
-    |
-    |-- [2b] Search via async_hybrid_search()
-    |         Uses app.state.pool connection
-    |         SQL: dense (HNSW) + BM25 (GIN) -> RRF fusion
-    |         Returns: list[SearchResult] (top 30)
-    |
-    |-- [2c] Source-balanced rerank
-    |         source_balanced_rerank(results, limit=10, max_per_source=3)
-    |         Returns: list[SearchResult] (top 10, diverse)
-    |
-    |-- [2d] Map source URLs
-    |         to_public_url(r.source_url) for each result
-    |         Returns: list of (SearchResult, public_url) pairs
-    |
-    |-- [2e] Build Claude API request
-    |         System prompt: "You are a BBj programming expert..."
-    |         Context: formatted search results with titles + content
-    |         User message: original query
-    |
-    v
-[3] Stream Claude response via SSE
-    |
-    |-- AsyncAnthropic.messages.stream(
-    |       model="claude-sonnet-4-5-20250929",
-    |       system=system_prompt,
-    |       messages=[{"role": "user", "content": context + query}],
-    |       max_tokens=2048,
-    |   )
-    |
-    |-- For each text chunk from stream.text_stream:
-    |       yield SSE event: { "data": chunk }
-    |
-    v
-[4] EventSourceResponse streams to browser
-    |
-    v
-[5] Browser (HTMX SSE extension) appends text to chat container
-    |
-    |-- Markdown rendered client-side (lightweight: marked.js or similar)
-    |-- Citations rendered as links using mapped source URLs
-    |-- Code blocks with syntax highlighting
-    |
-    v
-[6] Stream ends -> final SSE event with citations summary
-    |
-    |-- Sources used: [title1](url1), [title2](url2), ...
-    |-- Optional: "Validate code?" button (if response contains BBj code)
+### Option 1: Continue.dev + Ollama (MOST FEASIBLE)
+
+**Feasibility: HIGH. Available today.**
+
+Continue.dev is an open-source AI coding assistant for VS Code and JetBrains. It supports:
+- **Chat:** Configure any Ollama model for chat conversations
+- **Tab autocomplete:** Configure a local model for inline completions (FIM)
+- **Custom models:** Point to any Ollama endpoint, including custom fine-tuned models
+- **MCP tools:** Continue.dev supports MCP server connections (experimental)
+
+**Configuration for BBj:**
+
+```yaml
+# ~/.continue/config.yaml
+models:
+  - title: "BBj Coder"
+    provider: ollama
+    model: bbj-coder
+    apiBase: http://server-ip:11434
+
+tabAutocompleteModel:
+  title: "BBj Autocomplete"
+  provider: ollama
+  model: bbj-coder
+  apiBase: http://server-ip:11434
 ```
 
-**Latency budget:**
-- Step 2a (embedding): ~50ms (Qwen3 0.6B is fast)
-- Step 2b (search): ~100ms (HNSW + BM25 + RRF)
-- Step 2c-2d (rerank + URL map): ~1ms (in-memory, 10-30 items)
-- Step 2e (API call setup): ~1ms
-- Step 3 (first token from Claude): ~500-1500ms (network to Anthropic API)
-- Step 3 (streaming): tokens arrive every ~20-50ms
-- **Time to first visible token: ~700-1700ms**
+**Limitations:**
+- Tab autocomplete works best with models trained for Fill-in-the-Middle (FIM). The current bbjllm training is instruction-tuned (ChatML), NOT FIM-trained. This means chat works well but inline ghost-text completion may be poor.
+- Continue.dev does not have BBj syntax highlighting. Code blocks will be treated as plain text.
+- MCP integration in Continue.dev is experimental as of early 2026.
+
+**Recommendation:** This is the fastest path to "developer uses fine-tuned BBj model in their IDE." The chat interface will work immediately. Tab autocomplete requires FIM training data, which is a training methodology change for a future iteration.
+
+### Option 2: GitHub Copilot BYOK + Ollama (FEASIBLE FOR CHAT ONLY)
+
+**Feasibility: MEDIUM. Chat works; inline completions do NOT.**
+
+GitHub Copilot BYOK (Bring Your Own Key) now supports Ollama as a provider:
+- **Chat:** Works. Configure `github.copilot.chat.byok.ollamaEndpoint` in VS Code settings.
+- **Inline completions:** NOT SUPPORTED for local models. BYOK only works for chat, not for ghost-text tab completion.
+- **Agent mode:** Works with BYOK models for tool-calling scenarios.
+
+**Configuration for BBj:**
+
+```json
+// VS Code settings.json
+{
+  "github.copilot.chat.models": [
+    {
+      "provider": "ollama",
+      "model": "bbj-coder",
+      "name": "BBj Coder"
+    }
+  ]
+}
+```
+
+**Critical limitation:** The most valuable IDE integration (inline code completion as you type) does not work with local models in Copilot BYOK. You only get the chat panel. This significantly reduces the value proposition compared to Continue.dev.
+
+**Known issues:** Multiple GitHub community discussions report compatibility regressions with Ollama in Copilot BYOK as of early 2026. The integration is in public preview and unstable.
+
+### Option 3: Cursor + Ollama via OpenAI Override (FEASIBLE WITH WORKAROUNDS)
+
+**Feasibility: MEDIUM. Requires ngrok or network tunnel.**
+
+Cursor supports OpenAI API overrides, and Ollama provides an OpenAI-compatible API. However, Cursor's backend runs in a sandboxed environment that cannot access `localhost:11434` directly.
+
+**Workaround:** Use ngrok to tunnel Ollama to a public URL:
+```bash
+OLLAMA_ORIGINS="*" ollama serve
+ngrok http 11434
+# Use the ngrok URL in Cursor settings
+```
+
+**Or** for a shared server on LAN:
+```bash
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+# Use server-ip:11434 in Cursor settings
+```
+
+Cursor supports using custom models for chat. Inline completions with custom models are possible but less reliable than the built-in models.
+
+### Option 4: bbj-language-server (Existing, Not AI-Powered)
+
+**Feasibility: Already exists (v0.5.0 on Marketplace).**
+
+The existing bbj-language-server provides:
+- Syntax highlighting
+- Symbol completion
+- Diagnostics
+- Formatting
+- Code execution
+
+This does NOT use AI. The Chapter 4 vision of "two-layer completion" (Langium deterministic + LLM generative) is aspirational. Integrating the fine-tuned model into the language server requires:
+1. A VS Code extension that acts as MCP client
+2. Or a direct Ollama API integration in the extension
+3. FIM-trained model for inline completions
+
+**This is the most complex option** and should be described as a future phase, not a near-term goal.
+
+### IDE Integration Summary
+
+| Option | Chat | Inline Completion | MCP Tools | Setup Effort | Stability |
+|--------|------|-------------------|-----------|-------------|-----------|
+| Continue.dev + Ollama | YES | YES (needs FIM model) | Experimental | Low | HIGH |
+| Copilot BYOK + Ollama | YES | NO | Agent mode | Low | MEDIUM |
+| Cursor + Ollama | YES | Partial | No | Medium (ngrok) | MEDIUM |
+| bbj-language-server | NO (future) | NO (future) | NO (future) | High | N/A |
+
+**Documentation recommendation:** Present Continue.dev as the primary IDE integration path for the fine-tuned model. It is the only option that supports both chat and inline completions with local models. Copilot BYOK is a secondary option for teams already using Copilot. The bbj-language-server + AI integration is a future phase.
 
 ---
 
-## 4. Data Flow: bbjcpl Validation
+## 7. Deployment Topology
 
-### 4A: MCP Tool Validation (Host Process)
-
-```
-Claude generates BBj code in response
-        |
-        v
-[1] Claude calls validate_bbj_code MCP tool
-    Input: { "code": "REM BBj example\nPRINT 'Hello'\n" }
-        |
-        v
-[2] mcp_server.py::validate_bbj_code()
-    |
-    |-- Write code to tempfile.NamedTemporaryFile(suffix=".bbj")
-    |-- subprocess.run(["bbjcpl", tempfile_path], capture_output=True)
-    |-- Parse stdout/stderr for error messages
-    |-- Delete tempfile
-    |
-    v
-[3] Return validation result to Claude
-    "Compilation successful" or "Line 5: Syntax error: ..."
-        |
-        v
-[4] Claude incorporates result into response
-    "The code compiles successfully." or "I found an error on line 5..."
-```
-
-**Requirements:**
-- `bbjcpl` must be on the host's PATH (or configured via `BBJ_BBJCPL_PATH` env var)
-- BBj must be installed on the host machine
-- 10-second timeout to prevent hanging on malformed input
-
-### 4B: Chat UI Validation (Requires Host Proxy)
+### Recommended Setup for Internal Exploration
 
 ```
-User clicks "Validate" on a code block in chat UI
-        |
-        v
-[1] Browser sends POST /chat/validate
-    Body: { "code": "REM example\n..." }
-        |
-        v
-[2] chat/routes.py::validate_code()
-    |
-    |-- OPTION A (if MCP HTTP is mounted):
-    |   Call mcp.search_bbj_knowledge or direct function
-    |   But bbjcpl is NOT in the Docker container!
-    |
-    |-- OPTION B (recommended for v1.5):
-    |   Forward to a host-side validation endpoint
-    |   httpx.post("http://host.docker.internal:10801/validate", ...)
-    |   Where 10801 is a lightweight validation service on the host
-    |
-    v
-[3] Return result to browser
-    SSE or JSON: { "valid": false, "errors": [...] }
+Shared Server (GPU-equipped, on LAN)
++--------------------------------------------------+
+|                                                  |
+|  Ollama :11434                                   |
+|    - qwen3-embedding:0.6b  (RAG embeddings)     |
+|    - bbj-coder             (fine-tuned model)    |
+|                                                  |
+|  Docker Compose                                  |
+|    - db: pgvector (51K+ chunks)    :10432        |
+|    - app: FastAPI                  :10800        |
+|      - /search (RAG API)                         |
+|      - /chat (Claude API + RAG)                  |
+|      - /mcp (Streamable HTTP)                    |
+|                                                  |
+|  bbjcpl compiler (host-side)                     |
+|                                                  |
++--------------------------------------------------+
+         |              |              |
+    LAN :10800     LAN :11434    LAN :10432
+         |              |              |
+   +-----+-----+  +----+----+  +-----+-----+
+   |           |  |         |  |           |
+Dev 1       Dev 2        Dev 3          Dev 4
+Claude      Continue     Cursor      Web Browser
+Desktop     .dev IDE     IDE         /chat
+(MCP HTTP)  (Ollama)    (Ollama)    (Claude API)
 ```
 
-**v1.5 practical recommendation:** For the alpha:
-1. Implement bbjcpl validation in the MCP server first (trivial, host-side)
-2. For chat UI, add a small FastAPI validation service on the host (separate from Docker)
-3. The chat UI calls this service via `host.docker.internal`
-4. Alternatively, defer chat UI validation to a fast-follow and focus on MCP validation for alpha
+**Key decisions:**
+
+1. **One server, multiple consumers.** All developers connect to the same Ollama instance and the same RAG database. No per-developer GPU needed.
+
+2. **Ollama serves both models.** The embedding model (Qwen3-Embedding-0.6B, ~1.2GB) and the fine-tuned code model (bbj-coder 32B Q4, ~18GB) run on the same Ollama instance. Ollama handles model loading/unloading. With 24+ GB VRAM, both can be resident simultaneously.
+
+3. **bbjcpl must be on the server.** The validate_bbj_syntax MCP tool calls bbjcpl as a subprocess. BBj must be installed on the shared server. This is the only host-side dependency.
+
+4. **Claude API is server-side only.** The ANTHROPIC_API_KEY is configured on the server. Individual developers do not need their own API keys for the web chat. They DO need their own keys if using Claude Desktop directly.
+
+5. **Ollama is network-accessible.** Set `OLLAMA_HOST=0.0.0.0:11434` so that Continue.dev and Cursor on developer machines can reach the fine-tuned model.
+
+### Hardware Requirements
+
+| Component | Min VRAM | Min RAM | Notes |
+|-----------|----------|---------|-------|
+| Qwen3-Embedding-0.6B | ~0.5 GB | ~2 GB | Small, fast, always loaded |
+| bbj-coder 32B Q4 | ~18 GB | ~4 GB | Large, slower inference |
+| pgvector (51K chunks) | N/A | ~2 GB | Database, no GPU needed |
+| FastAPI + uvicorn | N/A | ~0.5 GB | Application server |
+| **Total** | **~19 GB VRAM** | **~8.5 GB RAM** | |
+
+**GPU recommendation:** A single NVIDIA RTX 4090 (24 GB) or A6000 (48 GB). For Apple Silicon, an M2 Pro/Max/Ultra with 32+ GB unified memory. The remote GPU server used for training (bbjllm) could be repurposed for inference if it has CUDA-compatible GPUs.
+
+**If 32B is too large:** Fall back to Qwen2.5-Coder-7B-Instruct with the same QLoRA approach. 7B Q4 requires ~4 GB VRAM and infers at 50-100 tokens/second -- much faster and viable on consumer hardware. The documentation should recommend starting with 7B for internal exploration and scaling to 32B only if quality demands it.
 
 ---
 
-## 5. Data Flow: Remote MCP (Streamable HTTP)
+## 8. Gap Analysis: Documentation vs Reality
 
-```
-Remote Claude Desktop / Claude Code (on another machine on LAN)
-        |
-        v
-[1] HTTP POST to http://server-ip:10800/mcp
-    MCP protocol messages (JSON-RPC over Streamable HTTP)
-        |
-        v
-[2] FastAPI app routes to mounted MCP Streamable HTTP app
-    app.mount("/mcp", mcp.streamable_http_app())
-        |
-        v
-[3] MCP protocol handler invokes search_bbj_knowledge tool
-    |
-    |-- Refactored tool calls async_hybrid_search() directly
-    |   (no HTTP proxy to itself)
-    |-- Uses app.state.pool for DB connection
-    |-- Uses app.state.ollama_client for embedding
-    |
-    v
-[4] Tool returns formatted text results
-        |
-        v
-[5] MCP protocol sends response back over HTTP
-        |
-        v
-[6] Remote Claude Desktop renders results
-```
+### Chapter 2 Claims vs Actual Status
 
-**Key change from v1.4:** The MCP server switches from "external proxy to REST API" to "internal direct access to search functions." This eliminates the HTTP round-trip and makes the MCP server a first-class citizen of the FastAPI app.
+| Documentation Claim | Actual Status | Recommended Doc Update |
+|---------------------|---------------|----------------------|
+| Three MCP tools: search, generate, validate | Two implemented (search, validate). Generate does not exist. | State that generate_bbj_code is planned, with implementation design defined. Describe the two working tools as "operational" and the third as "pending fine-tuned model." |
+| Generate-validate-fix loop (sequence diagram) | Chat has a server-side validate-fix loop using Claude. MCP-based loop with fine-tuned model does not exist. | Distinguish between existing (chat validate-fix) and planned (MCP generate-validate-fix). The chat loop is working; the MCP loop depends on generate_bbj_code. |
+| "Fine-tuned BBj model ~10K examples, Qwen2.5-Coder-7B" | Actually training on 32B-Instruct (not 7B-Base), using PEFT/QLoRA (not Unsloth). 9,922 ChatML examples. | Update model name, training approach, and example count. Major correction needed in Chapter 3. |
+| "Qwen2.5-Coder-7B via Ollama" in architecture diagram | Model will be 32B, served via Ollama after GGUF conversion. | Update architecture diagram to show 32B. Note hardware requirements. |
+| Clients connect through MCP server to all three tools | search and validate work via MCP. Chat uses Claude API directly (not MCP). | Clarify that web chat is NOT an MCP client -- it is a direct Claude API consumer with RAG context. |
+| "Training data structure" shows JSON format | Two separate formats exist: markdown (training-data/) and ChatML JSONL (bbjllm/). Neither matches the JSON shown in docs. | Document both formats honestly. Explain conversion pipeline. |
 
-**Backward compatibility for local stdio:** Keep `main()` entry point in `mcp_server.py` that runs `mcp.run(transport="stdio")`. When run standalone (`bbj-mcp` CLI), it uses stdio. When mounted in FastAPI, it uses Streamable HTTP. Same tool definitions, different transport.
+### Tone Corrections Needed
+
+The documentation uses aspirational language ("The BBj MCP Server defines three tools") for components that do not exist. For v1.7, every component should be labeled:
+
+- **Operational:** search_bbj_knowledge, validate_bbj_syntax, web chat, RAG pipeline
+- **In progress:** Fine-tuned model training (bbjllm repo)
+- **Planned (design defined):** generate_bbj_code, MCP generate-validate-fix loop
+- **Future:** Automated query routing, IDE integration, customer self-hosting
 
 ---
 
-## 6. Build Order (Dependency-Driven)
-
-Build features in this order based on dependencies:
-
-### Phase 1: Source URL Mapping + Source-Balanced Ranking
-
-**Why first:** These are pure additions with zero risk to existing functionality. No new dependencies, no new containers, no API keys needed. They improve search quality for all consumers (API, MCP, chat).
-
-- Add `url_mapping.py` -- standalone utility, no dependencies
-- Add `source_balanced_rerank()` to `search.py` -- pure function
-- Wire into `/search` endpoint -- one-line addition to `routes.py`
-- **Test:** Existing `/search` endpoint returns balanced, URL-mapped results
-
-### Phase 2: Chat UI + Claude API Integration
-
-**Why second:** This is the marquee v1.5 feature. Depends on URL mapping (for citations) and balanced ranking (for quality results).
-
-- Add `anthropic`, `sse-starlette`, `jinja2` dependencies
-- Add `ANTHROPIC_API_KEY` to config and docker-compose
-- Build `chat/claude.py` -- Claude API wrapper with RAG context
-- Build `chat/routes.py` -- SSE streaming endpoint
-- Build `chat/templates/chat.html` -- HTMX chat interface
-- Wire into `app.py` -- router + static files mount
-- **Test:** Open browser to `http://localhost:10800/chat`, ask a question, see streaming response
-
-### Phase 3: Remote MCP (Streamable HTTP)
-
-**Why third:** Depends on the FastAPI app being stable (Phase 2 validates this). Requires MCP server refactoring.
-
-- Refactor `mcp_server.py` from httpx proxy to direct search
-- Mount `mcp.streamable_http_app()` in `app.py`
-- Test dual transport (stdio still works for local)
-- **Test:** Configure remote Claude Desktop to connect via HTTP
-
-### Phase 4: bbjcpl Validation
-
-**Why fourth:** The MCP refactoring (Phase 3) establishes the pattern for adding tools. Validation is a new tool on the refactored MCP server.
-
-- Add `validation.py` with bbjcpl subprocess wrapper
-- Add `validate_bbj_code` tool to MCP server
-- Add validation proxy endpoint for chat UI
-- **Test:** Claude uses the tool; chat UI validates code blocks
-
-### Phase 5: Concurrent Ingestion
-
-**Why last:** Ingestion is a batch operation, not a user-facing feature. It's an optimization that doesn't block alpha readiness. The `--parallel` flag already exists as a stub.
-
-- Implement `asyncio.gather()` + semaphore in `ingest_all.py`
-- **Test:** `bbj-ingest-all --parallel` runs faster than sequential
-
----
-
-## 7. What Does NOT Change
-
-These components require zero modification in v1.5:
-
-| Component | Why Unchanged |
-|-----------|---------------|
-| `sql/schema.sql` | No new columns, no new tables, no schema migration needed |
-| `db.py` | Connection management, bulk insert, content-hash dedup -- all unchanged |
-| `models.py` | `Document`, `Chunk` data models remain transport-agnostic |
-| `chunker.py` | Pure function, no I/O dependencies |
-| `pipeline.py` | `run_pipeline()` is not modified; concurrent ingestion wraps it |
-| `intelligence/` | Classification logic unchanged |
-| `parsers/` | All 7 parsers (flare, pdf, mdx, bbj-source, wordpress-advantage, wordpress-kb, web-crawl) unchanged |
-| `embedder.py` | `OllamaEmbedder` and `OpenAIEmbedder` unchanged |
-| `health.py` | Health check endpoint unchanged |
-| `source_config.py` | Source loading and validation unchanged (URL mapping is additive) |
-| `startup.py` | Startup validation unchanged |
-| Docker `db` service | pgvector container configuration unchanged |
-
-**The v1.4 system continues to work exactly as-is.** New features are additive routes, new modules, and refactored MCP transport. If any new feature breaks, the existing `/search`, `/stats`, `/health` endpoints and the MCP stdio server are unaffected.
-
----
-
-## 8. New Dependencies
-
-| Package | Version | Purpose | Where Used |
-|---------|---------|---------|------------|
-| `anthropic` | >=0.77,<1 | Claude API client for chat | `chat/claude.py` |
-| `sse-starlette` | >=2.0,<3 | `EventSourceResponse` for SSE streaming | `chat/routes.py` |
-| `jinja2` | >=3.1,<4 | HTML template rendering | `chat/routes.py`, `chat/templates/` |
-
-**Note:** `jinja2` may already be installed as a transitive dependency of FastAPI, but should be declared explicitly. The `anthropic` package is already in the dev dependencies (`openai` is there), suggesting API client patterns are established in this project.
-
----
-
-## 9. Container Architecture (v1.5)
-
-```
-                         macOS Host
-                    +------------------+
-                    |  Ollama :11434   |
-                    |  bbjcpl          |
-                    |                  |
-                    |  MCP stdio       |  (still works for local Claude Desktop)
-                    |  Validation svc  |  (optional, for chat UI bbjcpl proxy)
-                    +--------+---------+
-                             |
-               host.docker.internal:11434
-                             |
-        Docker Compose Network (bbj-rag-net)
-   +-------------------------------------------------------------+
-   |                                                             |
-   |  +------------------+      +--------------------------+    |
-   |  | db (pgvector)    |      | app (FastAPI)            |    |
-   |  | pg17 + pgvector  |      |                          |    |
-   |  | :5432            |<---->| GET  /health             |    |
-   |  |                  |      | POST /search             |    |
-   |  | 50,439 chunks    |      | GET  /stats              |    |
-   |  +------------------+      | GET  /chat        (NEW)  |    |
-   |                             | POST /chat/send   (NEW)  |    |
-   |                             | POST /mcp         (NEW)  |    |
-   |                             +--------------------------+    |
-   +-------------------------------------------------------------+
-                              |
-                        :10800 (mapped)
-```
-
-**Changes from v1.4:**
-- Three new routes on the same app container: `/chat`, `/chat/send`, `/mcp`
-- No new containers
-- No new port mappings
-- `ANTHROPIC_API_KEY` env var added to app container
-
----
-
-## 10. Risk Assessment
-
-| Integration | Risk | Mitigation |
-|-------------|------|------------|
-| MCP SDK mounting in FastAPI | MEDIUM -- known issues in GitHub | Test early; fall back to standalone HTTP process |
-| Claude API streaming via SSE | LOW -- well-documented pattern | Standard `sse-starlette` + `anthropic` SDK |
-| bbjcpl in Docker | N/A -- don't put it in Docker | Validation stays host-side |
-| Concurrent ingestion + Ollama | LOW -- semaphore limits concurrency | Start with semaphore=2, tune based on GPU |
-| HTMX chat UI complexity | LOW -- no JS build step | Server-rendered HTML fragments, progressive enhancement |
-| Source-balanced reranking | LOW -- pure Python post-processing | Does not touch SQL or database |
-| URL mapping correctness | LOW -- static configuration | Verify mapping for each source type manually |
-
----
-
-## 11. Confidence Assessment
+## 9. Confidence Assessment
 
 | Area | Confidence | Rationale |
 |------|-----------|-----------|
-| Chat UI architecture | HIGH | FastAPI + Jinja2 + HTMX + SSE is a well-established pattern; multiple 2025 tutorials confirm it. No JS build step needed. |
-| Claude API integration | HIGH | Anthropic Python SDK v0.77.0 confirmed. `AsyncAnthropic.messages.stream()` with `.text_stream` is stable, documented API. |
-| bbjcpl validation | MEDIUM | bbjcpl command-line behavior confirmed from official docs, but exact exit codes and error message format need testing with actual compiler. Pipe mode drops type-checking. |
-| Remote MCP (mounted) | MEDIUM | Official SDK supports `streamable_http_app()` but GitHub issues report mounting problems. Standalone HTTP is a reliable fallback. |
-| Concurrent ingestion | HIGH | Standard `asyncio.Semaphore` + `asyncio.to_thread()` pattern. Well-documented, no edge cases for this use case. |
-| Source-balanced ranking | HIGH | Pure Python list manipulation. Trivial to implement and test. |
-| Source URL mapping | HIGH | Configuration-based string transformation. No database changes. |
+| Model serving via Ollama | MEDIUM | Qwen2 GGUF base model works. Adapter import for Qwen2 specifically has reported issues (GitHub #8132). GGUF conversion via llama.cpp is more reliable. Needs testing. |
+| generate_bbj_code implementation | HIGH (design) / N/A (reality) | The implementation pattern (Ollama OpenAI-compatible API + optional RAG enrichment) is well-established. But the tool does not exist yet and depends on a trained model. |
+| Generate-validate-fix loop | HIGH (design) | The pattern is proven by LLMLOOP research and by the existing chat validate-fix code. The MCP version is a straightforward extension. |
+| RAG + fine-tuned model interaction | MEDIUM | The RAFT (retrieval-augmented fine-tuning) pattern is well-documented. But whether the 32B fine-tuned model actually benefits from RAG context depends on training quality -- untested. |
+| Training data conversion pipeline | HIGH (design) | Markdown-to-ChatML conversion is a straightforward script. But the two repos are disconnected and the 9,922 existing examples lack metadata. |
+| Continue.dev + Ollama integration | HIGH | Well-documented, multiple tutorials, actively maintained. Configuration is simple. FIM limitation is real but documented. |
+| Copilot BYOK + Ollama | MEDIUM | Officially supported but reported as unstable. Chat-only limitation is verified. |
+| Cursor + Ollama | MEDIUM | Works but requires network workarounds (ngrok or LAN-accessible Ollama). Not a native integration. |
+| Deployment topology | HIGH | Standard pattern: one GPU server, Ollama, Docker Compose. No novel architecture. |
+| 32B model feasibility on shared server | MEDIUM | Requires 24+ GB VRAM. Inference speed may be too slow for interactive use (10-30 tok/s). 7B fallback should be documented. |
+
+---
+
+## 10. Open Questions for Phase-Specific Research
+
+1. **Does the QLoRA adapter from PEFT actually convert correctly to GGUF for Qwen2.5-Coder-32B?** This needs testing with the actual training output. If it fails, the fallback is merging the adapter into the base model weights before GGUF conversion.
+
+2. **What is the actual inference latency of the 32B Q4 model via Ollama on the target hardware?** If >1 second per token, the generate_bbj_code tool will be too slow for interactive use and a 7B model should be trained instead.
+
+3. **Does the fine-tuned model actually generate better BBj code than Claude + RAG?** This is the fundamental question. Without evaluation benchmarks, the entire fine-tuning investment is unvalidated.
+
+4. **Should the training data include FIM (Fill-in-the-Middle) examples?** Required for Continue.dev inline completion. The current ChatML format only supports instruction/response pairs.
+
+5. **How should the system handle Ollama model switching?** When both embedding model and code model are loaded, Ollama may need to swap models. With 24 GB VRAM, both can be resident. With less VRAM, there will be model loading latency.
 
 ---
 
 ## Sources
 
-- [FastMCP Running Server (transports)](https://gofastmcp.com/deployment/running-server) -- stdio, HTTP, SSE transport options
-- [FastMCP + FastAPI Integration](https://gofastmcp.com/integrations/fastapi) -- `http_app()` mounting, `combine_lifespans()`
-- [MCP SDK GitHub Issues](https://github.com/modelcontextprotocol/python-sdk/issues/1367) -- `streamable_http_app()` mounting issues
-- [Anthropic Python SDK](https://github.com/anthropics/anthropic-sdk-python) -- v0.77.0, streaming API
-- [Anthropic Streaming Docs](https://docs.anthropic.com/en/api/messages-streaming) -- SSE event types, `.stream()` helper
-- [sse-starlette](https://github.com/sysid/sse-starlette) -- EventSourceResponse for FastAPI
-- [bbjcpl Documentation](https://documentation.basis.com/BASISHelp/WebHelp/util/bbjcpl_bbj_compiler.htm) -- Compiler CLI, error reporting
-- [FastAPI + HTMX Chat UI Pattern](https://towardsdatascience.com/javascript-fatigue-you-dont-need-js-to-build-chatgpt/) -- Full pattern with SSE streaming
-- [Asyncio Semaphore for Rate Limiting](https://rednafi.com/python/limit-concurrency-with-semaphore/) -- Standard concurrency pattern
+- [Ollama Import Documentation](https://docs.ollama.com/import) -- Modelfile ADAPTER instruction, supported architectures, GGUF conversion
+- [Ollama Qwen2.5-Coder-32B](https://ollama.com/library/qwen2.5-coder:32b) -- Available quantization variants
+- [Ollama GitHub Issue #8132](https://github.com/ollama/ollama/issues/8132) -- Fine-tuned Qwen2.5-Instruct import issues
+- [llama.cpp convert_lora_to_gguf.py](https://github.com/ggml-org/llama.cpp/discussions/2948) -- PEFT adapter to GGUF conversion
+- [GGUF-my-LoRA (HuggingFace)](https://huggingface.co/blog/ngxson/gguf-my-lora) -- LoRA to GGUF conversion tool
+- [Continue.dev Ollama Guide](https://docs.continue.dev/guides/ollama-guide) -- Custom model configuration
+- [Continue.dev Autocomplete Setup](https://docs.continue.dev/customize/deep-dives/autocomplete) -- Tab completion with local models, FIM requirements
+- [GitHub Copilot BYOK Enhancements (Jan 2026)](https://github.blog/changelog/2026-01-15-github-copilot-bring-your-own-key-byok-enhancements/) -- Latest BYOK features
+- [VS Code AI Language Models](https://code.visualstudio.com/docs/copilot/customization/language-models) -- BYOK configuration, Ollama provider
+- [Copilot BYOK Ollama Discussion #186374](https://github.com/orgs/community/discussions/186374) -- Known compatibility issues
+- [Support custom models for Copilot Code Completion #7690](https://github.com/microsoft/vscode-copilot-release/issues/7690) -- Inline completions not supported for BYOK
+- [Cursor Ollama Integration Guide](https://thebizaihub.com/how-to-use-local-models-with-cursor-ai/) -- ngrok workaround, OpenAI override
+- [LLMLOOP: Improving LLM-Generated Code (ICSME 2025)](https://valerio-terragni.github.io/assets/pdf/ravi-icsme-2025.pdf) -- Iterative compiler feedback loop research
+- [Iterative Refinement with Compiler Feedback (arXiv)](https://arxiv.org/html/2403.16792v2) -- Generate-validate-fix pattern in research
+- [AWS Guide: RAG, Fine-Tuning, and Hybrid Approaches](https://aws.amazon.com/blogs/machine-learning/tailoring-foundation-models-for-your-business-needs-a-comprehensive-guide-to-rag-fine-tuning-and-hybrid-approaches/) -- When to use RAG vs fine-tuning vs hybrid
+- [vLLM vs Ollama Performance (Red Hat)](https://developers.redhat.com/articles/2025/08/08/ollama-vs-vllm-deep-dive-performance-benchmarking) -- Inference server comparison
+- [Ollama vs vLLM (Northflank)](https://northflank.com/blog/vllm-vs-ollama-and-how-to-run-them) -- Deployment comparison
+
+---
+
+*Research conducted 2026-02-06. External sources verified via WebSearch. Codebase analysis based on direct file reads of bbj-ai-strategy and bbjllm repositories. Confidence levels assigned per source hierarchy (Context7/official docs = HIGH, WebSearch verified = MEDIUM, WebSearch unverified = LOW).*
