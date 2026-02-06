@@ -42,7 +42,7 @@ tool -- multiplies cost and introduces inconsistency.
 duplicates compute and deployment); cloud-hosted API with no self-hosting (rejected:
 customers need data privacy options).
 
-**Status:** Architecture defined. Model fine-tuning and RAG pipeline are in progress.
+**Status:** Architecture defined and operational. RAG pipeline operational for internal exploration (51K+ chunks). Model fine-tuning is active research (bbjllm experiment; 14B-Base recommended).
 :::
 
 ## Architecture Overview
@@ -230,7 +230,7 @@ BASIS already ships a [webforJ MCP server](https://mcp.webforj.com/) that expose
 
 **Alternatives considered:** REST API with OpenAPI specification (requires custom client code in each consumer; no standard tool discovery); custom VS Code extension API (locks integration to one editor; excludes Claude, Cursor, and CLI workflows); language-specific plugin system (fragments the ecosystem; each editor needs its own plugin; multiplies maintenance).
 
-**Status:** Architecture defined. Three tool schemas specified. Generate-validate-fix loop validated by bbjcpltool proof-of-concept. MCP server implementation planned.
+**Status:** Two of three tools operational -- search_bbj_knowledge and validate_bbj_syntax are running via stdio and Streamable HTTP transports. generate_bbj_code is planned (requires operational fine-tuned model). Generate-validate-fix loop validated by bbjcpltool proof-of-concept.
 :::
 
 ## Integration Patterns
@@ -301,7 +301,7 @@ For team environments, the MCP server can be deployed as a shared service access
 
 ## Three Initiatives
 
-The shared foundation supports three planned consumer applications, each acting as an MCP client that connects to the BBj MCP server. Each initiative is introduced briefly here and covered in full in its own chapter.
+The shared foundation supports three consumer applications, each acting as an MCP client that connects to the BBj MCP server. Each initiative is introduced briefly here and covered in full in its own chapter.
 
 ### VSCode Extension (Chapter 4)
 
@@ -362,25 +362,27 @@ The unified architecture creates different value for different stakeholders.
 ## Current Status
 
 :::note[Where Things Stand]
-The unified architecture is being built incrementally -- foundation first, consumers next.
+The unified architecture is operational for internal exploration, with most components running and the fine-tuned model in active research.
 
-- **Shipped:** The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, completion, diagnostics, formatting, and code execution.
-- **Shipped:** [RAG ingestion pipeline](/docs/rag-database) (v1.2) -- 6 source parsers, embedding pipeline, generation-aware tagging, hybrid search.
-- **Shipped:** bbjcpltool v1 proof-of-concept -- validates the compiler-in-the-loop concept for syntax checking.
-- **In progress:** The [fine-tuned BBj model](/docs/fine-tuning) -- approximately 10,000 curated training examples on Qwen2.5-Coder-7B, with fine-tuning underway.
-- **In progress:** MCP server architecture defined (v1.3) -- three tool schemas specified, generate-validate-fix loop validated.
-- **Planned:** MCP server implementation -- concrete realization of the architecture documented in this chapter.
-- **Planned:** [Documentation chat](/docs/documentation-chat) -- depends on model and MCP server being operational.
+- **Operational:** [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) (v0.5.0) -- Langium-powered VS Code extension with syntax highlighting, completion, and diagnostics.
+- **Operational for internal exploration:** [RAG knowledge system](/docs/rag-database) -- 51K+ documentation chunks across 7 source groups, PostgreSQL + pgvector database, REST API (search, stats, health endpoints), hybrid retrieval with source-balanced ranking.
+- **Operational for internal exploration:** MCP server with two tools -- search_bbj_knowledge (semantic search across documentation corpus) and validate_bbj_syntax (BBj compiler validation via bbjcpl). Available via stdio and Streamable HTTP transports.
+- **Operational for internal exploration:** [Web chat](/docs/documentation-chat) at /chat endpoint -- Claude API backend with RAG retrieval, SSE streaming, source citations with clickable links, automatic BBj code validation in responses.
+- **Operational:** Compiler validation (bbjcpltool) -- integrated into MCP server and web chat with automatic syntax checking and 3-attempt auto-fix.
+- **Active research:** [Fine-tuned BBj code model](/docs/fine-tuning) -- bbjllm experiment (9,922 ChatML examples on Qwen2.5-Coder-32B-Instruct via QLoRA/PEFT); research recommends 14B-Base with two-stage training.
+- **Planned:** generate_bbj_code MCP tool -- requires operational fine-tuned model.
 :::
 
-| Component | Status | Next Steps |
-|-----------|--------|------------|
-| Fine-tuned BBj model | ~10K training examples curated; Qwen2.5-Coder-7B fine-tuning in progress | Expand dataset, establish evaluation benchmarks |
-| RAG database | Ingestion pipeline shipped (v1.2). 6 source parsers, embedding pipeline, generation-aware tagging. | Index full BBj documentation corpus, tune retrieval quality |
-| MCP server | Architecture defined (v1.3). Three tool schemas specified. | Implement server, integrate with RAG and model backends |
-| BBj compiler validation | Concept validated by bbjcpltool v1 proof-of-concept | Integrate as `validate_bbj_syntax` MCP tool |
-| VSCode extension | v0.5.0 shipped on Marketplace | Add MCP client integration for AI completions |
-| Documentation chat | Architecture defined | Build as MCP client after server is operational |
-| Ollama deployment | Validated for model serving | Package fine-tuned model, test customer self-hosting |
+| Component | Status | Notes |
+|-----------|--------|-------|
+| bbj-language-server | Operational | v0.5.0 on VS Code Marketplace |
+| RAG ingestion pipeline | Operational for internal exploration | 7 parsers, 51K+ chunks |
+| REST retrieval API | Operational for internal exploration | POST /search, GET /stats, GET /health |
+| MCP server | Operational for internal exploration | search_bbj_knowledge, validate_bbj_syntax |
+| Web chat | Operational for internal exploration | Claude API + RAG + SSE streaming |
+| Compiler validation | Operational | bbjcpltool, MCP tool, chat integration |
+| Fine-tuned BBj model | Active research | bbjllm experiment; 14B-Base recommended |
+| generate_bbj_code | Planned | Requires fine-tuned model |
+| Training data repository | Operational | 2 seed examples, 7 topic directories |
 
 The chapters that follow cover each component in implementation-level detail: [model fine-tuning](/docs/fine-tuning) (Chapter 3), [IDE integration](/docs/ide-integration) (Chapter 4), [documentation chat](/docs/documentation-chat) (Chapter 5), [RAG database design](/docs/rag-database) (Chapter 6), and the [implementation roadmap](/docs/implementation-roadmap) with timelines and resource planning (Chapter 7).
