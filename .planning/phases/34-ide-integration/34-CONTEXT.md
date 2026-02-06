@@ -20,7 +20,7 @@ Update Chapter 4 to present a realistic IDE integration strategy: Continue.dev a
 - bbjcpl compiler validation keeps its own standalone section (it's a differentiator)
 
 ### Continue.dev depth
-- Full config walkthrough — show config.json with Ollama connection, model setup, autocomplete settings so someone could follow along
+- Full config walkthrough — show config.yaml (YAML format; JSON is deprecated per research) with Ollama connection, model setup, autocomplete settings so someone could follow along
 - Config shows generic Ollama model (e.g. Qwen2.5-Coder) with a note about where to swap in the fine-tuned BBj model when ready
 - Chat mode and tab-completion mode split into clear separate subsections: chat works now with instruction-tuned model, tab completion needs FIM-trained model
 - Include comparison table: Continue.dev vs Copilot BYOK vs custom language server — covering chat, tab completion, BBj awareness, compiler validation, effort to integrate
