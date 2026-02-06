@@ -62,10 +62,11 @@ Plans:
   2. Copilot BYOK limitations are clearly stated: chat only, no inline completions for local models
   3. bbj-language-server + AI integration is positioned as a future phase with rationale for why it is deferred
   4. Reader understands that tab completion requires FIM-trained model and current ChatML training data only supports instruction/chat use cases
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 Plans:
-- [ ] 34-01: Update Chapter 4 with Continue.dev path, Copilot BYOK status, and FIM requirements
+- [ ] 34-01-PLAN.md — Core restructure: Continue.dev primary section with config walkthrough, FIM gap, Copilot reframe with comparison table
+- [ ] 34-02-PLAN.md — Language server repositioning, ghost text expansion, Langium AI recontextualization, status block, consistency pass
 
 ### Phase 35: Implementation Roadmap Restructure
 
@@ -106,7 +107,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 32. Multi-Chapter Status & Tone Update | v1.7 | 2/2 | Complete | 2026-02-06 |
 | 33. Fine-Tuning Chapter Rewrite | v1.7 | 2/2 | Complete | 2026-02-06 |
-| 34. IDE Integration Update | v1.7 | 0/1 | Not started | - |
+| 34. IDE Integration Update | v1.7 | 0/2 | Not started | - |
 | 35. Implementation Roadmap Restructure | v1.7 | 0/1 | Not started | - |
 | 36. Cross-Chapter Consistency Pass | v1.7 | 0/1 | Not started | - |
 
