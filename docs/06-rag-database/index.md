@@ -18,51 +18,62 @@ This chapter is the technical blueprint for that pipeline: what goes in, how it 
 
 ## Source Corpus
 
-The RAG database ingests documentation from four primary sources, each contributing a different kind of knowledge:
+The RAG database ingests documentation from 7 source types, processed by 7 dedicated parsers into 51K+ chunks. Each source contributes a different kind of knowledge:
 
-| Source | Content Type | Volume | Value for Retrieval |
-|--------|-------------|--------|-------------------|
-| **MadCap Flare documentation** | API references, concepts, tutorials, migration guides | Primary corpus (thousands of topics) | Authoritative, structured, generation-tagged |
-| **BBj source code** | Implementation patterns, real-world usage | Supporting corpus | Shows idiomatic usage across generations |
-| **API references** | Method signatures, parameters, return types | Structured supplement | Precise answers for "how do I call X?" |
-| **Knowledge base articles** | Troubleshooting, FAQs, workarounds | Supplementary | Covers edge cases documentation misses |
+| Source | Parser | Chunks | Description |
+|--------|--------|--------|-------------|
+| **MadCap Flare** | Flare XML parser | 44,587 | Primary BBj/webforJ documentation -- API references, concepts, tutorials, migration guides |
+| **WordPress (Advantage + KB)** | WordPress REST API parser | 2,950 | Blog posts and knowledge base articles |
+| **Web Crawl** | Docusaurus HTML parser | 1,798 | Crawled web documentation |
+| **Docusaurus MDX** | MDX parser | 951 | This strategy documentation site |
+| **JavaDoc JSON** | JavaDoc JSON parser | 695 | BBj API class/method documentation |
+| **BBj Source Code** | BBj source parser | 106 | BBj code examples and patterns |
+| **PDF** | PDF parser | 47 | PDF documentation |
 
-The MadCap Flare documentation is the primary source -- it is the authoritative, maintained documentation that BBj developers rely on. The other sources supplement it with practical examples, precise API details, and community knowledge.
+**Total: 51,134 chunks across 7 source groups.**
+
+The MadCap Flare documentation is the primary source (87% of the corpus) -- it is the authoritative, maintained documentation that BBj developers rely on. The other sources supplement it with practical examples, precise API details, community knowledge, and API reference data.
 
 ```mermaid
 graph LR
-    subgraph "Source Corpus"
-        FLARE["MadCap Flare<br/>XHTML Topics"]
-        CODE["BBj Source Code"]
-        API["API References"]
-        KB["Knowledge Base"]
+    subgraph "Source Corpus (7 sources, 51K+ chunks)"
+        FLARE["MadCap Flare<br/>44,587 chunks"]
+        WP["WordPress<br/>2,950 chunks"]
+        WEB["Web Crawl<br/>1,798 chunks"]
+        MDX["Docusaurus MDX<br/>951 chunks"]
+        JAVADOC["JavaDoc JSON<br/>695 chunks"]
+        CODE["BBj Source Code<br/>106 chunks"]
+        PDF["PDF Docs<br/>47 chunks"]
     end
 
-    subgraph "Ingestion Pipeline"
+    subgraph "Ingestion Pipeline (7 parsers)"
         PARSE["Parse + Extract"]
         TAG["Generation Tagging"]
         CHUNK["Semantic Chunking<br/>(contextual headers)"]
-        EMBED["Embedding<br/>(dense vectors)"]
+        EMBED["Embedding<br/>(Qwen3-Embedding-0.6B)"]
     end
 
     subgraph "Vector Store"
-        PG["PostgreSQL + pgvector"]
+        PG["PostgreSQL 17 + pgvector 0.8.0"]
     end
 
     subgraph "Consumers"
-        IDE["IDE Extension"]
+        MCP["MCP Server<br/>(search_bbj_knowledge)"]
         CHAT["Documentation Chat"]
     end
 
     FLARE --> PARSE
+    WP --> PARSE
+    WEB --> PARSE
+    MDX --> PARSE
+    JAVADOC --> PARSE
     CODE --> PARSE
-    API --> PARSE
-    KB --> PARSE
+    PDF --> PARSE
     PARSE --> TAG
     TAG --> CHUNK
     CHUNK --> EMBED
     EMBED --> PG
-    PG --> IDE
+    PG --> MCP
     PG --> CHAT
 
     style FLARE fill:#e8f4e8,stroke:#2d8a2d
@@ -95,7 +106,7 @@ Flare provides a **Clean XHTML** build target that strips all MadCap-specific ta
 
 **Alternatives considered:** Parsing raw Flare project files directly (requires handling MadCap-specific XML namespaces, conditions, and snippets -- significantly more complex). Using Flare's HTML5 output (includes styling and navigation elements that add noise to extracted text).
 
-**Status:** Format selected. Export workflow not yet configured.
+**Status:** Operational. The Flare XML parser processes Clean XHTML exports, producing 44,587 chunks -- the largest source in the corpus.
 :::
 
 ### Ingestion Pipeline
@@ -230,7 +241,7 @@ Not all documentation should be chunked the same way. An API reference entry for
 
 **Alternatives considered:** Uniform 512-token chunks (simpler but lower retrieval quality), sentence-level splitting (too granular for technical documentation), full-document embedding (works only for very short documents).
 
-**Status:** Strategy defined. Implementation requires document type classification in the ingestion pipeline.
+**Status:** Operational. The ingestion pipeline applies document-type-aware chunking across all 7 source parsers, producing 51K+ chunks with contextual headers.
 :::
 
 | Document Type | Target Chunk Size | Rationale |
@@ -303,9 +314,9 @@ The vector store is where embedded chunks live and where similarity search happe
 **Alternatives considered:**
 - **Qdrant** -- Purpose-built vector database with excellent filtering and clustering. Better scaling characteristics above 1M vectors. Worth evaluating if the corpus grows significantly or if multi-tenant isolation is needed.
 - **Weaviate** -- GraphQL-native vector database with built-in vectorization modules. More complex to operate but offers hybrid search out of the box.
-- **Chroma** -- Lightweight, embedded vector store. Good for prototyping but lacks production features.
+- **Chroma** -- Lightweight, embedded vector store. Good for prototyping but lacks advanced operational features.
 
-**Status:** pgvector selected as default. No infrastructure provisioned yet.
+**Status:** Operational for internal exploration. PostgreSQL 17 + pgvector 0.8.0 running via Docker Compose, storing 51,134 embedded chunks with Qwen3-Embedding-0.6B (1024 dimensions) via Ollama.
 :::
 
 ### pgvector Capabilities
@@ -506,13 +517,14 @@ For the complete MCP server architecture and the other two tools (`generate_bbj_
 ## Current Status
 
 :::note[Where Things Stand]
-- **Shipped:** RAG ingestion pipeline (v1.2) -- 6 source parsers, embedding pipeline, generation-aware tagging, hybrid search. Built and tested, awaiting deployment against production corpus.
-- **Defined:** Source corpus identified -- MadCap Flare documentation (primary), BBj source code, API references, and knowledge base articles. Generation metadata schema established (shared with [training data](/docs/fine-tuning)).
-- **Planned:** Retrieval exposed via MCP `search_bbj_knowledge` tool ([Chapter 2](/docs/strategic-architecture#search_bbj_knowledge)) for consumption by documentation chat and any MCP client.
-- **Planned next:** Deploy pipeline against production corpus. Index full BBj documentation, tune retrieval quality, validate with representative queries.
+- **operational for internal exploration:** RAG ingestion pipeline with 7 parsers processing the full documentation corpus into 51K+ chunks across 7 source groups.
+- **operational for internal exploration:** PostgreSQL 17 + pgvector 0.8.0 database via Docker Compose, storing 51,134 embedded chunks with Qwen3-Embedding-0.6B (1024 dimensions) via Ollama.
+- **operational for internal exploration:** REST retrieval API -- POST /search (hybrid retrieval with source-balanced ranking), GET /stats, GET /health.
+- **operational for internal exploration:** MCP `search_bbj_knowledge` tool providing semantic search across the documentation corpus, available via stdio and Streamable HTTP transports.
+- **operational for internal exploration:** Web chat integration using RAG retrieval to ground Claude API responses in documentation.
 :::
 
-The RAG ingestion pipeline is built and tested (v1.2), and the next step is deployment against the production corpus. The generation metadata schema is shared with the [fine-tuning training data](/docs/fine-tuning), ensuring consistency between what the model learned and what the retrieval system provides. Implementation is tracked in the [implementation roadmap](/docs/implementation-roadmap).
+The full RAG system is operational for internal exploration. The ingestion pipeline has processed the complete documentation corpus into 51,134 chunks across 7 source groups, stored in PostgreSQL 17 with pgvector 0.8.0. Retrieval is available through the REST API (hybrid search with source-balanced ranking) and the MCP `search_bbj_knowledge` tool. The generation metadata schema is shared with the [fine-tuning training data](/docs/fine-tuning), ensuring consistency between what the model learned and what the retrieval system provides. The [documentation chat](/docs/documentation-chat) uses this retrieval pipeline to ground Claude API responses in actual documentation with source citations.
 
 ## What Comes Next
 
