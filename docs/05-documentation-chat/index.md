@@ -7,7 +7,7 @@ description: "Two independent paths to BBj AI knowledge -- MCP access for AI cli
 # Documentation Chat
 
 :::tip[TL;DR]
-BBj AI knowledge is accessible through two independent, equally important paths: any MCP-compatible client (Claude, Cursor, custom tools) can invoke `search_bbj_knowledge` and `generate_bbj_code` for instant access with zero custom code, while an embedded chat interface on the documentation site serves human users with generation-aware, cited responses. Both paths consume the same shared foundation -- the [fine-tuned model](/docs/fine-tuning) and [generation-tagged RAG pipeline](/docs/rag-database) -- because generic chat services fail for BBj (the same core problem [Chapter 1](/docs/bbj-challenge) establishes). Same infrastructure, two access methods.
+BBj AI knowledge is accessible through two independent, equally important paths: any MCP-compatible client (Claude, Cursor, custom tools) can invoke `search_bbj_knowledge` and `validate_bbj_syntax` for instant access with zero custom code, while an embedded chat interface on the documentation site serves human users with RAG-grounded, cited responses. The chat uses the Claude API with retrieval from the [generation-tagged RAG pipeline](/docs/rag-database) (51K+ documentation chunks across 7 source groups) to produce answers with source citations linking back to the original documentation. A planned `generate_bbj_code` tool will add code generation capabilities once an operational [fine-tuned BBj model](/docs/fine-tuning) is available. Generic chat services fail for BBj (the same core problem [Chapter 1](/docs/bbj-challenge) establishes) -- the RAG-grounded approach with BBj-specific retrieval bridges that gap today.
 :::
 
 Developers asking BBj questions today have limited options: search the documentation manually, post on forums, or ask a generic chatbot that hallucinates answers. The BBj AI strategy addresses this through two independent paths to the same shared infrastructure, each serving a different audience.
@@ -42,13 +42,15 @@ BBj gets none of this. The LLM has no prior exposure to BBj's `!` suffix convent
 
 ## The Shared Foundation
 
-Both paths -- MCP access and documentation chat -- consume the same two backend capabilities through the [BBj MCP server](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) defined in Chapter 2.
+Both paths -- MCP access and documentation chat -- consume backend capabilities through the [BBj MCP server](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) defined in Chapter 2.
 
-The first capability is **RAG retrieval** via the `search_bbj_knowledge` tool. This tool queries the [generation-tagged RAG database](/docs/rag-database) using hybrid search (dense vectors + BM25 keyword matching + cross-encoder reranking) and returns ranked documentation chunks with source citations. Whether the query comes from Claude Desktop or from the chat interface, the same retrieval pipeline surfaces the same generation-appropriate results.
+The first capability is **RAG retrieval** via the `search_bbj_knowledge` tool. This tool queries the [generation-tagged RAG database](/docs/rag-database) using hybrid search (dense vectors + BM25 keyword matching + source-balanced ranking) and returns ranked documentation chunks with source citations. Whether the query comes from Claude Desktop or from the chat interface, the same retrieval pipeline surfaces the same generation-appropriate results. This tool is operational and available via both stdio and Streamable HTTP transports.
 
-The second capability is **code generation** via the `generate_bbj_code` tool. This tool sends enriched prompts to the [fine-tuned model](/docs/fine-tuning) hosted on Ollama, producing generation-appropriate BBj code with RAG-retrieved context automatically assembled into the prompt. The chat interface uses this for richer conversational answers; MCP clients use it for direct code generation.
+The second capability is **compiler validation** via the `validate_bbj_syntax` tool. This tool provides [compiler-based validation](/docs/ide-integration) through the BBj compiler (`bbjcpl`) -- completing the generate-validate-fix loop described in [Chapter 2](/docs/strategic-architecture#generate-validate-fix). The chat interface uses this to automatically validate BBj code in responses, with visual pass/fail indicators and a 3-attempt auto-fix cycle. This tool is operational and available to any MCP client that needs ground-truth syntax checking.
 
-The third tool in the MCP ecosystem, `validate_bbj_syntax`, provides [compiler-based validation](/docs/ide-integration) through the BBj compiler -- completing the generate-validate-fix loop described in [Chapter 2](/docs/strategic-architecture#generate-validate-fix). While not part of the typical chat interaction, it is available to any MCP client that needs ground-truth syntax checking.
+A planned third capability is **code generation** via the `generate_bbj_code` tool. This tool will send enriched prompts to a [fine-tuned BBj model](/docs/fine-tuning) hosted on Ollama, producing generation-appropriate BBj code with RAG-retrieved context automatically assembled into the prompt. This tool is not yet implemented -- it requires an operational fine-tuned BBj model, which is currently in the research phase (see [Chapter 3](/docs/fine-tuning)).
+
+The current chat implementation takes a different approach: rather than using `generate_bbj_code`, it sends queries directly to the Claude API (Anthropic SDK) with RAG-retrieved documentation as context. This produces high-quality, grounded answers today without waiting for a fine-tuned model. When `generate_bbj_code` becomes available, it will offer an additional path with deeper BBj code comprehension.
 
 For complete tool schemas and the MCP server architecture, see [Chapter 2: Strategic Architecture](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer).
 
@@ -64,9 +66,11 @@ Because the [MCP server exposes standard tool discovery and schema-based invocat
 
 ## Path 2: Documentation Chat
 
-The documentation chat serves humans browsing the BBj documentation site. Embedded directly on the documentation site, it lets developers ask natural language questions -- "How do I create a window?" -- and receive accurate, generation-appropriate answers with links to the source documentation.
+The documentation chat serves humans browsing the BBj documentation site. Available at the `/chat` endpoint, it lets developers ask natural language questions -- "How do I create a window?" -- and receive accurate, generation-appropriate answers with links to the source documentation.
 
-The chat interface goes beyond what raw MCP access provides: it manages conversation context, detects generation hints from the dialogue, and streams formatted responses with inline citations. These capabilities are what make a chat experience natural for human users, and they are described in the sections below.
+The current implementation uses the Claude API (Anthropic SDK) as the LLM backend, with RAG retrieval providing documentation context from the 51K+ chunk corpus. This is a different architecture than originally envisioned (which assumed a fine-tuned BBj model via Ollama) -- the Claude API approach was chosen because it delivers high-quality, grounded answers today while the fine-tuned model remains in the research phase. The eventual vision of using a fine-tuned BBj model for deeper code comprehension remains a future goal.
+
+The chat interface goes beyond what raw MCP access provides: it manages conversation context, detects generation hints from the dialogue, streams formatted responses via SSE with inline citations, and automatically validates BBj code in responses using `bbjcpl`. These capabilities are what make a chat experience natural for human users, and they are described in the sections below.
 
 ### Generation-Aware Response Design
 
@@ -136,10 +140,10 @@ The streaming flow:
 1. **Client sends query** via HTTP POST to the chat backend
 2. **Backend processes** the query through the generation detection and RAG retrieval pipeline
 3. **Backend opens SSE stream** to the client
-4. **LLM generates tokens** via Ollama's streaming API, and the backend relays each token to the client in real time
+4. **LLM generates tokens** via the Claude API's streaming interface, and the backend relays each token to the client in real time
 5. **Citations are appended** at the end of the stream, referencing the documentation chunks that informed the answer
 
-This approach is compatible with Ollama's native streaming API, which follows the OpenAI-compatible `/v1/chat/completions` format with `stream: true`. The chat backend acts as an intermediary -- enriching the prompt with RAG context before forwarding to Ollama, and attaching citations to the streamed response.
+The current implementation uses the Anthropic SDK's async streaming API. The chat backend acts as an intermediary -- enriching the prompt with RAG-retrieved documentation context before forwarding to the Claude API, and attaching source citations with clickable documentation links to the streamed response. This architecture is also compatible with Ollama's streaming API (OpenAI-compatible `/v1/chat/completions` with `stream: true`), which would be used if the backend is switched to a fine-tuned BBj model in the future.
 
 SSE has a key advantage over WebSockets for this use case: it works through standard HTTP infrastructure (proxies, load balancers, CDNs) without special configuration. For a self-hosted deployment behind a corporate firewall, this reduces the operational surface area.
 
@@ -182,7 +186,7 @@ A typical chat request assembles several components into a single prompt, all co
 
 When conversation history grows long, the system must decide what to compress or drop. A practical strategy is to keep the most recent 3-5 exchanges verbatim and summarize older ones into a compact context block ("The user has been asking about Visual PRO/5 window management"). This preserves generation context without consuming the entire token budget.
 
-The chat is deployed as an embedded component on the documentation site -- users stay in their documentation context, and the backend runs alongside Ollama and the RAG database as a service.
+The chat is available as an embedded component on the documentation site -- users stay in their documentation context, and the backend runs alongside the RAG database as a service.
 
 ## Unified Architecture
 
@@ -242,16 +246,16 @@ maintaining a separate API alongside MCP; duplicates effort); direct database
 queries from the chat backend (couples the chat system to the database schema;
 breaks the abstraction layer; prevents other clients from benefiting).
 
-**Status:** Architecture defined. The `search_bbj_knowledge` tool schema is
-specified in [Chapter 2](/docs/strategic-architecture#search_bbj_knowledge).
-Implementation depends on the MCP server being built.
+**Status:** Operational. The `search_bbj_knowledge` tool is implemented and
+available via the BBj MCP server (stdio and Streamable HTTP transports). The
+chat backend and MCP clients both use this tool for RAG retrieval.
 :::
 
 ## Architectural Requirements
 
 The documentation chat system must satisfy six non-negotiable requirements, derived from the failures of generic services and the unique challenges of BBj's multi-generational ecosystem.
 
-1. **Uses the BBj-aware model.** The chat backend must use the [fine-tuned model](/docs/fine-tuning) that understands BBj syntax across all four generations. A generic LLM -- even with perfect RAG -- will misinterpret code snippets and hallucinate methods.
+1. **Uses a BBj-aware LLM backend.** The chat backend must use an LLM that can reason about BBj syntax and documentation. The current implementation uses the Claude API with RAG-retrieved documentation context, which grounds responses in the 51K+ chunk corpus. The target architecture is a [fine-tuned BBj model](/docs/fine-tuning) that understands BBj syntax across all four generations -- this will provide deeper code comprehension when an operational fine-tuned model is available.
 
 2. **Retrieves generation-tagged documentation.** The [RAG pipeline](/docs/rag-database) must filter retrieval results by generation metadata. When a user asks about Visual PRO/5, the system should not surface modern DWC documentation (and vice versa) unless the user specifically requests a comparison.
 
@@ -261,7 +265,7 @@ The documentation chat system must satisfy six non-negotiable requirements, deri
 
 5. **Adapts answers to the user's target generation.** The system must detect generation context from the query (explicit mentions like "Visual PRO/5" or implicit signals like mnemonic-style syntax) and tailor both retrieval and response generation accordingly.
 
-6. **Leverages shared infrastructure.** The chat system must not build its own model or its own retrieval pipeline. It consumes the same Ollama instance and RAG database that the IDE extension uses.
+6. **Leverages shared infrastructure.** The chat system must not build its own retrieval pipeline. It consumes the same RAG database that the MCP server and IDE extension use. When a fine-tuned BBj model becomes operational, the chat backend can switch to consuming the same Ollama instance.
 
 :::info[Decision: Shared Infrastructure for Documentation Chat]
 **Choice:** The documentation chat system uses the same Ollama server and RAG database as the IDE extension -- no separate AI infrastructure.
@@ -270,31 +274,35 @@ The documentation chat system must satisfy six non-negotiable requirements, deri
 
 **Alternatives considered:** Dedicated chat model (higher maintenance, potential drift from IDE model), cloud-hosted LLM with custom RAG (privacy concerns, ongoing API costs, still no BBj comprehension), generic chat service with fine-tuned embeddings only (improves retrieval but not comprehension).
 
-**Status:** Architectural requirement defined. Implementation not yet started.
+**Status:** Operational for internal exploration. The chat backend consumes the
+same RAG database and MCP retrieval pipeline as all other AI consumers. The
+current LLM backend is the Claude API; when a fine-tuned BBj model becomes
+operational, the chat can switch to the shared Ollama instance.
 :::
 
 ## Current Status
 
 :::note[Where Things Stand]
-- **Shipped:** Nothing. The documentation chat is a planned capability, not a shipped product.
-- **Defined:** Two-path architecture -- MCP access for AI clients and embedded chat for human users -- both consuming the shared foundation through MCP tools. Generation-aware response strategy. Shared infrastructure decision.
-- **Available upstream:** [RAG ingestion pipeline](/docs/rag-database) (v1.2) shipped. [Fine-tuned model](/docs/fine-tuning) in progress (~10K training examples). MCP server architecture defined ([Chapter 2](/docs/strategic-architecture)).
-- **Planned:** Chat backend service, embedded chat component for the documentation site. Depends on MCP server being operational.
+- **operational for internal exploration:** Web chat interface at `/chat` endpoint -- Claude API backend with RAG-based retrieval, SSE streaming for real-time responses, and source citations with clickable documentation links.
+- **operational for internal exploration:** BBj code validation integrated into chat responses -- automatic syntax checking via `bbjcpl` with visual pass/fail indicators and 3-attempt auto-fix.
+- **operational for internal exploration:** MCP access path via `search_bbj_knowledge` (semantic documentation search) and `validate_bbj_syntax` (compiler validation) tools.
+- **Planned:** `generate_bbj_code` MCP tool -- requires an operational fine-tuned BBj model (not yet available).
 :::
 
-The documentation chat depends on two upstream components that are also in progress: the [fine-tuned model](/docs/fine-tuning) (currently showing promising results with ~10K training data points) and the [RAG database](/docs/rag-database) (ingestion pipeline shipped in v1.2, awaiting deployment against the production corpus). Until both are operational and the MCP server is built, the chat system cannot be implemented.
+The documentation chat is operational for internal exploration. Engineers can ask questions about BBj, webforJ, and the BASIS ecosystem and receive answers grounded in the 51K+ chunk documentation corpus, with source citations linking back to the original documentation. The chat uses the Claude API as its LLM backend with RAG retrieval from the [full documentation corpus](/docs/rag-database), SSE streaming for real-time responses, and automatic BBj code validation via `bbjcpl`.
 
-The [implementation roadmap](/docs/implementation-roadmap) in Chapter 7 places the documentation chat in Phase 3 -- after the model is validated (Phase 1) and the IDE integration is functional (Phase 2). This sequencing is deliberate: the IDE integration exercises the model and RAG pipeline first, and the documentation chat benefits from whatever improvements emerge during that process.
+The two-path architecture described in this chapter -- MCP access for AI clients and embedded chat for human users -- is operational. The `search_bbj_knowledge` and `validate_bbj_syntax` MCP tools are available via stdio and Streamable HTTP transports. The remaining planned capability is `generate_bbj_code`, which requires an operational [fine-tuned BBj model](/docs/fine-tuning) (currently in the research phase).
 
 ## What Comes Next
 
-The chapters that follow build the remaining infrastructure this chat system depends on:
+With the web chat, MCP server, and RAG pipeline operational, the next steps focus on deepening the system's capabilities:
+
+- **`generate_bbj_code` MCP tool** -- Requires an operational fine-tuned BBj model. This tool will enable code generation with deep BBj syntax comprehension, complementing the current Claude API + RAG approach. See [Chapter 3: Fine-Tuning the Model](/docs/fine-tuning) for the research findings and recommended training approach.
+- **Deeper MCP integration** -- Expanding the MCP tool ecosystem and exploring how IDE clients ([Chapter 4](/docs/ide-integration)) can leverage the same retrieval and validation infrastructure.
+- **Expanded corpus and retrieval quality** -- Continuous improvement of the 51K+ chunk documentation corpus, retrieval tuning, and evaluation methodology.
+
+For context on the related components:
 
 - **[Chapter 6: RAG Database Design](/docs/rag-database)** -- How the generation-tagged document corpus is built, chunked, embedded, and queried. This is the retrieval layer that both paths consume through `search_bbj_knowledge`.
-- **[Chapter 7: Implementation Roadmap](/docs/implementation-roadmap)** -- Timeline, phasing, and resource allocation for all components including the documentation chat.
-
-For context on the shared infrastructure that makes this approach viable:
-
 - **[Chapter 2: Strategic Architecture](/docs/strategic-architecture)** -- The unified infrastructure design and MCP server that both paths consume.
-- **[Chapter 3: Fine-Tuning the Model](/docs/fine-tuning)** -- The model that powers both chat and MCP code generation.
-- **[Chapter 4: IDE Integration](/docs/ide-integration)** -- The parallel consumer of the same shared infrastructure, using it for code completion instead of conversational answers.
+- **[Chapter 7: Implementation Roadmap](/docs/implementation-roadmap)** -- Timeline, phasing, and resource allocation for all components.
