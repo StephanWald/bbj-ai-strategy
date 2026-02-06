@@ -670,4 +670,4 @@ The remaining components complete the picture:
 - [**RAG Database**](/docs/rag-database) -- the retrieval layer that feeds documentation context into both IDE completion prompts and chat responses
 - [**Documentation Chat**](/docs/documentation-chat) -- a conversational interface for BBj questions, powered by the same model and RAG infrastructure
 - [**Strategic Architecture**](/docs/strategic-architecture) -- how the model, RAG database, IDE extension, and chat interface connect as a unified system
-- [**Implementation Roadmap**](/docs/implementation-roadmap) -- timelines, milestones, and the path from Continue.dev model delivery to full language-server-powered AI completion
+- [**Implementation Roadmap**](/docs/implementation-roadmap) -- progress to date and the forward plan for all components

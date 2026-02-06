@@ -95,7 +95,7 @@ Two components form the foundation layer. Each is covered in depth in its own ch
 
 ### Fine-Tuned BBj Model
 
-The core of the infrastructure is a language model fine-tuned specifically on BBj. Starting from a strong open-source code model (the current recommendation is [Qwen2.5-Coder-7B](https://qwenlm.github.io/blog/qwen2.5-coder-family/), selected for its benchmark performance, Apache 2.0 license, and practical size for self-hosting), the model is trained on curated BBj examples covering all four generations.
+The core of the infrastructure is a language model fine-tuned specifically on BBj. Starting from a strong open-source code model (the current recommendation is [Qwen2.5-Coder-14B-Base](https://qwenlm.github.io/blog/qwen2.5-coder-family/), selected for its benchmark performance, Apache 2.0 license, and practical size for self-hosting), the model is trained on curated BBj examples covering all four generations.
 
 The fine-tuned model is hosted via [Ollama](https://ollama.com/), which provides:
 
@@ -181,7 +181,7 @@ The knowledge search tool connects to the RAG database (pgvector with hybrid sea
 
 ### generate_bbj_code
 
-The code generation tool sends enriched prompts to the fine-tuned model (Qwen2.5-Coder-7B via Ollama). It accepts a natural language description, a target BBj generation, and optional surrounding code context. The tool assembles RAG-retrieved documentation into the prompt automatically, so the model always has relevant API references and examples available when generating code.
+The code generation tool sends enriched prompts to the fine-tuned model (Qwen2.5-Coder-14B-Base via Ollama). It accepts a natural language description, a target BBj generation, and optional surrounding code context. The tool assembles RAG-retrieved documentation into the prompt automatically, so the model always has relevant API references and examples available when generating code.
 
 ```json
 {
@@ -385,4 +385,4 @@ The unified architecture is operational for internal exploration, with most comp
 | generate_bbj_code | Planned | Requires fine-tuned model |
 | Training data repository | Operational | 2 seed examples, 7 topic directories |
 
-The chapters that follow cover each component in implementation-level detail: [model fine-tuning](/docs/fine-tuning) (Chapter 3), [IDE integration](/docs/ide-integration) (Chapter 4), [documentation chat](/docs/documentation-chat) (Chapter 5), [RAG database design](/docs/rag-database) (Chapter 6), and the [implementation roadmap](/docs/implementation-roadmap) with timelines and resource planning (Chapter 7).
+The chapters that follow cover each component in implementation-level detail: [model fine-tuning](/docs/fine-tuning) (Chapter 3), [IDE integration](/docs/ide-integration) (Chapter 4), [documentation chat](/docs/documentation-chat) (Chapter 5), [RAG database design](/docs/rag-database) (Chapter 6), and the [implementation roadmap](/docs/implementation-roadmap) covering progress to date and the forward plan (Chapter 7).

@@ -271,7 +271,7 @@ for code completion), RAG-only approach (fails on syntax-level understanding),
 waiting for future LLMs to learn BBj naturally (unlikely given BBj's proprietary
 nature and small community).
 
-**Status:** Training data structure defined; base model evaluation underway.
+**Status:** Training data structure defined (9,922 ChatML examples in bbjllm); Qwen2.5-Coder-14B-Base recommended as next model. See [Fine-Tuning](/docs/fine-tuning).
 :::
 
 ## Why GitHub Copilot Will Not Work
@@ -317,7 +317,7 @@ The strategy described in this document is being actively implemented across mul
 - **Operational for internal exploration:** A RAG-based knowledge system with 51K+ documentation chunks, a [REST API](/docs/rag-database), an [MCP server](/docs/strategic-architecture#the-mcp-server-concrete-integration-layer) (search_bbj_knowledge and validate_bbj_syntax tools), and a [web chat interface](/docs/documentation-chat) powered by Claude API with SSE streaming and source citations.
 - **Operational:** Compiler validation via bbjcpltool integrates with both the MCP server and web chat, providing automatic BBj syntax checking.
 - **Active research:** Fine-tuning a BBj-specialized code model -- the bbjllm experiment has 9,922 training examples on Qwen2.5-Coder-32B-Instruct; [research recommends](/docs/fine-tuning) moving to a 14B-Base model with a two-stage training approach.
-- **Under investigation:** Copilot BYOK integration remains in early exploration; [Continue.dev](https://www.continue.dev/) is being evaluated as the primary IDE integration path.
+- **Active research:** Copilot BYOK integration remains in early exploration; [Continue.dev](https://www.continue.dev/) is being evaluated as the primary IDE integration path.
 - **Validated:** Testing with ChatGPT, Claude, and GitHub Copilot confirms that all major LLMs produce incorrect BBj code. The hallucination pattern is consistent -- they default to VB/VBA-style syntax.
 - **webforJ AI tools operational:** The MCP server approach is working for webforJ, validating the broader infrastructure design. BBj is the remaining -- and harder -- challenge.
 :::

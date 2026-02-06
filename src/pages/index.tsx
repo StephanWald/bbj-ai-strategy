@@ -41,7 +41,7 @@ const chapters = [
   {
     title: 'Implementation Roadmap',
     href: '/docs/implementation-roadmap',
-    description: 'Phased delivery, resources, risks, and success metrics.',
+    description: 'Progress summary and forward plan for the BBj AI strategy.',
   },
 ];
 

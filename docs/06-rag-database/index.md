@@ -534,4 +534,4 @@ This chapter described the retrieval foundation. The chapters that follow descri
 - **[Documentation Chat](/docs/documentation-chat)** -- The chat interface uses the same retrieval API to ground conversational responses in actual documentation, with citations linking back to source topics.
 - **[Fine-Tuning the Model](/docs/fine-tuning)** -- The training data uses the same generation labeling schema described in this chapter, ensuring the model and the retrieval system share a consistent understanding of BBj's generational structure.
 - **[Strategic Architecture](/docs/strategic-architecture)** -- The two-layer architecture that positions this RAG pipeline as shared infrastructure consumed by multiple applications.
-- **[Implementation Roadmap](/docs/implementation-roadmap)** -- Timeline and phases for building the ingestion pipeline, provisioning the vector store, and validating retrieval quality.
+- **[Implementation Roadmap](/docs/implementation-roadmap)** -- Progress to date and forward plan for all components, including the RAG pipeline.

@@ -170,7 +170,7 @@ A documentation chat that forgets previous messages after each query is frustrat
 
 Conversation history is included in each request to the backend, allowing the model to resolve references ("the Visual PRO/5 version") without the user restating the full question. This also enables the generation detection pipeline to accumulate context -- if a user has been asking about legacy code for three messages, the fourth message inherits that generation context even without explicit markers.
 
-Session memory is bounded: older messages are summarized or dropped after a configurable window (typically 10-20 exchanges) to keep the prompt within the model's context window. For the 7B model with a 4096-token context, this means balancing conversation history against RAG-retrieved documentation in the available token budget.
+Session memory is bounded: older messages are summarized or dropped after a configurable window (typically 10-20 exchanges) to keep the prompt within the model's context window. For the 14B model with a larger context window, this means balancing conversation history against RAG-retrieved documentation in the available token budget.
 
 #### Token Budget Management
 
@@ -305,4 +305,4 @@ For context on the related components:
 
 - **[Chapter 6: RAG Database Design](/docs/rag-database)** -- How the generation-tagged document corpus is built, chunked, embedded, and queried. This is the retrieval layer that both paths consume through `search_bbj_knowledge`.
 - **[Chapter 2: Strategic Architecture](/docs/strategic-architecture)** -- The unified infrastructure design and MCP server that both paths consume.
-- **[Chapter 7: Implementation Roadmap](/docs/implementation-roadmap)** -- Timeline, phasing, and resource allocation for all components.
+- **[Chapter 7: Implementation Roadmap](/docs/implementation-roadmap)** -- Progress to date and forward plan for all components.
