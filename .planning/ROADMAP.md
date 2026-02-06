@@ -81,7 +81,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 35-01: Restructure Chapter 7 with completed/remaining separation and updated estimates
+- [ ] 35-01-PLAN.md -- Rewrite Chapter 7: delete speculative content, update comparison table, add component summary + forward plan
 
 ### Phase 36: Cross-Chapter Consistency Pass
 
