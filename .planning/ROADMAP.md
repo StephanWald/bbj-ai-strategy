@@ -12,7 +12,7 @@ v1.7 refreshes all 7 documentation chapters to reflect the actual state of the B
 
 - [x] **Phase 32: Multi-Chapter Status & Tone Update** - Update status sections and correct tone across chapters 1, 2, 5, 6
 - [x] **Phase 33: Fine-Tuning Chapter Rewrite** - Research-backed rewrite of Chapter 3 with 14B-Base recommendation and evaluation methodology
-- [ ] **Phase 34: IDE Integration Update** - Update Chapter 4 with Continue.dev path and FIM requirements
+- [x] **Phase 34: IDE Integration Update** - Update Chapter 4 with Continue.dev path and FIM requirements
 - [ ] **Phase 35: Implementation Roadmap Restructure** - Restructure Chapter 7 separating completed work from forward plan
 - [ ] **Phase 36: Cross-Chapter Consistency Pass** - Verify model names, tool status, data counts, and code samples across all chapters
 
@@ -65,8 +65,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 34-01-PLAN.md — Core restructure: Continue.dev primary section with config walkthrough, FIM gap, Copilot reframe with comparison table
-- [ ] 34-02-PLAN.md — Language server repositioning, ghost text expansion, Langium AI recontextualization, status block, consistency pass
+- [x] 34-01-PLAN.md — Core restructure: Continue.dev primary section with config walkthrough, FIM gap, Copilot reframe with comparison table
+- [x] 34-02-PLAN.md — Language server repositioning, ghost text expansion, Langium AI recontextualization, status block, consistency pass
 
 ### Phase 35: Implementation Roadmap Restructure
 
@@ -107,7 +107,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 32. Multi-Chapter Status & Tone Update | v1.7 | 2/2 | Complete | 2026-02-06 |
 | 33. Fine-Tuning Chapter Rewrite | v1.7 | 2/2 | Complete | 2026-02-06 |
-| 34. IDE Integration Update | v1.7 | 0/2 | Not started | - |
+| 34. IDE Integration Update | v1.7 | 2/2 | Complete | 2026-02-06 |
 | 35. Implementation Roadmap Restructure | v1.7 | 0/1 | Not started | - |
 | 36. Cross-Chapter Consistency Pass | v1.7 | 0/1 | Not started | - |
 
@@ -130,10 +130,10 @@ Plans:
 | FT-07 | 33 | Complete |
 | FT-08 | 33 | Complete |
 | FT-09 | 33 | Complete |
-| IDE-01 | 34 | Pending |
-| IDE-02 | 34 | Pending |
-| IDE-03 | 34 | Pending |
-| IDE-04 | 34 | Pending |
+| IDE-01 | 34 | Complete |
+| IDE-02 | 34 | Complete |
+| IDE-03 | 34 | Complete |
+| IDE-04 | 34 | Complete |
 | ROAD-01 | 35 | Pending |
 | ROAD-02 | 35 | Pending |
 | ROAD-03 | 35 | Pending |

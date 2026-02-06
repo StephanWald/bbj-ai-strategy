@@ -28,10 +28,10 @@ Requirements for the documentation refresh milestone. Each maps to roadmap phase
 
 ### Chapter 4: IDE Integration Update
 
-- [ ] **IDE-01**: Continue.dev presented as primary IDE integration path for fine-tuned model (chat + inline completion)
-- [ ] **IDE-02**: Copilot BYOK status updated — chat only, no inline completions for local models, unstable integration
-- [ ] **IDE-03**: bbj-language-server + AI positioned as future phase, not near-term
-- [ ] **IDE-04**: FIM training noted as requirement for tab completion (current ChatML format is instruction-only)
+- [x] **IDE-01**: Continue.dev presented as primary IDE integration path for fine-tuned model (chat + inline completion)
+- [x] **IDE-02**: Copilot BYOK status updated — chat only, no inline completions for local models, unstable integration
+- [x] **IDE-03**: bbj-language-server + AI positioned as future phase, not near-term
+- [x] **IDE-04**: FIM training noted as requirement for tab completion (current ChatML format is instruction-only)
 
 ### Chapter 5: Documentation Chat Update
 
@@ -94,10 +94,10 @@ Deferred to later milestones.
 | FT-07 | Phase 33 | Complete |
 | FT-08 | Phase 33 | Complete |
 | FT-09 | Phase 33 | Complete |
-| IDE-01 | Phase 34 | Pending |
-| IDE-02 | Phase 34 | Pending |
-| IDE-03 | Phase 34 | Pending |
-| IDE-04 | Phase 34 | Pending |
+| IDE-01 | Phase 34 | Complete |
+| IDE-02 | Phase 34 | Complete |
+| IDE-03 | Phase 34 | Complete |
+| IDE-04 | Phase 34 | Complete |
 | ROAD-01 | Phase 35 | Pending |
 | ROAD-02 | Phase 35 | Pending |
 | ROAD-03 | Phase 35 | Pending |
