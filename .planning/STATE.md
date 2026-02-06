@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-06)
 
 **Core value:** Stakeholders can understand the BBj AI strategy through a well-structured documentation site, backed by a running RAG system serving retrieval via REST API and MCP server.
-**Current focus:** Phase 33 complete -- Fine-Tuning Chapter Rewrite
+**Current focus:** Phase 34 in progress -- IDE Integration Chapter Rewrite
 
 ## Current Position
 
 Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy
-Phase: 33 (2 of 5 in v1.7)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-02-06 -- Completed 33-02-PLAN.md (Supporting Updates + Status)
+Phase: 34 (3 of 5 in v1.7)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-06 -- Completed 34-01-PLAN.md (Core Content Restructure)
 
-Progress: [####......] 57% (4/7 plans)
+Progress: [#####.....] 71% (5/7 plans)
 
 ## Performance Metrics
 
 **Cumulative:**
 - v1.0-v1.6: 33 phases, 75 plans delivered across 7 milestones
-- v1.7: 4/7 plans
+- v1.7: 5/7 plans
 
 **By Phase (v1.7):**
 
@@ -29,6 +29,7 @@ Progress: [####......] 57% (4/7 plans)
 |-------|-------|-------|----------|
 | 32 | 2/2 | 56min | 28min |
 | 33 | 2/2 | 21min | 10.5min |
+| 34 | 1/2 | 3min | 3min |
 
 ## Accumulated Context
 
@@ -58,6 +59,13 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - Q4_K_M as recommended quantization format (over Q4_0): better quality-to-size ratio at marginal size increase
 - MCP tool status distinction: operational (search_bbj_knowledge, validate_bbj_syntax) vs planned (generate_bbj_code)
 
+**Phase 34 decisions (34-01):**
+- Continue.dev as primary near-term IDE integration path (over Copilot BYOK)
+- config.yaml format for walkthrough (JSON is deprecated)
+- FIM training gap as subsection within Continue.dev section (needs space for technical detail)
+- Enterprise BYOK updated to public preview (January 2026)
+- Langium AI content preserved in place for Plan 02 recontextualization
+
 **Research findings informing v1.7:**
 - 14B-Base recommended over 7B-Base (better fine-tuning improvement) and 32B-Instruct (alignment tax)
 - Two-stage training: continued pretraining on raw BBj, then instruction fine-tuning
@@ -73,6 +81,7 @@ See .planning/PROJECT.md Key Decisions table for full log (57 decisions).
 - BBJ_HOME environment variable required for JavaDoc ingestion
 - Research summary at .planning/research/fine-tuning/SUMMARY.md -- essential for Phase 33
 - Chapter 3 fully rewritten (702 lines, 9 major sections, all 9 FT requirements addressed)
+- Chapter 4 top sections restructured (663 lines); language server sections + status deferred to Plan 02
 
 ### Blockers/Concerns
 
@@ -81,6 +90,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-06
-Stopped at: Completed 33-02-PLAN.md (Supporting Updates + Status) -- Phase 33 complete (2/2 plans)
+Stopped at: Completed 34-01-PLAN.md (Core Content Restructure) -- Plan 02 remaining in Phase 34
 Resume file: None
-Next action: Begin Phase 34 (next phase in v1.7 milestone)
+Next action: Execute 34-02-PLAN.md (Language Server Sections + Status + Cleanup)
