@@ -1,5 +1,32 @@
 # Project Milestones: BBj AI Strategy Documentation Site
 
+## v1.7 Documentation Refresh & Fine-Tuning Strategy (Shipped: 2026-02-06)
+
+**Delivered:** Full refresh of all 7 documentation chapters to reflect actual project state as of February 2026, with research-backed fine-tuning strategy rewrite (14B-Base recommendation, two-stage training, compile@1 evaluation), Continue.dev as primary IDE path, restructured implementation roadmap, and cross-chapter consistency verification.
+
+**Phases completed:** 32-36 (8 plans total)
+
+**Key accomplishments:**
+
+- **Chapter status refresh** — All 7 chapters updated with honest February 2026 status using consistent terminology (operational / operational for internal exploration / active research / planned)
+- **Fine-tuning rewrite** — Chapter 3 rewritten with research-backed 14B-Base recommendation, bbjllm gap analysis, two-stage training approach, and bbjcpl-based compile@1 evaluation methodology
+- **IDE integration update** — Chapter 4 restructured around Continue.dev as primary path, Copilot BYOK limitations documented, language server repositioned as future phase
+- **Implementation roadmap** — Chapter 7 reduced 56% (311→135 lines), speculative content replaced with progress summary and grounded forward plan
+- **Cross-chapter consistency** — 10 text fixes across 6 files ensuring zero contradictions in model names, tool status, data counts, and chapter descriptions
+- **27/27 requirements shipped** — All v1.7 requirements complete with verification
+
+**Stats:**
+
+- 36 files changed, +6,552 / -686 lines
+- 5 phases, 8 plans
+- Same day (2026-02-06)
+
+**Git range:** `feat(32-01)` → `docs(36-01): complete cross-chapter consistency plan`
+
+**What's next:** TBD — potential directions include fine-tuning execution (bbjllm fixes, evaluation suite, model training), Continue.dev integration, or generate_bbj_code MCP tool.
+
+---
+
 ## v1.6 Data Expansion (Shipped: 2026-02-05)
 
 **Delivered:** Expanded RAG knowledge base with 695 BBjAPI JavaDoc chunks (359 classes, 4,438 methods) and established training data infrastructure for curated BBj code examples with JSON Schema validation and contributor workflow.

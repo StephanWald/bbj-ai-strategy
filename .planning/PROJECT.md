@@ -63,20 +63,15 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - ✓ 2 seed training examples (hello-window, keyed-file-read) passing validation — v1.6
 - ✓ Contributor documentation for adding new training examples — v1.6
 
+- ✓ All 7 chapters' status sections updated to February 2026 state with consistent terminology — v1.7
+- ✓ Chapter 3 rewritten with research-backed 14B-Base recommendation, bbjllm gap analysis, two-stage training, compile@1 evaluation — v1.7
+- ✓ Chapter 4 restructured: Continue.dev primary, Copilot BYOK limitations, language server repositioned — v1.7
+- ✓ Chapter 7 restructured: progress summary + forward plan (56% reduction, no speculative timelines) — v1.7
+- ✓ Cross-chapter consistency verified: model names, MCP tools, training data counts, status terminology — v1.7
+
 ### Active
 
-**Current Milestone: v1.7 Documentation Refresh & Fine-Tuning Strategy**
-
-**Goal:** Full refresh of all 7 documentation chapters to reflect actual project state (internal exploration), with research-backed fine-tuning strategy analysis and forward-looking implementation roadmap.
-
-**Target features:**
-- Update all 7 chapters' status sections to accurately reflect current state
-- Correct tone: nothing is "production" — everything is "internal exploration" at best
-- Rewrite Chapter 3 (Fine-Tuning) based on actual bbjllm repo (32B-Instruct + PEFT, not 7B-Base + Unsloth) with research-backed critique and recommendations
-- Update Chapter 7 (Implementation Roadmap) with restructured phases showing completed work + credible forward plan
-- Report RAG system, web chat, MCP server, and compiler validation as operational for internal exploration
-- Add training workflow recommendations (artifact management, evaluation practices, what to commit back)
-- Research current LLM fine-tuning best practices (2026) to inform recommendations
+(No active milestone — run `/gsd:new-milestone` to start next)
 
 ### Out of Scope
 
@@ -99,7 +94,7 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 - **Three initiatives:** Fine-tuned BBj model (via Ollama), VSCode extension with Langium integration, documentation chat system — all sharing unified infrastructure.
 - **Audiences:** Internal developers (implementation detail), leadership (strategy/ROI), customers/partners (capability awareness).
 - **webforJ context:** BASIS also has webforJ (Java-based web framework) where generic LLMs work fine because they know Java. BBj is the unique challenge.
-- **Current state:** v1.7 started 2026-02-06. Documentation refresh milestone to update all chapters against actual progress. Separate fine-tuning repo at `/Users/beff/_workspace/bbjllm` (Qwen2.5-Coder-32B-Instruct, QLoRA via PEFT, 9,922 ChatML training examples). Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Anthropic SDK, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x + FastMCP. 3,015 lines docs content + ~8,700 lines Python source + 340+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy.
+- **Current state:** v1.7 shipped 2026-02-06. All 7 documentation chapters refreshed to February 2026 state. Chapter 3 rewritten with 14B-Base recommendation and two-stage training. Chapter 4 restructured around Continue.dev. Chapter 7 reduced 56% to progress-and-plan format. Separate fine-tuning repo at `/Users/beff/_workspace/bbjllm` (Qwen2.5-Coder-32B-Instruct, QLoRA via PEFT, 9,922 ChatML training examples). Tech stack: Docusaurus 3.9.2, Rspack, GitHub Actions, GitHub Pages + Python 3.12, uv, pgvector 0.8.0-pg17, psycopg3, FastAPI, Anthropic SDK, Ollama (Qwen3-Embedding-0.6B), MCP SDK v1.x + FastMCP. 3,015 lines docs content + ~8,700 lines Python source + 340+ tests passing. Site live at stephanwald.github.io/bbj-ai-strategy.
 - **Alpha testers:** Internal BASIS engineers with BBj installed locally. Most will access via shared server; some may run locally. Engineers have Claude Desktop/Code access and bbjcpl available on their machines.
 - **Source data inventory (v1.4):** Flare project at `/Users/beff/bbjdocs/` (7,087 .htm topics), PDF at project root, 3 MDX tutorial sites (DWC, beginner, DB modernization — 98 .md files), BBj source code in SVN checkout + tutorial samples (1,363+ .bbj files), WordPress articles at basis.cloud (HTTP), documentation.basis.cloud for web crawl (HTTP).
 - **MCP concept paper:** Draft architecture for BBj AI Development Assistant — MCP server orchestrating RAG search, fine-tuned code model, and compiler validation. Key innovation: generate-validate-fix loop using BBj compiler as ground truth.
@@ -170,5 +165,12 @@ Stakeholders (developers, leadership, customers) can understand the BBj AI strat
 | JSON Schema for training example validation | Portable, shareable with non-Python tools, standard approach | ✓ Good |
 | Topic-based flat directory organization | Better discoverability, no nested subtopics, slug filenames | ✓ Good |
 
+| Qwen2.5-Coder-14B-Base over 7B-Base and 32B-Instruct | Greater fine-tuning improvement at 14B; Base avoids alignment tax | ✓ Good |
+| Two-stage training (continued pretraining → instruction FT) | Stage 1 teaches BBj syntax, Stage 2 teaches instruction-following | ✓ Good |
+| bbjcpl-based compile@1 as primary evaluation metric | Ground-truth syntax validation using existing BBj compiler | ✓ Good |
+| Continue.dev as primary IDE integration path | Chat + inline completion with local models; Copilot BYOK limited to chat only | ✓ Good |
+| Status terminology: operational / exploration / research / planned | Consistent honest framing across all 7 chapters | ✓ Good |
+| Chapter 7 as progress-and-plan (no phases/timelines/costs) | Speculative roadmap replaced with grounded summary of 7 shipped milestones | ✓ Good |
+
 ---
-*Last updated: 2026-02-05 after v1.6 milestone shipped*
+*Last updated: 2026-02-06 after v1.7 milestone shipped*
