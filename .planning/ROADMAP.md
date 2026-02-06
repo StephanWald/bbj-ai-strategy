@@ -29,10 +29,11 @@ v1.7 refreshes all 7 documentation chapters to reflect the actual state of the B
   3. Chapter 5 describes the web chat as operational with Claude API + RAG + SSE streaming + source citations
   4. Chapter 2 describes MCP tools with correct status: search_bbj_knowledge (operational), validate_bbj_syntax (operational), generate_bbj_code (planned)
   5. RAG system (51K+ chunks, REST API, MCP server, web chat) described consistently as operational for internal exploration
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 Plans:
-- [ ] 32-01: Update status blocks and tone across chapters 1, 2, 5, 6
+- [ ] 32-01-PLAN.md — Update status blocks and tone across chapters 1 and 2
+- [ ] 32-02-PLAN.md — Update status blocks, architecture, and tone across chapters 5 and 6
 
 ### Phase 33: Fine-Tuning Chapter Rewrite
 
@@ -104,7 +105,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 32. Multi-Chapter Status & Tone Update | v1.7 | 0/1 | Not started | - |
+| 32. Multi-Chapter Status & Tone Update | v1.7 | 0/2 | Not started | - |
 | 33. Fine-Tuning Chapter Rewrite | v1.7 | 0/3 | Not started | - |
 | 34. IDE Integration Update | v1.7 | 0/1 | Not started | - |
 | 35. Implementation Roadmap Restructure | v1.7 | 0/1 | Not started | - |
