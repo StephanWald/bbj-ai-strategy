@@ -11,7 +11,7 @@ v1.7 refreshes all 7 documentation chapters to reflect the actual state of the B
 ## Phases
 
 - [x] **Phase 32: Multi-Chapter Status & Tone Update** - Update status sections and correct tone across chapters 1, 2, 5, 6
-- [ ] **Phase 33: Fine-Tuning Chapter Rewrite** - Research-backed rewrite of Chapter 3 with 14B-Base recommendation and evaluation methodology
+- [x] **Phase 33: Fine-Tuning Chapter Rewrite** - Research-backed rewrite of Chapter 3 with 14B-Base recommendation and evaluation methodology
 - [ ] **Phase 34: IDE Integration Update** - Update Chapter 4 with Continue.dev path and FIM requirements
 - [ ] **Phase 35: Implementation Roadmap Restructure** - Restructure Chapter 7 separating completed work from forward plan
 - [ ] **Phase 36: Cross-Chapter Consistency Pass** - Verify model names, tool status, data counts, and code samples across all chapters
@@ -49,8 +49,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 33-01-PLAN.md — Rewrite core content: TL;DR, bbjllm Foundation, Base Model Selection, Training Data pipeline, QLoRA+two-stage, Evaluation Methodology
-- [ ] 33-02-PLAN.md — Update Toolchain versions, add Training Workflow, update Hosting, replace Status block, full-file consistency pass
+- [x] 33-01-PLAN.md — Rewrite core content: TL;DR, bbjllm Foundation, Base Model Selection, Training Data pipeline, QLoRA+two-stage, Evaluation Methodology
+- [x] 33-02-PLAN.md — Update Toolchain versions, add Training Workflow, update Hosting, replace Status block, full-file consistency pass
 
 ### Phase 34: IDE Integration Update
 
@@ -105,7 +105,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 32. Multi-Chapter Status & Tone Update | v1.7 | 2/2 | Complete | 2026-02-06 |
-| 33. Fine-Tuning Chapter Rewrite | v1.7 | 0/2 | Not started | - |
+| 33. Fine-Tuning Chapter Rewrite | v1.7 | 2/2 | Complete | 2026-02-06 |
 | 34. IDE Integration Update | v1.7 | 0/1 | Not started | - |
 | 35. Implementation Roadmap Restructure | v1.7 | 0/1 | Not started | - |
 | 36. Cross-Chapter Consistency Pass | v1.7 | 0/1 | Not started | - |
@@ -120,15 +120,15 @@ Plans:
 | STAT-04 | 32 | Complete |
 | CHAT-01 | 32 | Complete |
 | CHAT-02 | 32 | Complete |
-| FT-01 | 33 | Pending |
-| FT-02 | 33 | Pending |
-| FT-03 | 33 | Pending |
-| FT-04 | 33 | Pending |
-| FT-05 | 33 | Pending |
-| FT-06 | 33 | Pending |
-| FT-07 | 33 | Pending |
-| FT-08 | 33 | Pending |
-| FT-09 | 33 | Pending |
+| FT-01 | 33 | Complete |
+| FT-02 | 33 | Complete |
+| FT-03 | 33 | Complete |
+| FT-04 | 33 | Complete |
+| FT-05 | 33 | Complete |
+| FT-06 | 33 | Complete |
+| FT-07 | 33 | Complete |
+| FT-08 | 33 | Complete |
+| FT-09 | 33 | Complete |
 | IDE-01 | 34 | Pending |
 | IDE-02 | 34 | Pending |
 | IDE-03 | 34 | Pending |

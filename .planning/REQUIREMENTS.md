@@ -16,15 +16,15 @@ Requirements for the documentation refresh milestone. Each maps to roadmap phase
 
 ### Chapter 3: Fine-Tuning Rewrite
 
-- [ ] **FT-01**: Model recommendation updated from Qwen2.5-Coder-7B-Base to 14B-Base as primary recommendation, with rationale from research
-- [ ] **FT-02**: Toolchain updated to current versions (Unsloth 2026.x, transformers 5.x, peft 0.18.x, Ollama 0.15.x)
-- [ ] **FT-03**: Base vs Instruct model analysis added — when to use each, tradeoffs, recommendation for BBj
-- [ ] **FT-04**: Evaluation methodology section added with bbjcpl-based compile@1 metric, evaluation suite design, base model baseline approach
-- [ ] **FT-05**: Relationship to bbjllm repo documented — what exists (32B-Instruct, 9,922 examples, PEFT/QLoRA), how it differs from docs, recommended path forward
-- [ ] **FT-06**: Training data pipeline section added — markdown format (training-data/) as canonical source, ChatML JSONL (bbjllm/) as training input, conversion pipeline described
-- [ ] **FT-07**: Two-stage training approach described — Stage 1 continued pretraining on raw BBj, Stage 2 instruction fine-tuning
-- [ ] **FT-08**: Training workflow recommendations added — artifact management, what to commit back, iterative improvement process
-- [ ] **FT-09**: Model comparison table updated with Qwen3 models, current landscape assessment
+- [x] **FT-01**: Model recommendation updated from Qwen2.5-Coder-7B-Base to 14B-Base as primary recommendation, with rationale from research
+- [x] **FT-02**: Toolchain updated to current versions (Unsloth 2026.x, transformers 5.x, peft 0.18.x, Ollama 0.15.x)
+- [x] **FT-03**: Base vs Instruct model analysis added — when to use each, tradeoffs, recommendation for BBj
+- [x] **FT-04**: Evaluation methodology section added with bbjcpl-based compile@1 metric, evaluation suite design, base model baseline approach
+- [x] **FT-05**: Relationship to bbjllm repo documented — what exists (32B-Instruct, 9,922 examples, PEFT/QLoRA), how it differs from docs, recommended path forward
+- [x] **FT-06**: Training data pipeline section added — markdown format (training-data/) as canonical source, ChatML JSONL (bbjllm/) as training input, conversion pipeline described
+- [x] **FT-07**: Two-stage training approach described — Stage 1 continued pretraining on raw BBj, Stage 2 instruction fine-tuning
+- [x] **FT-08**: Training workflow recommendations added — artifact management, what to commit back, iterative improvement process
+- [x] **FT-09**: Model comparison table updated with Qwen3 models, current landscape assessment
 
 ### Chapter 4: IDE Integration Update
 
@@ -85,15 +85,15 @@ Deferred to later milestones.
 | STAT-04 | Phase 32 | Complete |
 | CHAT-01 | Phase 32 | Complete |
 | CHAT-02 | Phase 32 | Complete |
-| FT-01 | Phase 33 | Pending |
-| FT-02 | Phase 33 | Pending |
-| FT-03 | Phase 33 | Pending |
-| FT-04 | Phase 33 | Pending |
-| FT-05 | Phase 33 | Pending |
-| FT-06 | Phase 33 | Pending |
-| FT-07 | Phase 33 | Pending |
-| FT-08 | Phase 33 | Pending |
-| FT-09 | Phase 33 | Pending |
+| FT-01 | Phase 33 | Complete |
+| FT-02 | Phase 33 | Complete |
+| FT-03 | Phase 33 | Complete |
+| FT-04 | Phase 33 | Complete |
+| FT-05 | Phase 33 | Complete |
+| FT-06 | Phase 33 | Complete |
+| FT-07 | Phase 33 | Complete |
+| FT-08 | Phase 33 | Complete |
+| FT-09 | Phase 33 | Complete |
 | IDE-01 | Phase 34 | Pending |
 | IDE-02 | Phase 34 | Pending |
 | IDE-03 | Phase 34 | Pending |
