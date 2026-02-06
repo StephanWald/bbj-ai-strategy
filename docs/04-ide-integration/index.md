@@ -154,6 +154,62 @@ The configuration defines two models with distinct roles: a 14B instruction-tune
 
 Continue.dev's autocomplete implementation uses VS Code's `InlineCompletionItemProvider` API internally -- the same API described later in the [Ghost Text Architecture](#ghost-text-architecture) section. This creates a natural connection: Continue.dev delivers the "pragmatic now" (local model tab completion with a config file), while the bbj-language-server's planned ghost text integration provides the "strategic future" (BBj-aware completion with Langium semantic context, generation detection, and compiler validation).
 
+## Why Not Copilot?
+
+Developers will naturally ask: "Can't we just use GitHub Copilot with a custom model?" The short answer is: partially, and only for chat -- not for inline completions. The contrast with Continue.dev makes the limitation clear.
+
+### What BYOK Offers
+
+As of VS Code v1.99 (March 2025), Copilot supports [Bring Your Own Key (BYOK)](https://code.visualstudio.com/docs/copilot/customization/language-models) with Ollama as a built-in model provider. Configuration is straightforward:
+
+1. Open Command Palette and select **Chat: Manage Language Models**
+2. Select **Add Models** and choose **Ollama**
+3. Enter endpoint: `http://localhost:11434`
+4. Select the model (e.g., `bbj-coder`)
+
+This gives Copilot Chat access to the fine-tuned BBj model in Ask Mode. Developers can ask questions like "How do I create a window in BBj?" or "Convert this Visual PRO/5 code to DWC" and receive answers from a model that understands BBj. The January 2026 enhancements expanded provider support to include AWS Bedrock, Google AI Studio, and OpenAI-compatible endpoints alongside the existing Anthropic and OpenAI providers.
+
+Enterprise and Business BYOK is now in [public preview](https://github.blog/changelog/2026-01-15-github-copilot-bring-your-own-key-byok-enhancements/) as of January 2026, with admin configuration through organization and enterprise settings. This removes the earlier limitation that restricted BYOK to individual subscriptions.
+
+### What BYOK Does Not Offer
+
+From the [VS Code official documentation](https://code.visualstudio.com/docs/copilot/customization/language-models): **"BYOK does not currently work with completions."** The dimmed ghost text suggestions that appear as you type -- arguably the most valuable Copilot feature for daily coding -- still come exclusively from GitHub's cloud-hosted models. There is no mechanism to route inline completions through a local Ollama model via BYOK, regardless of plan tier.
+
+This means BYOK with a fine-tuned BBj model gives you:
+- **Chat:** BBj-aware conversational assistance via Ask Mode (works)
+- **Inline completions:** Generic suggestions from GitHub's models, with no BBj knowledge (unchanged)
+
+Additionally, even with BYOK, the Copilot service remains a dependency: embeddings, repository indexing, query refinement, and intent detection still require internet connectivity and an active Copilot subscription. BYOK routes chat through a local model but does not eliminate the cloud dependency.
+
+The contrast with Continue.dev is direct: Continue.dev gives you both chat **and** tab completion with local models, works across VS Code and JetBrains, requires no subscription, and runs entirely offline. Copilot BYOK gives you chat only, works in VS Code only, requires a Copilot subscription, and still depends on internet for supporting services.
+
+### Comparison: Continue.dev vs Copilot BYOK vs Language Server
+
+| Feature | Continue.dev | Copilot BYOK | Custom Language Server |
+|---------|-------------|-------------|----------------------|
+| Chat with local model | Yes (Ollama) | Yes (Ask Mode only) | Planned (via MCP) |
+| Tab completion with local model | Yes (FIM-capable models) | No | Planned (InlineCompletionItemProvider) |
+| BBj language awareness | None (generic) | None (generic) | Full (Langium parser, AST, scope) |
+| Generation detection | No | No | Planned (character/vpro5/bbj-gui/dwc) |
+| Compiler validation | No | No | Planned (bbjcpl in-the-loop) |
+| Multi-editor support | VS Code + JetBrains | VS Code only | VS Code + IntelliJ (extensions in repo) |
+| Effort to integrate | Low (config file) | Low (built-in) | High (custom development) |
+| Subscription required | No (open source) | Yes (Copilot + internet) | No |
+
+Continue.dev has the best near-term coverage: both chat and tab completion with local models, minimal setup, and no subscription. The custom language server has the best long-term potential: BBj-specific intelligence, generation-aware prompting, and compiler validation that no generic tool can provide. Copilot BYOK occupies the middle -- useful if developers already have a Copilot subscription, but not the recommended path for BBj-specific AI integration.
+
+:::info[Decision: Continue.dev as Primary IDE Integration Path]
+**Choice:** Evaluate Continue.dev as the primary near-term path for connecting fine-tuned BBj models to the IDE, with Copilot BYOK as a supplementary option for developers who already have Copilot.
+
+**Rationale:** Continue.dev fills the gap that Copilot BYOK leaves -- both chat and inline completion with local models. It supports separate models for chat and autocomplete roles, matching the BBj fine-tuning strategy (instruction-tuned for chat, FIM-trained for autocomplete). The language server remains the strategic path for BBj-specific intelligence, but Continue.dev provides immediate model delivery without custom extension development.
+
+**Alternatives considered:** Copilot BYOK as primary (no inline completion support, subscription required), custom extension only (high development effort, delays model delivery to developers), wait for Copilot to add local inline completions (timeline uncertain, may never happen).
+
+**Status:** Active research: Copilot BYOK integration (chat only). Continue.dev evaluation as primary IDE integration path.
+:::
+
+Continue.dev and Copilot BYOK address the model delivery problem -- how the fine-tuned BBj model's output reaches the developer's editor. But model delivery is only half the picture. The other half is language understanding: knowing which BBj generation the code belongs to, which symbols are in scope, what type a variable resolves to, and whether the generated code actually compiles. That understanding comes from the bbj-language-server.
+
 ## The Foundation: bbj-language-server
 
 The [bbj-language-server](https://github.com/BBx-Kitchen/bbj-language-server) is the BBj language extension for VS Code, built on the [Langium](https://langium.org/) framework and published on the [VS Code Marketplace](https://marketplace.visualstudio.com/). It is the single most important piece of existing infrastructure for BBj AI integration.
@@ -167,10 +223,10 @@ Key facts:
 | Language | TypeScript (87.9%), with Java interop |
 | License | MIT |
 | Contributors | 13 |
-| Commits | 450+ |
-| Structure | `bbj-vscode` (extension + language server) + `java-interop` (classpath via JSON-RPC) |
+| Commits | 508 |
+| Structure | `bbj-vscode` (VS Code extension + language server) + `bbj-intellij` (IntelliJ support) + `java-interop` (classpath via JSON-RPC) |
 
-The extension ships with production-grade features:
+The extension provides full-featured language support:
 
 - **Syntax highlighting** -- full BBj grammar support including all four generational syntaxes
 - **Code completion** -- Langium-powered symbol completion with scope awareness
@@ -180,7 +236,7 @@ The extension ships with production-grade features:
 - **Code execution** -- run BBj programs directly from VS Code
 - **Enterprise Manager integration** -- connect to BBj Enterprise Manager
 
-This is not a future plan. It is a shipped, maintained product with 450+ commits and 13 contributors. Every AI integration feature described in this chapter builds on top of this foundation.
+This is not a future plan. It is an operational, actively maintained product with 508 commits and 13 contributors. Every AI integration feature described in this chapter builds on top of this foundation.
 
 ### Why Langium Matters
 
@@ -215,12 +271,14 @@ The architecture uses two fundamentally different completion mechanisms, each op
 
 **Alternatives considered:** LLM-only completion (too slow for popup, too unreliable for symbol lists), Langium-only completion (cannot generate multi-line code or novel patterns), hybrid single provider (latency compromise unacceptable for popup).
 
-**Status:** Popup completion is shipped via the bbj-language-server. Ghost text completion is planned.
+**Status:** Popup completion is operational via the bbj-language-server. Ghost text completion is planned.
 :::
 
 ### Ghost Text Architecture
 
-Ghost text -- the dimmed inline suggestion that appears as you type -- is powered by VS Code's [`InlineCompletionItemProvider`](https://code.visualstudio.com/api/references/vscode-api#InlineCompletionItemProvider) API. This is the same API that GitHub Copilot uses internally for its suggestions.
+Ghost text -- the dimmed inline suggestion that appears as you type -- is powered by VS Code's [`InlineCompletionItemProvider`](https://code.visualstudio.com/api/references/vscode-api#InlineCompletionItemProvider) API. This is the same API that GitHub Copilot uses internally for its suggestions, and the same API that Continue.dev uses for its autocomplete feature.
+
+Implementing ghost text in the bbj-language-server is one of the closest next milestones for BBj AI integration. The infrastructure is already in place: the `bbj-vscode` extension provides the VS Code host, the `bbj-intellij` extension provides the IntelliJ host, and the Langium language server provides the parser, AST, and semantic context. What remains is connecting an LLM completion provider to this existing infrastructure -- extending the language server, not building from scratch.
 
 The lifecycle for a ghost text completion:
 
@@ -230,6 +288,8 @@ The lifecycle for a ghost text completion:
 4. **Prompt assembly** -- the extracted context is assembled into a structured prompt for the LLM (see [Generation-Aware Completion](#generation-aware-completion) below)
 5. **LLM call** -- the prompt is sent to the Ollama server running the fine-tuned BBj model
 6. **Render ghost text** -- the response is displayed as dimmed inline text; the developer presses Tab to accept or continues typing to dismiss
+
+Continue.dev already uses this same `InlineCompletionItemProvider` API for its autocomplete feature -- so the pattern is proven in practice with local Ollama models. The bbj-language-server's ghost text implementation adds what Continue.dev cannot: Langium semantic context, generation detection, and compiler validation in the completion pipeline.
 
 The extension-side implementation follows the standard VS Code pattern:
 
@@ -524,7 +584,7 @@ The `alt` block shows the generate-validate-fix cycle -- the same pattern descri
 
 The VS Code `InlineCompletionItemProvider` API works, but it is an editor-specific extension API. [LSP 3.18](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/) introduces `textDocument/inlineCompletion` as a **protocol-level feature**, meaning inline completion can be served from the language server itself rather than requiring editor-specific extension code.
 
-This is architecturally significant for Langium-based servers. Currently, the ghost text provider lives in the VS Code extension client and must query the language server for context via custom requests. With LSP 3.18, the completion logic can live directly in the language server -- closer to the parser, the AST, and the semantic context it needs.
+This is architecturally significant for Langium-based servers. Currently, the ghost text provider would live in the VS Code extension client and query the language server for context via custom requests. With LSP 3.18, the completion logic could live directly in the language server -- closer to the parser, the AST, and the semantic context it needs.
 
 ```typescript
 // Server capability registration
@@ -561,10 +621,10 @@ connection.onRequest('textDocument/inlineCompletion', async (params) => {
 });
 ```
 
-Editor adoption of LSP 3.18 inline completion is progressing: [Neovim has merged support](https://github.com/neovim/neovim), Helix has an open pull request, and Zed has an open issue tracking implementation. As adoption grows, a Langium-based server that implements `textDocument/inlineCompletion` can provide AI-powered ghost text completion to any LSP-compatible editor -- not just VS Code.
+Editor adoption of LSP 3.18 inline completion is progressing: [Neovim has merged support](https://github.com/neovim/neovim), Helix has an open pull request, and Zed has an open issue tracking implementation. If the bbj-language-server implements `textDocument/inlineCompletion`, it could provide AI-powered ghost text completion to any LSP-compatible editor -- not just VS Code. This represents a potential migration path from the VS Code-specific `InlineCompletionItemProvider` to a standardized, multi-editor approach.
 
 :::info[Decision: Extension API Now, LSP 3.18 Migration Path]
-**Choice:** Implement ghost text completion using VS Code's `InlineCompletionItemProvider` API initially, with a planned migration to LSP 3.18 `textDocument/inlineCompletion` as editor adoption matures.
+**Choice:** Implement ghost text completion using VS Code's `InlineCompletionItemProvider` API initially, with a potential migration to LSP 3.18 `textDocument/inlineCompletion` as editor adoption matures.
 
 **Rationale:** VS Code is the primary target editor and supports the extension API today. LSP 3.18 inline completion is not yet universally adopted. Starting with the extension API delivers value immediately while the LSP migration path ensures multi-editor support in the future. The semantic context extraction logic is shared between both approaches.
 
@@ -573,91 +633,41 @@ Editor adoption of LSP 3.18 inline completion is progressing: [Neovim has merged
 **Status:** Planned. The bbj-language-server's Langium foundation supports either approach.
 :::
 
-## Why Not Copilot?
+## Langium AI: Extending the Language Server
 
-Developers will naturally ask: "Can't we just use GitHub Copilot with a custom model?" The short answer is: partially, and only for chat -- not for inline completions. The contrast with Continue.dev makes the limitation clear.
+The bbj-language-server is built on [Langium](https://langium.org/), the Eclipse Foundation's language engineering framework. [Langium AI](https://github.com/eclipse-langium/langium-ai) is the natural extension of this architecture -- a toolbox for bridging Langium-based DSL parsers with LLM integration, developed under the same Eclipse Langium umbrella.
 
-### What BYOK Offers
+The project originated at [TypeFox](https://www.typefox.io/) (the company behind Langium) as [langium-ai-tools](https://www.typefox.io/blog/langium-ai-the-fusion-of-dsls-and-llms/) in 2025. The original TypeFox/langium-ai repository was archived in September 2025, and development moved to [eclipse-langium/langium-ai](https://github.com/eclipse-langium/langium-ai) under the Eclipse Langium organization. Both Langium itself and Langium AI are now maintained under the same Eclipse umbrella -- suggesting that version alignment is a matter of when, not if.
 
-As of VS Code v1.99 (March 2025), Copilot supports [Bring Your Own Key (BYOK)](https://code.visualstudio.com/docs/copilot/customization/language-models) with Ollama as a built-in model provider. Configuration is straightforward:
+The tools provide three capabilities directly relevant to BBj AI integration:
 
-1. Open Command Palette and select **Chat: Manage Language Models**
-2. Select **Add Models** and choose **Ollama**
-3. Enter endpoint: `http://localhost:11434`
-4. Select the model (e.g., `bbj-coder`)
+- **Evaluation pipelines** -- composable evaluators that score LLM output against DSL grammars, enabling automated testing of generated BBj code
+- **DSL-aware splitting** -- chunking code for RAG that respects grammar boundaries, leveraging AST types and concrete syntax tree offsets rather than arbitrary line counts
+- **Constraint generation** -- deriving validation rules from Langium grammars that restrict LLM token output to syntactically valid constructs
 
-This gives Copilot Chat access to the fine-tuned BBj model in Ask Mode. Developers can ask questions like "How do I create a window in BBj?" or "Convert this Visual PRO/5 code to DWC" and receive answers from a model that understands BBj. The January 2026 enhancements expanded provider support to include AWS Bedrock, Google AI Studio, and OpenAI-compatible endpoints alongside the existing Anthropic and OpenAI providers.
+For the bbj-language-server, constraint generation is particularly compelling: it could ensure the fine-tuned model's suggestions are always syntactically valid BBj before they reach the developer -- a grammar-level guarantee that complements the compiler validation described above.
 
-Enterprise and Business BYOK is now in [public preview](https://github.blog/changelog/2026-01-15-github-copilot-bring-your-own-key-byok-enhancements/) as of January 2026, with admin configuration through organization and enterprise settings. This removes the earlier limitation that restricted BYOK to individual subscriptions.
-
-### What BYOK Does Not Offer
-
-From the [VS Code official documentation](https://code.visualstudio.com/docs/copilot/customization/language-models): **"BYOK does not currently work with completions."** The dimmed ghost text suggestions that appear as you type -- arguably the most valuable Copilot feature for daily coding -- still come exclusively from GitHub's cloud-hosted models. There is no mechanism to route inline completions through a local Ollama model via BYOK, regardless of plan tier.
-
-This means BYOK with a fine-tuned BBj model gives you:
-- **Chat:** BBj-aware conversational assistance via Ask Mode (works)
-- **Inline completions:** Generic suggestions from GitHub's models, with no BBj knowledge (unchanged)
-
-Additionally, even with BYOK, the Copilot service remains a dependency: embeddings, repository indexing, query refinement, and intent detection still require internet connectivity and an active Copilot subscription. BYOK routes chat through a local model but does not eliminate the cloud dependency.
-
-The contrast with Continue.dev is direct: Continue.dev gives you both chat **and** tab completion with local models, works across VS Code and JetBrains, requires no subscription, and runs entirely offline. Copilot BYOK gives you chat only, works in VS Code only, requires a Copilot subscription, and still depends on internet for supporting services.
-
-### Comparison: Continue.dev vs Copilot BYOK vs Language Server
-
-| Feature | Continue.dev | Copilot BYOK | Custom Language Server |
-|---------|-------------|-------------|----------------------|
-| Chat with local model | Yes (Ollama) | Yes (Ask Mode only) | Planned (via MCP) |
-| Tab completion with local model | Yes (FIM-capable models) | No | Planned (InlineCompletionItemProvider) |
-| BBj language awareness | None (generic) | None (generic) | Full (Langium parser, AST, scope) |
-| Generation detection | No | No | Planned (character/vpro5/bbj-gui/dwc) |
-| Compiler validation | No | No | Planned (bbjcpl in-the-loop) |
-| Multi-editor support | VS Code + JetBrains | VS Code only | VS Code + IntelliJ (extensions in repo) |
-| Effort to integrate | Low (config file) | Low (built-in) | High (custom development) |
-| Subscription required | No (open source) | Yes (Copilot + internet) | No |
-
-Continue.dev has the best near-term coverage: both chat and tab completion with local models, minimal setup, and no subscription. The custom language server has the best long-term potential: BBj-specific intelligence, generation-aware prompting, and compiler validation that no generic tool can provide. Copilot BYOK occupies the middle -- useful if developers already have a Copilot subscription, but not the recommended path for BBj-specific AI integration.
-
-:::info[Decision: Continue.dev as Primary IDE Integration Path]
-**Choice:** Evaluate Continue.dev as the primary near-term path for connecting fine-tuned BBj models to the IDE, with Copilot BYOK as a supplementary option for developers who already have Copilot.
-
-**Rationale:** Continue.dev fills the gap that Copilot BYOK leaves -- both chat and inline completion with local models. It supports separate models for chat and autocomplete roles, matching the BBj fine-tuning strategy (instruction-tuned for chat, FIM-trained for autocomplete). The language server remains the strategic path for BBj-specific intelligence, but Continue.dev provides immediate model delivery without custom extension development.
-
-**Alternatives considered:** Copilot BYOK as primary (no inline completion support, subscription required), custom extension only (high development effort, delays model delivery to developers), wait for Copilot to add local inline completions (timeline uncertain, may never happen).
-
-**Status:** Active research: Copilot BYOK integration (chat only). Continue.dev evaluation as primary IDE integration path.
-:::
-
-### Langium AI
-
-[TypeFox](https://www.typefox.io/) (the company behind Langium) released [langium-ai-tools](https://www.typefox.io/blog/langium-ai-the-fusion-of-dsls-and-llms/) in 2025 -- a toolbox for bridging Langium-based DSL parsers with LLM integration. The tools include:
-
-- **Evaluation pipelines** -- automated testing of LLM output against DSL grammars
-- **DSL-aware splitting** -- chunking code for RAG that respects grammar boundaries
-- **Constraint generation** -- producing validation rules from Langium grammars that constrain LLM output
-
-This is directly relevant to the bbj-language-server. However, as of January 2026, langium-ai-tools (v0.0.2) targets Langium 3.4.x, while the bbj-language-server is built on Langium 4.x. Whether the tools will be updated for Langium 4.x compatibility is not yet clear.
-
-Langium AI is an initiative to watch rather than a current dependency. If the version gap is bridged, it could accelerate features like grammar-constrained LLM output validation -- ensuring the fine-tuned model's suggestions are always syntactically valid BBj before they reach the developer.
-
-## Current Status
+Currently, langium-ai-tools v0.0.2 targets Langium 3.4.x, while the bbj-language-server is built on Langium 4.x. This version gap means the tools cannot be used directly today. However, with both projects now under the Eclipse Langium organization, the path to compatibility is clear. When the gap is bridged, Langium AI tools would integrate naturally with the bbj-language-server's existing Langium foundation -- no architectural changes required, just a version update.
 
 :::note[Where Things Stand]
-**Shipped:** The bbj-language-server (v0.5.0) is published on the [VS Code Marketplace](https://marketplace.visualstudio.com/) with syntax highlighting, code completion, diagnostics, formatting, BBj Properties viewing, and code execution. It is actively maintained with 450+ commits and 13 contributors.
-
-**Shipped:** bbjcpltool v1 proof-of-concept — validates the compiler-in-the-loop concept for BBj syntax checking. Demonstrates that LLMs can interpret `bbjcpl` error messages and self-correct without human intervention.
-
-**In progress:** The fine-tuned BBj model is under active development with approximately 10,000 training data points and promising early results (see [Chapter 3](/docs/fine-tuning)). Copilot BYOK integration is in early exploration.
-
-**Planned:** LLM-powered ghost text completion via `InlineCompletionItemProvider` with compiler validation in the pipeline, generation detection in the Langium parser, semantic context API for enriched prompts, and integration of `validate_bbj_syntax` as an MCP tool for cross-client compiler validation. Eventual migration to LSP 3.18 `textDocument/inlineCompletion` for multi-editor support.
+- **Operational:** bbj-language-server v0.5.0 -- syntax highlighting, code completion, diagnostics, formatting, and code execution on the [VS Code Marketplace](https://marketplace.visualstudio.com/). 508 commits, 13 contributors.
+- **Operational:** bbjcpltool v1 -- compiler-in-the-loop validation demonstrated. LLMs interpret `bbjcpl` error messages and self-correct.
+- **Active research:** Continue.dev evaluation as primary IDE integration path for fine-tuned BBj model delivery (chat + tab completion).
+- **Active research:** Copilot BYOK integration (chat only -- inline completions not supported for BYOK models).
+- **Planned:** Ghost text completion via `InlineCompletionItemProvider` with compiler validation in the pipeline.
+- **Planned:** FIM fine-tuning on BBj source code for tab completion support.
+- **Planned:** Generation detection in the Langium parser, semantic context API for enriched prompts.
+- **Planned:** Migration to LSP 3.18 `textDocument/inlineCompletion` for multi-editor support.
 :::
-
-The path from current state to AI-powered completion is incremental, not revolutionary. The language server already provides the Langium parser, AST, scope resolution, and VS Code integration. Adding generation detection, a semantic context API, an LLM completion provider, and compiler validation extends the existing architecture without replacing it.
 
 ## What Comes Next
 
-The fine-tuned model described in [Chapter 3](/docs/fine-tuning) provides the intelligence. This chapter describes how that intelligence reaches the developer's editor. The remaining components complete the picture:
+The path from current state to AI-powered completion is incremental, not revolutionary. The bbj-language-server already provides the Langium parser, AST, scope resolution, and VS Code integration. Continue.dev provides immediate model delivery with a config file. Adding generation detection, a semantic context API, an LLM completion provider, and compiler validation extends the existing architecture layer by layer -- each step building on what already exists.
 
+The remaining components complete the picture:
+
+- [**Fine-Tuning**](/docs/fine-tuning) -- the model that powers both chat (instruction-tuned) and future tab completion (FIM-trained)
 - [**RAG Database**](/docs/rag-database) -- the retrieval layer that feeds documentation context into both IDE completion prompts and chat responses
 - [**Documentation Chat**](/docs/documentation-chat) -- a conversational interface for BBj questions, powered by the same model and RAG infrastructure
 - [**Strategic Architecture**](/docs/strategic-architecture) -- how the model, RAG database, IDE extension, and chat interface connect as a unified system
-- [**Implementation Roadmap**](/docs/implementation-roadmap) -- timelines, milestones, and resource allocation for bringing these components to production
+- [**Implementation Roadmap**](/docs/implementation-roadmap) -- timelines, milestones, and the path from Continue.dev model delivery to full language-server-powered AI completion
